@@ -10,7 +10,6 @@ export type HashKeyRequest = {
 // MFA
 export type MFARequest = {
   hash_key: string
-  email: string
   code: string
 }
 // パスワード変更

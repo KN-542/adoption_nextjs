@@ -22,7 +22,7 @@ import ClearIcon from '@mui/icons-material/Clear'
 import { HashKeyRequest, MFARequest } from '@/api/model/management'
 import { APICommonCode, APIMFACode, APISessionCheckCode } from '@/enum/apiError'
 import { PasswordChangeStatus } from '@/enum/login'
-import { mgChangeSetting } from '@/hooks/store'
+import { mgChangeSetting, mgSignOut } from '@/hooks/store'
 import { SettingModel } from '@/types/management'
 
 const CODE_SIZE = 6
@@ -111,7 +111,6 @@ const MFA = () => {
 
     await MFACSR({
       hash_key: user.hashKey,
-      email: user.mail,
       code: codeString,
     } as MFARequest)
       .then((res) => {
@@ -230,7 +229,10 @@ const MFA = () => {
             variant="outlined"
             color="inherit"
             className={classes.buttonBack}
-            onClick={() => router.push(RouterPath.ManagementLogin)}
+            onClick={() => {
+              store.dispatch(mgSignOut())
+              router.push(RouterPath.ManagementLogin)
+            }}
           >
             {t('common.button.back')}
           </Button>

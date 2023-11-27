@@ -31,7 +31,7 @@ import { Role } from '@/enum/user'
 type Props = {
   drawerOpen: boolean
   onToggleDrawer: () => void
-  logout: (req: HashKeyRequest) => void
+  logout: (req: HashKeyRequest, msg: string) => void
 }
 
 const SideBar = (props: Props) => {
@@ -100,9 +100,12 @@ const SideBar = (props: Props) => {
       icon: <LogoutIcon />,
       role: true,
       button: async () => {
-        await props.logout({
-          hash_key: user.hashKey,
-        } as HashKeyRequest)
+        await props.logout(
+          {
+            hash_key: user.hashKey,
+          } as HashKeyRequest,
+          '',
+        )
       },
     },
   ]

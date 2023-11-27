@@ -12,23 +12,32 @@ import { ToastContainer } from 'react-toastify'
 import { HashKeyRequest } from '@/api/model/management'
 import { LogoutCSR } from '@/api/repository'
 import { RouterPath } from '@/enum/router'
-import { mgSignOut } from '@/hooks/store'
+import { mgChangeSetting, mgSignOut } from '@/hooks/store'
 import Admin from '@/components/Admin'
 import AppMFA from '@/components/AppMFA'
 import AppPasswordChange from '@/components/AppPasswordChange'
+import { SettingModel } from '@/types/management'
+import { APICommonCode } from '@/enum/apiError'
 
 const App = ({ Component, pageProps }) => {
   const router = useRouter()
 
   // ログアウト
-  const logout = async (req: HashKeyRequest) => {
+  const logout = async (req: HashKeyRequest, msg: string) => {
     await LogoutCSR(req)
       .then(() => {
         store.dispatch(mgSignOut())
+        store.dispatch(
+          mgChangeSetting({
+            errorMsg: msg,
+          } as SettingModel),
+        )
         router.push(RouterPath.ManagementLogin)
       })
-      .catch(() => {
-        router.push(RouterPath.ManagementError)
+      .catch((error) => {
+        isEqual(error.response.data.code, APICommonCode.BadRequest)
+          ? router.push(RouterPath.ManagementLogin)
+          : router.push(RouterPath.ManagementError)
         return
       })
   }
