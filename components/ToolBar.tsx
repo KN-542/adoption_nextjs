@@ -23,7 +23,7 @@ import { HashKeyRequest } from '@/api/model/management'
 
 type Props = {
   onToggleDrawer: () => void
-  logout: (req: HashKeyRequest) => void
+  logout: (req: HashKeyRequest, msg: string) => void
 }
 
 const ToolBar = (props: Props) => {
@@ -33,9 +33,12 @@ const ToolBar = (props: Props) => {
   const setting = useSelector((state: RootState) => state.management.setting)
 
   const logout = async () => {
-    await props.logout({
-      hash_key: user.hashKey,
-    } as HashKeyRequest)
+    await props.logout(
+      {
+        hash_key: user.hashKey,
+      } as HashKeyRequest,
+      '',
+    )
   }
 
   return (

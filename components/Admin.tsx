@@ -47,7 +47,7 @@ const Admin = ({ Component, pageProps, logout }) => {
 
         setDisp(true)
       })
-      .catch((error) => {
+      .catch(async (error) => {
         if (
           every([500 <= error.response.status, error.response.status < 600])
         ) {
@@ -70,7 +70,7 @@ const Admin = ({ Component, pageProps, logout }) => {
           } as SettingModel),
         )
 
-        router.push(RouterPath.ManagementLogin)
+        await logout({ hash_key: user.hashKey } as HashKeyRequest, msg)
         return
       })
   }, [])
@@ -83,14 +83,18 @@ const Admin = ({ Component, pageProps, logout }) => {
             onToggleDrawer={() => {
               setDrawerOpen((b) => !b)
             }}
-            logout={logout}
+            logout={async () => {
+              await logout({ hash_key: user.hashKey } as HashKeyRequest, '')
+            }}
           />
           <SideBar
             drawerOpen={drawerOpen}
             onToggleDrawer={() => {
               setDrawerOpen((b) => !b)
             }}
-            logout={logout}
+            logout={async () => {
+              await logout({ hash_key: user.hashKey } as HashKeyRequest, '')
+            }}
           />
           <Component {...pageProps} />
           <ToastContainer />
