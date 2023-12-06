@@ -170,11 +170,19 @@ const SideBar = (props: Props) => {
           <p color="inherit">{user.name}</p>
         </Box>
 
-        <List>{data.map((row) => renderRow(row))}</List>
+        <List>
+          {data.map((row, index) => {
+            return <Box key={index}>{renderRow(row)}</Box>
+          })}
+        </List>
 
         <Divider />
 
-        <List>{subData.map((row) => renderRow(row))}</List>
+        <List>
+          {subData.map((row, index) => {
+            return <Box key={index}>{renderRow(row)}</Box>
+          })}
+        </List>
       </Box>
     </Drawer>
   )

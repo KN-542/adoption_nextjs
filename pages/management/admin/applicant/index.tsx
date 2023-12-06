@@ -8,7 +8,7 @@ import { ApplicantsTableBody, TableHeader } from '@/types/management'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
 import { common } from '@mui/material/colors'
-import { isEmpty, isEqual, map } from 'lodash'
+import { every, isEmpty, isEqual, map } from 'lodash'
 import {
   ApplicantStatus,
   Site,
@@ -16,14 +16,24 @@ import {
   dispApplicantStatus,
 } from '@/enum/applicant'
 import UploadModal from '@/components/modal/UploadModal'
-import { ApplicantsDownloadRequest } from '@/api/model/management'
-import { applicantsDownloadCSR, applicantsSearchCSR } from '@/api/repository'
+import {
+  ApplicantDocumentDownloadRequest,
+  ApplicantsDownloadRequest,
+} from '@/api/model/management'
+import {
+  applicantDocumentDownloadCSR,
+  applicantsDownloadCSR,
+  applicantsSearchCSR,
+} from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
 import NextHead from '@/components/Header'
 import { ml, mr, mt, Resume, TableMenu } from '@/styles/index'
 import { RouterPath } from '@/enum/router'
 import { Role } from '@/enum/user'
+import { APICommonCode } from '@/enum/apiError'
+import { toast } from 'react-toastify'
+import ClearIcon from '@mui/icons-material/Clear'
 
 const Applicants = () => {
   const router = useRouter()
@@ -42,15 +52,15 @@ const Applicants = () => {
         _.forEach(res.data.applicants, (r, index) => {
           list.push({
             no: Number(index) + 1,
-            id: Number(r.id),
+            hashKey: r.hash_key,
             name: r.name,
             site: Number(r.site_id),
             mail: r.email,
             age: Number(r.age),
             status: ApplicantStatus.ScheduleUnanswered, // TODO
             interviewerDate: '-', // TODO
-            resume: null,
-            curriculumVitae: null,
+            resume: r.resume,
+            curriculumVitae: r.curriculum_vitae,
           })
         })
 
@@ -118,6 +128,49 @@ const Applicants = () => {
     } else {
       console.error('選択されたファイルはtxtファイルではありません。')
     }
+  }
+
+  const download = async (
+    hashKey: string,
+    namePre: string,
+    fileName: string,
+  ) => {
+    await applicantDocumentDownloadCSR({
+      hash_key: hashKey,
+      name_pre: namePre,
+    } as ApplicantDocumentDownloadRequest)
+      .then((res) => {
+        const url = window.URL.createObjectURL(
+          new Blob([res.data], { type: 'application/octet-stream' }),
+        )
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', fileName)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      })
+      .catch((error) => {
+        if (
+          every([500 <= error.response.status, error.response.status < 600])
+        ) {
+          router.push(RouterPath.ManagementError)
+          return
+        }
+
+        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response.data.code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+        }
+      })
   }
 
   const tableHeader: TableHeader[] = [
@@ -251,14 +304,31 @@ const Applicants = () => {
               resume: isEmpty(l.resume) ? (
                 <>{t('management.features.applicant.documents.f')}</>
               ) : (
-                <Button color="primary" sx={Resume}>
+                <Button
+                  color="primary"
+                  sx={Resume}
+                  onClick={async () => {
+                    await download(l.hashKey, 'resume', l.resume)
+                  }}
+                >
+                  <UploadFileIcon sx={mr(0.25)} />
                   {t('management.features.applicant.documents.t')}
                 </Button>
               ),
-              curriculumVitae: isEmpty(l.resume) ? (
+              curriculumVitae: isEmpty(l.curriculumVitae) ? (
                 <>{t('management.features.applicant.documents.f')}</>
               ) : (
-                <Button color="primary" sx={Resume}>
+                <Button
+                  color="primary"
+                  sx={Resume}
+                  onClick={async () => {
+                    await download(
+                      l.hashKey,
+                      'curriculum_vitae',
+                      l.curriculumVitae,
+                    )
+                  }}
+                >
                   <UploadFileIcon sx={mr(0.25)} />
                   {t('management.features.applicant.documents.t')}
                 </Button>
