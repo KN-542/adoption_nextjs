@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { APICommonHeader } from '.'
 import {
+  ApplicantDocumentDownloadRequest,
   ApplicantsDownloadRequest,
   HashKeyRequest,
   LoginRequest,
@@ -85,6 +86,24 @@ export const applicantsDownloadCSR = async (req: ApplicantsDownloadRequest) => {
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/download`,
     req,
     APICommonHeader,
+  )
+  return res
+}
+
+// 応募者ダウンロード CSR
+export const applicantDocumentDownloadCSR = async (
+  req: ApplicantDocumentDownloadRequest,
+) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/documents_download`,
+    req,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      responseType: 'blob', // レスポンスタイプをblobに設定
+      withCredentials: true,
+    },
   )
   return res
 }

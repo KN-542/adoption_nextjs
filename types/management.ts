@@ -47,8 +47,8 @@ export type SettingModel = {
 export type ApplicantsTableBody = {
   // No
   no: number
-  // ID
-  id: number
+  // hash_key
+  hashKey: string
   // 氏名
   name: string
   // 媒体

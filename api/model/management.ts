@@ -25,6 +25,12 @@ export type ApplicantsDownloadRequest = {
   site: number
 }
 
+// 書類ダウンロード request
+export type ApplicantDocumentDownloadRequest = {
+  hash_key: string
+  name_pre: string
+}
+
 // ユーザー登録 request
 export type UserCreateRequest = {
   name: string
