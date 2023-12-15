@@ -19,7 +19,8 @@
       },
       "modal": {
         "upload": "ファイルアップロード",
-        "createUser": "ログイン情報"
+        "createUser": "ログイン情報",
+        "search": "検索条件指定"
       }
     },
     "toast": {
@@ -33,7 +34,8 @@
       "cancel": "キャンセル",
       "back": "戻る",
       "change": "変更",
-      "auth": "認証する"
+      "auth": "認証する",
+      "search": "検索"
     },
     "validate": {
       "required": "は必須入力項目です",
@@ -86,6 +88,11 @@
       "applicant": {
         "upload": "アップロード",
         "search": "条件検索",
+        "searchModal": {
+          "status": "応募者ステータス",
+          "site": "媒体",
+          "initButton": "入力状態を初期化"
+        },
         "uploadMsg": "応募者情報のファイルアップロードを行ってください",
         "uploadMsg2": "ここにファイルをドラッグ＆ドロップ、またはここをクリックしてファイル選択",
         "site": {

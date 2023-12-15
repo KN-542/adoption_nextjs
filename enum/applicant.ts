@@ -1,3 +1,5 @@
+import { StatusCodes } from 'http-status-codes'
+
 // 媒体
 export enum Site {
   Recruit = 1,
@@ -73,4 +75,12 @@ export const dispApplicantStatus = (n: number): string => {
     default:
       return 'TODO'
   }
+}
+
+// 検索項目 index
+export enum SearchIndex {
+  // 応募者ステータス
+  Status = 0,
+  // 媒体
+  Site,
 }

@@ -93,3 +93,34 @@ export type TableHeader = {
   name: string
   sort?: TableSort
 }
+
+// 検索 選択項目
+export type SearchSelectTerm = {
+  id: number
+  value: string
+  isSelected: boolean
+}
+
+// 検索 選択
+export type SearchSelect = {
+  name: string
+  list: SearchSelectTerm[]
+}
+
+// 検索
+export type SearchForm = {
+  selectList: SearchSelect[]
+}
+
+// 検索ストレージ
+export type SearchSelected = {
+  // selectListのindex
+  index: number
+  // listの各要素のID
+  id: number
+}
+
+// 応募者 model
+export type ApplicantModel = {
+  searchTermList: SearchSelected[]
+}

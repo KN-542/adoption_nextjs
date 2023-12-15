@@ -2,6 +2,7 @@ import axios from 'axios'
 import { APICommonHeader } from '.'
 import {
   ApplicantDocumentDownloadRequest,
+  ApplicantSearchRequest,
   ApplicantsDownloadRequest,
   HashKeyRequest,
   LoginRequest,
@@ -108,11 +109,11 @@ export const applicantDocumentDownloadCSR = async (
   return res
 }
 
-// 応募者ダウンロード CSR
-export const applicantsSearchCSR = async () => {
+// 応募者検索 CSR
+export const applicantsSearchCSR = async (req: ApplicantSearchRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/search`,
-    {},
+    req,
     APICommonHeader,
   )
   return res
@@ -151,6 +152,26 @@ export const UserCreateCSR = async (req: UserCreateRequest) => {
 export const UserRoleListSSG = async () => {
   const res = await axios.post(
     `${process.env.NEXT_SSG_URL}/user/role_list`,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 応募者ステータス一覧 SSG
+export const ApplicantStatusListSSG = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSG_URL}/applicant/status`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}
+
+// サイト一覧 SSG
+export const ApplicantSitesSSG = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSG_URL}/applicant/sites`,
+    {},
     APICommonHeader,
   )
   return res

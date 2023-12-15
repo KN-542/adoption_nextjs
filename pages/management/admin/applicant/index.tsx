@@ -1,16 +1,33 @@
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { RootState } from '@/hooks/store/store'
+import store, { RootState } from '@/hooks/store/store'
 import EnhancedTable from '@/components/Table'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
-import { ApplicantsTableBody, TableHeader } from '@/types/management'
+import {
+  ApplicantsTableBody,
+  SearchForm,
+  SearchSelect,
+  SearchSelectTerm,
+  SearchSelected,
+  TableHeader,
+} from '@/types/management'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
 import { common } from '@mui/material/colors'
-import { every, isEmpty, isEqual, map } from 'lodash'
+import {
+  cloneDeep,
+  every,
+  filter,
+  find,
+  findIndex,
+  isEmpty,
+  isEqual,
+  map,
+} from 'lodash'
 import {
   ApplicantStatus,
+  SearchIndex,
   Site,
   dispApplicantSite,
   dispApplicantStatus,
@@ -18,9 +35,12 @@ import {
 import UploadModal from '@/components/modal/UploadModal'
 import {
   ApplicantDocumentDownloadRequest,
+  ApplicantSearchRequest,
   ApplicantsDownloadRequest,
 } from '@/api/model/management'
 import {
+  ApplicantSitesSSG,
+  ApplicantStatusListSSG,
   applicantDocumentDownloadCSR,
   applicantsDownloadCSR,
   applicantsSearchCSR,
@@ -28,26 +48,50 @@ import {
 import _ from 'lodash'
 import { useRouter } from 'next/router'
 import NextHead from '@/components/Header'
-import { ml, mr, mt, Resume, TableMenu } from '@/styles/index'
+import { ml, mr, mt, Resume, TableMenu, TableMenuButtons } from '@/styles/index'
 import { RouterPath } from '@/enum/router'
 import { Role } from '@/enum/user'
 import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
+import Search from '@/components/Search'
+import SearchModal from '@/components/modal/SearchModal'
+import { mgApplicantSearchTermList } from '@/hooks/store'
 
-const Applicants = () => {
+const Applicants = ({ api, isError, locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
+  const applicant = useSelector(
+    (state: RootState) => state.management.applicant,
+  )
+  const applicantSearchTermList = cloneDeep(applicant.searchTermList)
   const user = useSelector((state: RootState) => state.management.user)
   const setting = useSelector((state: RootState) => state.management.setting)
 
   const [bodies, setBodies] = useState([])
 
-  const search = () => {
+  const search = async () => {
     // API 応募者一覧
     const list: ApplicantsTableBody[] = []
-    applicantsSearchCSR()
+    await applicantsSearchCSR({
+      site_id_list: map(
+        filter(applicantSearchTermList, (item) =>
+          isEqual(item.index, SearchIndex.Site),
+        ),
+        (item2) => {
+          return item2.id
+        },
+      ),
+      applicant_status_list: map(
+        filter(applicantSearchTermList, (item) =>
+          isEqual(item.index, SearchIndex.Status),
+        ),
+        (item2) => {
+          return item2.id
+        },
+      ),
+    } as ApplicantSearchRequest)
       .then((res) => {
         _.forEach(res.data.applicants, (r, index) => {
           list.push({
@@ -57,8 +101,8 @@ const Applicants = () => {
             site: Number(r.site_id),
             mail: r.email,
             age: Number(r.age),
-            status: ApplicantStatus.ScheduleUnanswered, // TODO
-            interviewerDate: '-', // TODO
+            status: r[`status_name_${locale}`],
+            interviewerDate: isEmpty(r.desired_at) ? '-' : r.desired_at,
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
           })
@@ -72,10 +116,88 @@ const Applicants = () => {
   }
 
   useEffect(() => {
+    if (isError) router.push(RouterPath.ManagementError)
     search()
   }, [])
 
+  const [searchObj, setSearchObj] = useState<SearchForm>({
+    selectList: [
+      {
+        name: t('management.features.applicant.searchModal.status'),
+        list: map(api.applicantStatusList, (item) => {
+          return {
+            id: Number(item.id),
+            value: item[`status_name_${locale}`],
+            isSelected: !isEmpty(
+              find(applicantSearchTermList, (option) => {
+                return every([
+                  isEqual(option.id, Number(item.id)),
+                  isEqual(option.index, SearchIndex.Status),
+                ])
+              }),
+            ),
+          }
+        }) as SearchSelectTerm[],
+      },
+      {
+        name: t('management.features.applicant.searchModal.site'),
+        list: map(api.applicantSites, (item) => {
+          return {
+            id: Number(item.id),
+            value: item[`site_name_${locale}`],
+            isSelected: !isEmpty(
+              find(applicantSearchTermList, (option) => {
+                return every([
+                  isEqual(option.id, Number(item.id)),
+                  isEqual(option.index, SearchIndex.Site),
+                ])
+              }),
+            ),
+          }
+        }) as SearchSelectTerm[],
+      },
+    ] as SearchSelect[],
+  })
+
+  const changeSearchObjBySelect = (
+    index: number,
+    index2: number,
+    optionId: number,
+  ) => {
+    const newObj = Object.assign({}, searchObj)
+    newObj.selectList[index].list[index2].isSelected =
+      !newObj.selectList[index].list[index2].isSelected
+    setSearchObj(newObj)
+
+    if (newObj.selectList[index].list[index2].isSelected) {
+      applicantSearchTermList.push({
+        index: index,
+        id: optionId,
+      } as SearchSelected)
+      store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+    } else {
+      const i = findIndex(applicantSearchTermList, (item) =>
+        every([isEqual(item.index, index), isEqual(item.id, optionId)]),
+      )
+      applicantSearchTermList.splice(i, 1)
+
+      store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+    }
+  }
+
+  const selectInit = () => {
+    for (const item of searchObj.selectList) {
+      for (const option of item.list) {
+        option.isSelected = false
+      }
+    }
+
+    applicantSearchTermList.length = 0
+    store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+  }
+
   const [open, setOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const readTextFile = async (file: File) => {
     const reader = new FileReader()
@@ -251,105 +373,146 @@ const Applicants = () => {
   return (
     <>
       <NextHead></NextHead>
-      <Box sx={mt(12)}>
-        <Box sx={TableMenu}>
-          <Button
-            variant="contained"
-            sx={[
-              ml(1),
-              {
-                backgroundColor: setting.color,
-                '&:hover': {
-                  backgroundColor: common.white,
-                  color: setting.color,
-                },
-              },
-            ]}
-            onClick={() => setBodies([])}
-          >
-            <ManageSearchIcon sx={mr(0.25)} />
-            {t('management.features.applicant.search')}
-          </Button>
-          {isEqual(user.role, Role.Admin) && (
-            <Button
-              variant="contained"
-              sx={[
-                ml(1),
-                {
-                  backgroundColor: setting.color,
-                  '&:hover': {
-                    backgroundColor: common.white,
-                    color: setting.color,
+      {!isError && (
+        <>
+          <Box sx={mt(12)}>
+            <Box sx={TableMenuButtons}>
+              <Button
+                variant="contained"
+                sx={[
+                  ml(1),
+                  {
+                    backgroundColor: setting.color,
+                    '&:hover': {
+                      backgroundColor: common.white,
+                      color: setting.color,
+                    },
                   },
-                },
-              ]}
-              onClick={() => setOpen(true)}
-            >
-              <UploadFileIcon sx={mr(0.25)} />
-              {t('management.features.applicant.upload')}
-            </Button>
-          )}
-        </Box>
-        <EnhancedTable
-          headers={tableHeader}
-          bodies={map(bodies, (l) => {
-            return {
-              no: l.no,
-              name: l.name,
-              site: t(dispApplicantSite(l.site)),
-              mail: l.mail,
-              age: l.age,
-              status: t(dispApplicantStatus(Number(l.status))),
-              interviewerDate: l.interviewerDate,
-              resume: isEmpty(l.resume) ? (
-                <>{t('management.features.applicant.documents.f')}</>
-              ) : (
+                ]}
+                onClick={() => setSearchOpen(true)}
+              >
+                <ManageSearchIcon sx={mr(0.25)} />
+                {t('management.features.applicant.search')}
+              </Button>
+              {isEqual(user.role, Role.Admin) && (
                 <Button
-                  color="primary"
-                  sx={Resume}
-                  onClick={async () => {
-                    await download(l.hashKey, 'resume', l.resume)
-                  }}
+                  variant="contained"
+                  sx={[
+                    ml(1),
+                    {
+                      backgroundColor: setting.color,
+                      '&:hover': {
+                        backgroundColor: common.white,
+                        color: setting.color,
+                      },
+                    },
+                  ]}
+                  onClick={() => setOpen(true)}
                 >
                   <UploadFileIcon sx={mr(0.25)} />
-                  {t('management.features.applicant.documents.t')}
+                  {t('management.features.applicant.upload')}
                 </Button>
-              ),
-              curriculumVitae: isEmpty(l.curriculumVitae) ? (
-                <>{t('management.features.applicant.documents.f')}</>
-              ) : (
-                <Button
-                  color="primary"
-                  sx={Resume}
-                  onClick={async () => {
-                    await download(
-                      l.hashKey,
-                      'curriculum_vitae',
-                      l.curriculumVitae,
-                    )
-                  }}
-                >
-                  <UploadFileIcon sx={mr(0.25)} />
-                  {t('management.features.applicant.documents.t')}
-                </Button>
-              ),
-            }
-          })}
-          isCheckbox={true}
-        />
-      </Box>
-      <UploadModal
-        open={open}
-        closeModal={() => setOpen(false)}
-        afterFuncAsync={readFile}
-      ></UploadModal>
+              )}
+            </Box>
+            <EnhancedTable
+              headers={tableHeader}
+              bodies={map(bodies, (l) => {
+                return {
+                  no: l.no,
+                  name: l.name,
+                  site: t(dispApplicantSite(l.site)),
+                  mail: l.mail,
+                  age: l.age,
+                  status: l.status,
+                  interviewerDate: l.interviewerDate,
+                  resume: isEmpty(l.resume) ? (
+                    <>{t('management.features.applicant.documents.f')}</>
+                  ) : (
+                    <Button
+                      color="primary"
+                      sx={Resume}
+                      onClick={async () => {
+                        await download(l.hashKey, 'resume', l.resume)
+                      }}
+                    >
+                      <UploadFileIcon sx={mr(0.25)} />
+                      {t('management.features.applicant.documents.t')}
+                    </Button>
+                  ),
+                  curriculumVitae: isEmpty(l.curriculumVitae) ? (
+                    <>{t('management.features.applicant.documents.f')}</>
+                  ) : (
+                    <Button
+                      color="primary"
+                      sx={Resume}
+                      onClick={async () => {
+                        await download(
+                          l.hashKey,
+                          'curriculum_vitae',
+                          l.curriculumVitae,
+                        )
+                      }}
+                    >
+                      <UploadFileIcon sx={mr(0.25)} />
+                      {t('management.features.applicant.documents.t')}
+                    </Button>
+                  ),
+                }
+              })}
+              isCheckbox={true}
+            />
+          </Box>
+          <UploadModal
+            open={open}
+            closeModal={() => setOpen(false)}
+            afterFuncAsync={readFile}
+          ></UploadModal>
+          <SearchModal
+            open={searchOpen}
+            closeModal={() => setSearchOpen(false)}
+            searchObj={searchObj}
+            changeSearchObjBySelect={changeSearchObjBySelect}
+            selectInit={selectInit}
+          ></SearchModal>
+        </>
+      )}
     </>
   )
 }
 
 export const getStaticProps = async ({ locale }) => {
+  let isError: boolean = false
+
+  const applicantStatusList = []
+  await ApplicantStatusListSSG()
+    .then((res) => {
+      for (const item of res.data.list) {
+        applicantStatusList.push(item)
+      }
+    })
+    .catch(() => {
+      isError = true
+    })
+
+  const applicantSites = []
+  await ApplicantSitesSSG()
+    .then((res) => {
+      for (const item of res.data.list) {
+        applicantSites.push(item)
+      }
+    })
+    .catch(() => {
+      isError = true
+    })
+
   return {
     props: {
+      api: {
+        applicantStatusList: applicantStatusList,
+        applicantSites: applicantSites,
+      },
+      isError,
+      locale,
       messages: (
         await import(`../../../../public/locales/${locale}/common.json`)
       ).default,

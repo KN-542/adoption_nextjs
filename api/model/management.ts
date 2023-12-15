@@ -19,6 +19,14 @@ export type PasswordChangeRequest = {
   init_password: string
 }
 
+// 応募者検索
+export type ApplicantSearchRequest = {
+  // サイトID
+  site_id_list: number[]
+  // 応募者ステータス
+  applicant_status_list: number[]
+}
+
 // 応募者ダウンロード request
 export type ApplicantsDownloadRequest = {
   values: string[][]

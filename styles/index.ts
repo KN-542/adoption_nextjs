@@ -1,4 +1,4 @@
-import { common } from '@mui/material/colors'
+import { common, grey } from '@mui/material/colors'
 
 export const m = (m: number) => {
   return { m: m }
@@ -50,6 +50,12 @@ export const SpaceBetweenContent = {
 export const ToolBarMlMedia = {
   '@media (min-width:950px)': {
     ml: 15,
+  },
+}
+
+export const modalResponsive = {
+  '@media (min-width:1100px)': {
+    m: 10,
   },
 }
 
@@ -121,7 +127,36 @@ export const FormButtons = {
   },
 }
 
+export const FormThreeButtons = {
+  display: 'flex',
+  justifyContent: 'center',
+  width: '100%',
+  m: '0 auto',
+  alignItems: 'center',
+  gap: '16px',
+  flexWrap: 'wrap',
+  '@media (min-width:950px)': {
+    flexDirection: 'row',
+    width: '90%',
+    justifyContent: 'space-between',
+  },
+}
+
+export const SearchModalMenu = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 10,
+}
 export const TableMenu = {
+  display: 'flex',
+  justifyContent: 'center',
+  width: '90%',
+  m: '0 auto',
+  mb: 3,
+  mt: 20,
+  maxHeight: 64,
+}
+export const TableMenuButtons = {
   display: 'flex',
   justifyContent: 'flex-end',
   width: '90%',
@@ -191,3 +226,52 @@ export const SideBarBody = {
 export const Cell = { color: common.white, padding: 0.5 }
 
 export const TableHeaderSX = { position: 'sticky', top: 0, height: 48 }
+
+export const SearchModalSelect = {
+  minWidth: 280,
+  maxHeight: 300,
+  ml: 4,
+  mr: 4,
+  border: '2px solid',
+  borderColor: grey[300],
+  overflowY: 'auto',
+}
+
+export const ButtonColor = (color: string, color2: string) => {
+  return {
+    color: color,
+    backgroundColor: color2,
+    '&:hover': {
+      color: color,
+      backgroundColor: color2,
+    },
+  }
+}
+
+export const SearchModalSelectButtonColor = (
+  isSelected: boolean,
+  color: string,
+  color2: string,
+) => {
+  if (isSelected) {
+    return {
+      color: color2,
+      backgroundColor: color,
+      justifyContent: 'flex-start',
+      '&:hover': {
+        backgroundColor: color,
+        color: color2,
+      },
+    }
+  }
+
+  return {
+    color: color,
+    backgroundColor: color2,
+    justifyContent: 'flex-start',
+    '&:hover': {
+      backgroundColor: color,
+      color: color2,
+    },
+  }
+}
