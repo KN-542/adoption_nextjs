@@ -1,9 +1,19 @@
 import { green, indigo, red } from '@mui/material/colors'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
-import { SettingModel, SideBarStoreModel, UserModel } from 'types/management'
+import { cloneDeep } from 'lodash'
+import {
+  ApplicantModel,
+  SearchSelected,
+  SettingModel,
+  SideBarStoreModel,
+  UserModel,
+} from 'types/management'
 
 const state = {
   management: {
+    applicant: {
+      searchTermList: [] as SearchSelected[],
+    } as ApplicantModel,
     user: {
       hashKey: '',
       name: '',
@@ -43,8 +53,19 @@ export const slice = createSlice({
       Object.assign(state.management.sidebar, initState.management.sidebar)
       Object.assign(state.management.user, initState.management.user)
     },
+    mgApplicantSearchTermList: (
+      state,
+      action: PayloadAction<SearchSelected[]>,
+    ) => {
+      state.management.applicant.searchTermList = cloneDeep(action.payload)
+    },
   },
 })
 
-export const { mgUserSignIn, mgSideBarChange, mgChangeSetting, mgSignOut } =
-  slice.actions
+export const {
+  mgUserSignIn,
+  mgSideBarChange,
+  mgChangeSetting,
+  mgSignOut,
+  mgApplicantSearchTermList,
+} = slice.actions
