@@ -39,6 +39,7 @@ type Props = {
   searchObj: SearchForm
   changeSearchObjBySelect(i: number, i2: number, i3: number): void
   selectInit: () => void
+  submit: () => void
 }
 
 const SearchModal = (props: Props) => {
@@ -110,9 +111,9 @@ const SearchModal = (props: Props) => {
           </Button>
           <Button
             size="large"
-            variant="contained"
+            variant="outlined"
             color="inherit"
-            sx={minW(180)}
+            sx={[minW(180), ButtonColor(common.white, setting.toastErrorColor)]}
             onClick={props.selectInit}
           >
             {t('management.features.applicant.searchModal.initButton')}
@@ -121,7 +122,10 @@ const SearchModal = (props: Props) => {
             size="large"
             variant="outlined"
             sx={[minW(180), ButtonColor(common.white, setting.color)]}
-            onClick={props.closeModal}
+            onClick={async () => {
+              await props.submit()
+              props.closeModal()
+            }}
           >
             <ManageSearchIcon sx={mr(0.25)} />
             {t('common.button.search')}

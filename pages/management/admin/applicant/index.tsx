@@ -473,6 +473,7 @@ const Applicants = ({ api, isError, locale }) => {
             searchObj={searchObj}
             changeSearchObjBySelect={changeSearchObjBySelect}
             selectInit={selectInit}
+            submit={search}
           ></SearchModal>
         </>
       )}
