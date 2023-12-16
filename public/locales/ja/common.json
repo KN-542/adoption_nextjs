@@ -89,8 +89,7 @@
         "upload": "アップロード",
         "search": "条件検索",
         "searchModal": {
-          "status": "応募者ステータス",
-          "site": "媒体",
+          "initSelected": "選択解除",
           "initButton": "入力状態を初期化"
         },
         "uploadMsg": "応募者情報のファイルアップロードを行ってください",

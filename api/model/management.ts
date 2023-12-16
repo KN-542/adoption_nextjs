@@ -25,6 +25,10 @@ export type ApplicantSearchRequest = {
   site_id_list: number[]
   // 応募者ステータス
   applicant_status_list: number[]
+  // 履歴書
+  resume: number
+  // 職務経歴書
+  curriculum_vitae: number
 }
 
 // 応募者ダウンロード request

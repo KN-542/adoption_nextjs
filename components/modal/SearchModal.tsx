@@ -21,11 +21,13 @@ import {
   SearchModalMenu,
   SearchModalSelect,
   SearchModalSelectButtonColor,
+  SpaceBetween,
   mb,
   minW,
   ml,
   modalResponsive,
   mr,
+  mt,
 } from '@/styles/index'
 import { RootState } from '@/hooks/store/store'
 import { useSelector } from 'react-redux'
@@ -37,8 +39,9 @@ type Props = {
   open: boolean
   closeModal: () => void
   searchObj: SearchForm
-  changeSearchObjBySelect(i: number, i2: number, i3: number): void
-  selectInit: () => void
+  changeSearchObjBySelect(i: number, i2: number, i3: number, b: boolean): void
+  selectInit: (i: number) => void
+  initInputs: () => void
   submit: () => void
 }
 
@@ -63,8 +66,25 @@ const SearchModal = (props: Props) => {
             {map(props.searchObj.selectList, (item, index) => {
               return (
                 <Box key={index}>
-                  <Box component="span" sx={[ml(4), mr(4), mb(1), Bold]}>
-                    {item.name}
+                  <Box sx={SpaceBetween}>
+                    <Box component="span" sx={[ml(4), mr(4), mt(0.5), Bold]}>
+                      {item.name}
+                    </Box>
+                    <Button
+                      variant="text"
+                      sx={[
+                        ml(4),
+                        mr(4),
+                        ButtonColor(setting.color, common.white),
+                      ]}
+                      onClick={() => {
+                        props.selectInit(index)
+                      }}
+                    >
+                      {t(
+                        'management.features.applicant.searchModal.initSelected',
+                      )}
+                    </Button>
                   </Box>
                   <Box sx={SearchModalSelect}>
                     {map(item.list, (option, index2) => (
@@ -81,6 +101,7 @@ const SearchModal = (props: Props) => {
                               index,
                               index2,
                               option.id,
+                              item.isRadio,
                             )
                           }}
                         >
@@ -114,7 +135,7 @@ const SearchModal = (props: Props) => {
             variant="outlined"
             color="inherit"
             sx={[minW(180), ButtonColor(common.white, setting.toastErrorColor)]}
-            onClick={props.selectInit}
+            onClick={props.initInputs}
           >
             {t('management.features.applicant.searchModal.initButton')}
           </Button>
