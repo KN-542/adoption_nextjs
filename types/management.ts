@@ -104,6 +104,7 @@ export type SearchSelectTerm = {
 // 検索 選択
 export type SearchSelect = {
   name: string
+  isRadio: boolean
   list: SearchSelectTerm[]
 }
 

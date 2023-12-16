@@ -83,4 +83,16 @@ export enum SearchIndex {
   Status = 0,
   // 媒体
   Site,
+  // 履歴書
+  Resume,
+  // 職務経歴書
+  CurriculumVitae,
+}
+
+// 書類
+export enum DocumentUploaded {
+  // あり
+  Exist = 1,
+  // なし
+  NotExist = 2,
 }

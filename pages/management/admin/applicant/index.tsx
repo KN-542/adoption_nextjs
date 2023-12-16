@@ -27,6 +27,7 @@ import {
 } from 'lodash'
 import {
   ApplicantStatus,
+  DocumentUploaded,
   SearchIndex,
   Site,
   dispApplicantSite,
@@ -54,7 +55,6 @@ import { Role } from '@/enum/user'
 import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
-import Search from '@/components/Search'
 import SearchModal from '@/components/modal/SearchModal'
 import { mgApplicantSearchTermList } from '@/hooks/store'
 
@@ -91,6 +91,34 @@ const Applicants = ({ api, isError, locale }) => {
           return item2.id
         },
       ),
+      resume: isEmpty(
+        filter(applicantSearchTermList, (item) =>
+          isEqual(item.index, SearchIndex.Resume),
+        ),
+      )
+        ? null
+        : map(
+            filter(applicantSearchTermList, (item) =>
+              isEqual(item.index, SearchIndex.Resume),
+            ),
+            (item2) => {
+              return item2.id
+            },
+          )[0],
+      curriculum_vitae: isEmpty(
+        filter(applicantSearchTermList, (item) =>
+          isEqual(item.index, SearchIndex.CurriculumVitae),
+        ),
+      )
+        ? null
+        : map(
+            filter(applicantSearchTermList, (item) =>
+              isEqual(item.index, SearchIndex.CurriculumVitae),
+            ),
+            (item2) => {
+              return item2.id
+            },
+          )[0],
     } as ApplicantSearchRequest)
       .then((res) => {
         _.forEach(res.data.applicants, (r, index) => {
@@ -110,8 +138,26 @@ const Applicants = ({ api, isError, locale }) => {
 
         setBodies(list)
       })
-      .catch(() => {
-        router.push(RouterPath.ManagementError)
+      .catch((error) => {
+        if (
+          every([500 <= error.response.status, error.response.status < 600])
+        ) {
+          router.push(RouterPath.ManagementError)
+          return
+        }
+
+        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response.data.code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+        }
       })
   }
 
@@ -123,7 +169,8 @@ const Applicants = ({ api, isError, locale }) => {
   const [searchObj, setSearchObj] = useState<SearchForm>({
     selectList: [
       {
-        name: t('management.features.applicant.searchModal.status'),
+        name: t('management.features.applicant.header.status'),
+        isRadio: false,
         list: map(api.applicantStatusList, (item) => {
           return {
             id: Number(item.id),
@@ -140,7 +187,8 @@ const Applicants = ({ api, isError, locale }) => {
         }) as SearchSelectTerm[],
       },
       {
-        name: t('management.features.applicant.searchModal.site'),
+        name: t('management.features.applicant.header.site'),
+        isRadio: false,
         list: map(api.applicantSites, (item) => {
           return {
             id: Number(item.id),
@@ -156,6 +204,66 @@ const Applicants = ({ api, isError, locale }) => {
           }
         }) as SearchSelectTerm[],
       },
+      {
+        name: t('management.features.applicant.header.resume'),
+        isRadio: true,
+        list: [
+          {
+            id: DocumentUploaded.Exist,
+            value: t('management.features.applicant.documents.t'),
+            isSelected: !isEmpty(
+              find(applicantSearchTermList, (option) => {
+                return every([
+                  isEqual(option.id, DocumentUploaded.Exist),
+                  isEqual(option.index, SearchIndex.Resume),
+                ])
+              }),
+            ),
+          },
+          {
+            id: DocumentUploaded.NotExist,
+            value: t('management.features.applicant.documents.f'),
+            isSelected: !isEmpty(
+              find(applicantSearchTermList, (option) => {
+                return every([
+                  isEqual(option.id, DocumentUploaded.NotExist),
+                  isEqual(option.index, SearchIndex.Resume),
+                ])
+              }),
+            ),
+          },
+        ] as SearchSelectTerm[],
+      },
+      {
+        name: t('management.features.applicant.header.curriculumVitae'),
+        isRadio: true,
+        list: [
+          {
+            id: DocumentUploaded.Exist,
+            value: t('management.features.applicant.documents.t'),
+            isSelected: !isEmpty(
+              find(applicantSearchTermList, (option) => {
+                return every([
+                  isEqual(option.id, DocumentUploaded.Exist),
+                  isEqual(option.index, SearchIndex.CurriculumVitae),
+                ])
+              }),
+            ),
+          },
+          {
+            id: DocumentUploaded.NotExist,
+            value: t('management.features.applicant.documents.f'),
+            isSelected: !isEmpty(
+              find(applicantSearchTermList, (option) => {
+                return every([
+                  isEqual(option.id, DocumentUploaded.NotExist),
+                  isEqual(option.index, SearchIndex.CurriculumVitae),
+                ])
+              }),
+            ),
+          },
+        ] as SearchSelectTerm[],
+      },
     ] as SearchSelect[],
   })
 
@@ -163,8 +271,25 @@ const Applicants = ({ api, isError, locale }) => {
     index: number,
     index2: number,
     optionId: number,
+    isRadio: boolean,
   ) => {
     const newObj = Object.assign({}, searchObj)
+    if (isRadio) {
+      for (const option of newObj.selectList[index].list) {
+        option.isSelected = false
+      }
+      while (
+        findIndex(applicantSearchTermList, (item) =>
+          isEqual(item.index, index),
+        ) > -1
+      ) {
+        const i = findIndex(applicantSearchTermList, (item) =>
+          isEqual(item.index, index),
+        )
+        applicantSearchTermList.splice(i, 1)
+      }
+    }
+
     newObj.selectList[index].list[index2].isSelected =
       !newObj.selectList[index].list[index2].isSelected
     setSearchObj(newObj)
@@ -185,7 +310,27 @@ const Applicants = ({ api, isError, locale }) => {
     }
   }
 
-  const selectInit = () => {
+  const selectInit = (index: number) => {
+    const newObj = Object.assign({}, searchObj)
+
+    for (const option of newObj.selectList[index].list) {
+      option.isSelected = false
+    }
+    while (
+      findIndex(applicantSearchTermList, (item) => isEqual(item.index, index)) >
+      -1
+    ) {
+      const i = findIndex(applicantSearchTermList, (item) =>
+        isEqual(item.index, index),
+      )
+      applicantSearchTermList.splice(i, 1)
+    }
+
+    store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+    setSearchObj(newObj)
+  }
+
+  const initInputs = () => {
     for (const item of searchObj.selectList) {
       for (const option of item.list) {
         option.isSelected = false
@@ -473,6 +618,7 @@ const Applicants = ({ api, isError, locale }) => {
             searchObj={searchObj}
             changeSearchObjBySelect={changeSearchObjBySelect}
             selectInit={selectInit}
+            initInputs={initInputs}
             submit={search}
           ></SearchModal>
         </>
