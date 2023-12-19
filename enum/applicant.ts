@@ -96,3 +96,27 @@ export enum DocumentUploaded {
   // なし
   NotExist = 2,
 }
+
+// 検索項目 Text
+export enum SearchTextIndex {
+  // 氏名
+  Name = 0,
+  // メールアドレス
+  Mail,
+  // 面接官
+  Interviewer,
+  // 面接官(サブ)
+  SubInterviewer,
+}
+
+// 検索項目 sort key
+export enum SearchSortKey {
+  // 氏名
+  Name = 'name',
+  // メールアドレス
+  Mail = 'email',
+  // 媒体
+  Site = 'site_id',
+  // 選考状況
+  Status = 'status',
+}

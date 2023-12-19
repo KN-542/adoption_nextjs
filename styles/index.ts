@@ -164,8 +164,8 @@ export const TableMenuButtons = {
   mb: 3,
 }
 
-export const Resume = {
-  textTransform: 'none',
+export const Resume = (color: string) => {
+  return { textTransform: 'none', color: color }
 }
 
 export const ColorBox = {
