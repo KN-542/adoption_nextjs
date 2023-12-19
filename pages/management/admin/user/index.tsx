@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/hooks/store/store'
-import EnhancedTable from '@/components/Table'
+import CustomTable from '@/components/Table'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import { UsersTableBody, TableHeader } from '@/types/management'
 import { useTranslations } from 'next-intl'
@@ -70,7 +70,7 @@ const Applicants = ({ list, isError }) => {
             {t('management.features.user.create')}
           </Button>
         </Box>
-        <EnhancedTable
+        <CustomTable
           headers={tableHeader}
           bodies={map(bodies, (l) => {
             return {

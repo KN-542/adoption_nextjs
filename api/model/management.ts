@@ -29,6 +29,14 @@ export type ApplicantSearchRequest = {
   resume: number
   // 職務経歴書
   curriculum_vitae: number
+  // 氏名
+  name: string
+  // メールアドレス
+  email: string
+  // ソート(key)
+  sort_key: string
+  // ソート(向き)
+  sort_asc: boolean
 }
 
 // 応募者ダウンロード request

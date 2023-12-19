@@ -51,14 +51,16 @@ export type ApplicantsTableBody = {
   hashKey: string
   // 氏名
   name: string
-  // 媒体
-  site: number
   // メールアドレス
   mail: string
+  // 媒体
+  site: number
   // 年齢
   age: number
   // 選考状況
-  status: number | string
+  status: number
+  // 選考状況(ステータス名)
+  statusName: string
   // 面接予定日
   interviewerDate: string
   // 履歴書
@@ -83,6 +85,7 @@ export type UsersTableBody = {
 
 // table head sort
 export type TableSort = {
+  key: string
   target: boolean
   isAsc: boolean
 }
@@ -94,11 +97,21 @@ export type TableHeader = {
   sort?: TableSort
 }
 
-// 検索 選択項目
-export type SearchSelectTerm = {
-  id: number
-  value: string
-  isSelected: boolean
+// 検索 項目
+export type SearchForm = {
+  selectList: SearchSelect[]
+  textForm: SearchText[]
+}
+// 検索 model
+export type SearchModel = {
+  selectedList: SearchSelected[]
+  textForm: SearchText[]
+  sort: SearchSortModel
+}
+
+// 応募者 model
+export type ApplicantModel = {
+  search: SearchModel
 }
 
 // 検索 選択
@@ -108,9 +121,11 @@ export type SearchSelect = {
   list: SearchSelectTerm[]
 }
 
-// 検索
-export type SearchForm = {
-  selectList: SearchSelect[]
+// 検索 テキスト
+export type SearchText = {
+  id: number
+  name: string
+  value: string
 }
 
 // 検索ストレージ
@@ -121,7 +136,15 @@ export type SearchSelected = {
   id: number
 }
 
-// 応募者 model
-export type ApplicantModel = {
-  searchTermList: SearchSelected[]
+// 検索 選択項目
+export type SearchSelectTerm = {
+  id: number
+  value: string
+  isSelected: boolean
+}
+
+// 検索 ソート
+export type SearchSortModel = {
+  key: string
+  isAsc: boolean
 }

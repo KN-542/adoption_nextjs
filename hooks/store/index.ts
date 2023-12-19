@@ -1,9 +1,13 @@
+import { SearchTextIndex } from '@/enum/applicant'
 import { green, indigo, red } from '@mui/material/colors'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { cloneDeep } from 'lodash'
 import {
   ApplicantModel,
+  SearchModel,
   SearchSelected,
+  SearchSortModel,
+  SearchText,
   SettingModel,
   SideBarStoreModel,
   UserModel,
@@ -12,7 +16,25 @@ import {
 const state = {
   management: {
     applicant: {
-      searchTermList: [] as SearchSelected[],
+      search: {
+        selectedList: [] as SearchSelected[],
+        textForm: [
+          {
+            id: SearchTextIndex.Name,
+            name: 'management.features.applicant.header.name',
+            value: '',
+          },
+          {
+            id: SearchTextIndex.Mail,
+            name: 'management.features.applicant.header.mail',
+            value: '',
+          },
+        ] as SearchText[],
+        sort: {
+          key: '',
+          isAsc: true,
+        } as SearchSortModel,
+      } as SearchModel,
     } as ApplicantModel,
     user: {
       hashKey: '',
@@ -57,7 +79,13 @@ export const slice = createSlice({
       state,
       action: PayloadAction<SearchSelected[]>,
     ) => {
-      state.management.applicant.searchTermList = cloneDeep(action.payload)
+      state.management.applicant.search.selectedList = cloneDeep(action.payload)
+    },
+    mgApplicantSearchText: (state, action: PayloadAction<SearchText[]>) => {
+      state.management.applicant.search.textForm = cloneDeep(action.payload)
+    },
+    mgApplicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
+      Object.assign(state.management.applicant.search.sort, action.payload)
     },
   },
 })
@@ -68,4 +96,6 @@ export const {
   mgChangeSetting,
   mgSignOut,
   mgApplicantSearchTermList,
+  mgApplicantSearchText,
+  mgApplicantSearchSort,
 } = slice.actions

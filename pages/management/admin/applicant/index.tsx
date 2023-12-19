@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import store, { RootState } from '@/hooks/store/store'
-import EnhancedTable from '@/components/Table'
+import CustomTable from '@/components/Table'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import {
@@ -10,7 +10,10 @@ import {
   SearchSelect,
   SearchSelectTerm,
   SearchSelected,
+  SearchSortModel,
+  SearchText,
   TableHeader,
+  TableSort,
 } from '@/types/management'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
@@ -23,12 +26,15 @@ import {
   findIndex,
   isEmpty,
   isEqual,
+  isNull,
   map,
 } from 'lodash'
 import {
   ApplicantStatus,
   DocumentUploaded,
   SearchIndex,
+  SearchSortKey,
+  SearchTextIndex,
   Site,
   dispApplicantSite,
   dispApplicantStatus,
@@ -56,7 +62,12 @@ import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import SearchModal from '@/components/modal/SearchModal'
-import { mgApplicantSearchTermList } from '@/hooks/store'
+import {
+  mgApplicantSearchSort,
+  mgApplicantSearchTermList,
+  mgApplicantSearchText,
+} from '@/hooks/store'
+import { table } from 'console'
 
 const Applicants = ({ api, isError, locale }) => {
   const router = useRouter()
@@ -65,7 +76,9 @@ const Applicants = ({ api, isError, locale }) => {
   const applicant = useSelector(
     (state: RootState) => state.management.applicant,
   )
-  const applicantSearchTermList = cloneDeep(applicant.searchTermList)
+  const applicantSearchTermList = cloneDeep(applicant.search.selectedList)
+  const applicantSearchText = cloneDeep(applicant.search.textForm)
+  const applicantSearchSort = Object.assign({}, applicant.search.sort)
   const user = useSelector((state: RootState) => state.management.user)
   const setting = useSelector((state: RootState) => state.management.setting)
 
@@ -119,6 +132,10 @@ const Applicants = ({ api, isError, locale }) => {
               return item2.id
             },
           )[0],
+      name: applicantSearchText[SearchTextIndex.Name].value.trim(),
+      email: applicantSearchText[SearchTextIndex.Mail].value.trim(),
+      sort_key: applicantSearchSort.key,
+      sort_asc: applicantSearchSort.isAsc,
     } as ApplicantSearchRequest)
       .then((res) => {
         _.forEach(res.data.applicants, (r, index) => {
@@ -129,8 +146,9 @@ const Applicants = ({ api, isError, locale }) => {
             site: Number(r.site_id),
             mail: r.email,
             age: Number(r.age),
-            status: r[`status_name_${locale}`],
-            interviewerDate: isEmpty(r.desired_at) ? '-' : r.desired_at,
+            status: Number(r.status),
+            statusName: r[`status_name_${locale}`],
+            interviewerDate: r.desired_at,
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
           })
@@ -265,6 +283,18 @@ const Applicants = ({ api, isError, locale }) => {
         ] as SearchSelectTerm[],
       },
     ] as SearchSelect[],
+    textForm: [
+      {
+        id: applicantSearchText[SearchTextIndex.Name].id,
+        name: t(applicantSearchText[SearchTextIndex.Name].name),
+        value: applicantSearchText[SearchTextIndex.Name].value,
+      },
+      {
+        id: applicantSearchText[SearchTextIndex.Mail].id,
+        name: t(applicantSearchText[SearchTextIndex.Mail].name),
+        value: applicantSearchText[SearchTextIndex.Mail].value,
+      },
+    ] as SearchText[],
   })
 
   const changeSearchObjBySelect = (
@@ -330,15 +360,34 @@ const Applicants = ({ api, isError, locale }) => {
     setSearchObj(newObj)
   }
 
+  const changeSearchObjByText = (index: number, value: string) => {
+    const newObj = Object.assign({}, searchObj)
+    newObj.textForm[index].value = value
+    applicantSearchText[index].value = value
+    store.dispatch(mgApplicantSearchText(applicantSearchText))
+    setSearchObj(newObj)
+  }
+
   const initInputs = () => {
-    for (const item of searchObj.selectList) {
+    const newObj = Object.assign({}, searchObj)
+
+    for (const item of newObj.selectList) {
       for (const option of item.list) {
         option.isSelected = false
       }
     }
-
     applicantSearchTermList.length = 0
+
+    for (const item of newObj.textForm) {
+      item.value = ''
+    }
+    for (const item of applicantSearchText) {
+      item.value = ''
+    }
+
     store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+    store.dispatch(mgApplicantSearchText(applicantSearchText))
+    setSearchObj(newObj)
   }
 
   const [open, setOpen] = useState(false)
@@ -440,80 +489,105 @@ const Applicants = ({ api, isError, locale }) => {
       })
   }
 
-  const tableHeader: TableHeader[] = [
+  const [tableHeader, setTableHeader] = useState<TableHeader[]>([
     {
       id: 1,
       name: 'No',
-      sort: {
-        target: false,
-        isAsc: false,
-      },
+      sort: null,
     },
     {
       id: 2,
       name: t('management.features.applicant.header.name'),
       sort: {
-        target: false,
-        isAsc: false,
+        key: SearchSortKey.Name,
+        target: isEqual(SearchSortKey.Name, applicantSearchSort.key),
+        isAsc: isEqual(SearchSortKey.Name, applicantSearchSort.key)
+          ? applicantSearchSort.isAsc
+          : false,
       },
     },
     {
       id: 3,
       name: t('management.features.applicant.header.site'),
       sort: {
-        target: false,
-        isAsc: false,
+        key: SearchSortKey.Site,
+        target: isEqual(SearchSortKey.Site, applicantSearchSort.key),
+        isAsc: isEqual(SearchSortKey.Site, applicantSearchSort.key)
+          ? applicantSearchSort.isAsc
+          : false,
       },
     },
     {
       id: 4,
       name: t('management.features.applicant.header.mail'),
       sort: {
-        target: false,
-        isAsc: false,
+        key: SearchSortKey.Mail,
+        target: isEqual(SearchSortKey.Mail, applicantSearchSort.key),
+        isAsc: isEqual(SearchSortKey.Mail, applicantSearchSort.key)
+          ? applicantSearchSort.isAsc
+          : false,
       },
     },
     {
       id: 5,
       name: t('management.features.applicant.header.age'),
-      sort: {
-        target: false,
-        isAsc: false,
-      },
+      sort: null,
     },
     {
       id: 6,
       name: t('management.features.applicant.header.status'),
       sort: {
-        target: false,
-        isAsc: false,
+        key: SearchSortKey.Status,
+        target: isEqual(SearchSortKey.Status, applicantSearchSort.key),
+        isAsc: isEqual(SearchSortKey.Status, applicantSearchSort.key)
+          ? applicantSearchSort.isAsc
+          : true,
       },
     },
     {
       id: 7,
       name: t('management.features.applicant.header.interviewerDate'),
-      sort: {
-        target: false,
-        isAsc: false,
-      },
+      sort: null,
     },
     {
       id: 8,
       name: t('management.features.applicant.header.resume'),
-      sort: {
-        target: false,
-        isAsc: false,
-      },
+      sort: null,
     },
     {
       id: 9,
       name: t('management.features.applicant.header.curriculumVitae'),
-      sort: {
-        target: false,
-        isAsc: false,
-      },
+      sort: null,
     },
-  ]
+  ])
+
+  const changeTarget = (sort: TableSort) => {
+    const newObj = Object.assign({}, searchObj)
+    const list = cloneDeep(tableHeader)
+
+    const index = findIndex(list, (item) =>
+      every([!isNull(item.sort), isEqual(item.sort?.key, sort.key)]),
+    )
+
+    for (const item of filter(list, (el) => !isEmpty(el.sort))) {
+      item.sort.target = false
+      item.sort.isAsc = true
+    }
+
+    list[index].sort.isAsc = !sort.isAsc
+    list[index].sort.target = true
+
+    const newSort = {
+      key: sort.key,
+      isAsc: !sort.isAsc,
+    } as SearchSortModel
+
+    Object.assign(applicantSearchSort, newSort)
+    setTableHeader(list)
+    setSearchObj(newObj)
+
+    store.dispatch(mgApplicantSearchSort(newSort))
+  }
 
   return (
     <>
@@ -559,7 +633,7 @@ const Applicants = ({ api, isError, locale }) => {
                 </Button>
               )}
             </Box>
-            <EnhancedTable
+            <CustomTable
               headers={tableHeader}
               bodies={map(bodies, (l) => {
                 return {
@@ -568,14 +642,16 @@ const Applicants = ({ api, isError, locale }) => {
                   site: t(dispApplicantSite(l.site)),
                   mail: l.mail,
                   age: l.age,
-                  status: l.status,
-                  interviewerDate: l.interviewerDate,
+                  status: l.statusName,
+                  interviewerDate: isEmpty(l.interviewerDate)
+                    ? '-'
+                    : l.interviewerDate,
                   resume: isEmpty(l.resume) ? (
                     <>{t('management.features.applicant.documents.f')}</>
                   ) : (
                     <Button
-                      color="primary"
-                      sx={Resume}
+                      variant="text"
+                      sx={Resume(setting.color)}
                       onClick={async () => {
                         await download(l.hashKey, 'resume', l.resume)
                       }}
@@ -588,8 +664,8 @@ const Applicants = ({ api, isError, locale }) => {
                     <>{t('management.features.applicant.documents.f')}</>
                   ) : (
                     <Button
-                      color="primary"
-                      sx={Resume}
+                      variant="text"
+                      sx={Resume(setting.color)}
                       onClick={async () => {
                         await download(
                           l.hashKey,
@@ -605,6 +681,8 @@ const Applicants = ({ api, isError, locale }) => {
                 }
               })}
               isCheckbox={true}
+              changeTarget={changeTarget}
+              search={search}
             />
           </Box>
           <UploadModal
@@ -620,6 +698,7 @@ const Applicants = ({ api, isError, locale }) => {
             selectInit={selectInit}
             initInputs={initInputs}
             submit={search}
+            changeSearchObjByText={changeSearchObjByText}
           ></SearchModal>
         </>
       )}

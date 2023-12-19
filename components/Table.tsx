@@ -11,7 +11,7 @@ import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Checkbox from '@mui/material/Checkbox'
 import { useTranslations } from 'next-intl'
-import { TableHeader } from '@/types/management'
+import { TableHeader, TableSort } from '@/types/management'
 import { isEmpty, isEqual, keys, map, size } from 'lodash'
 import {
   Cell,
@@ -24,74 +24,28 @@ import {
   TextCenter,
   hBlock,
   w,
+  ml,
+  Bold,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp'
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+import { useState } from 'react'
+import { Button } from '@mui/material'
 
 type Props = {
   headers: TableHeader[]
   bodies: Record<string, any>[]
   isCheckbox?: boolean
+  changeTarget: (s: TableSort) => void
+  search: () => void
 }
 
-type EnhancedTableProps = {
-  numSelected: number
-  onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void
-  rowCount: number
-  headers: TableHeader[]
-  isCheckbox?: boolean
-}
-
-const EnhancedTableHead = (props: EnhancedTableProps) => {
-  const setting = useSelector((state: RootState) => state.management.setting)
-
-  return (
-    <TableHead sx={TableHeaderSX}>
-      <TableRow>
-        {props.isCheckbox && (
-          <TableCell
-            sx={[
-              Cell,
-              {
-                backgroundColor: setting.color,
-              },
-            ]}
-          ></TableCell>
-        )}
-        <TableCell
-          sx={[
-            Cell,
-            {
-              backgroundColor: setting.color,
-            },
-          ]}
-        ></TableCell>
-        {props.headers.map((header) => (
-          <TableCell
-            key={header.id}
-            align="left"
-            padding="none"
-            sortDirection={
-              header.sort ? (header.sort.isAsc ? 'asc' : 'desc') : false
-            }
-            sx={[ColorWhite, { bgcolor: setting.color }]}
-          >
-            {header.name}
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
-  )
-}
-
-const EnhancedTable = (props: Props) => {
+const CustomTable = (props: Props) => {
   const t = useTranslations()
   const setting = useSelector((state: RootState) => state.management.setting)
 
-  const [selected, setSelected] = React.useState<readonly string[]>([])
-
-  const handleSelectAllClick = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {}
+  const [selected, setSelected] = useState<string[]>([])
 
   const isSelected = (name: string) => selected.indexOf(name) !== -1
 
@@ -102,15 +56,119 @@ const EnhancedTable = (props: Props) => {
           <Paper sx={[mb(2)]}>
             <TableContainer sx={{ maxHeight: '75vh', overflowY: 'auto' }}>
               <Table sx={minW(750)} aria-labelledby="tableTitle" size="medium">
-                <EnhancedTableHead
-                  numSelected={size(selected)}
-                  onSelectAllClick={handleSelectAllClick}
-                  rowCount={size(props.bodies)}
-                  headers={props.headers}
-                  isCheckbox={props.isCheckbox}
-                />
+                <TableHead sx={TableHeaderSX}>
+                  <TableRow>
+                    {props.isCheckbox && (
+                      <TableCell
+                        sx={[
+                          Cell,
+                          {
+                            backgroundColor: setting.color,
+                          },
+                        ]}
+                      ></TableCell>
+                    )}
+                    <TableCell
+                      sx={[
+                        Cell,
+                        {
+                          backgroundColor: setting.color,
+                        },
+                      ]}
+                    ></TableCell>
+                    {map(props.headers, (header) => (
+                      <TableCell
+                        key={header.id}
+                        align="left"
+                        padding="none"
+                        sx={[ColorWhite, { bgcolor: setting.color }]}
+                      >
+                        {!isEmpty(header.sort) && (
+                          <>
+                            {!header.sort.target && (
+                              <Button
+                                variant="text"
+                                sx={[
+                                  ColorWhite,
+                                  {
+                                    padding: 0,
+                                  },
+                                ]}
+                                onClick={async () => {
+                                  props.changeTarget(header.sort)
+                                  await props.search()
+                                }}
+                              >
+                                {header.name}
+                                <ArrowDropUpIcon
+                                  sx={[
+                                    ml(0.25),
+                                    {
+                                      backgroundColor: setting.color,
+                                      padding: 0,
+                                      minWidth: 10,
+                                      ml: 1,
+                                      mr: 0,
+                                    },
+                                  ]}
+                                />
+                              </Button>
+                            )}
+                            {header.sort.target && (
+                              <Button
+                                variant="text"
+                                sx={[
+                                  ColorWhite,
+                                  Bold,
+                                  {
+                                    padding: 0,
+                                  },
+                                ]}
+                                onClick={async () => {
+                                  props.changeTarget(header.sort)
+                                  await props.search()
+                                }}
+                              >
+                                {header.name}
+                                {header.sort.isAsc ? (
+                                  <ArrowDropUpIcon
+                                    sx={[
+                                      ml(0.25),
+                                      {
+                                        backgroundColor: setting.color,
+                                        padding: 0,
+                                        minWidth: 10,
+                                        ml: 1,
+                                        mr: 0,
+                                      },
+                                    ]}
+                                  />
+                                ) : (
+                                  <ArrowDropDownIcon
+                                    sx={[
+                                      ml(0.25),
+                                      {
+                                        backgroundColor: setting.color,
+                                        padding: 0,
+                                        minWidth: 10,
+                                        ml: 1,
+                                        mr: 0,
+                                      },
+                                    ]}
+                                  />
+                                )}
+                              </Button>
+                            )}
+                          </>
+                        )}
+                        {isEmpty(header.sort) && <>{header.name}</>}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+
                 <TableBody>
-                  {props.bodies.map((row, index) => {
+                  {map(props.bodies, (row, index) => {
                     const isItemSelected = isSelected(String(row.name))
 
                     return (
@@ -172,4 +230,4 @@ const EnhancedTable = (props: Props) => {
   )
 }
 
-export default EnhancedTable
+export default CustomTable
