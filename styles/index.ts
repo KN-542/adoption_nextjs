@@ -27,8 +27,20 @@ export const wBlock = (w: number) => {
 export const minW = (w: number) => {
   return { minWidth: w }
 }
+export const minH = (h: number) => {
+  return { minHeight: h }
+}
+export const maxW = (w: number) => {
+  return { maxWidth: w }
+}
+export const maxH = (h: number) => {
+  return { maxHeight: h }
+}
 export const hBlock = (h: number) => {
   return { height: h }
+}
+export const BorderRadius = (b: number) => {
+  return { borderRadius: b }
 }
 
 export const TextCenter = {
@@ -159,9 +171,8 @@ export const TableMenu = {
 export const TableMenuButtons = {
   display: 'flex',
   justifyContent: 'flex-end',
-  width: '90%',
+  width: '100%',
   m: '0 auto',
-  mb: 3,
 }
 
 export const Resume = (color: string) => {
@@ -274,4 +285,9 @@ export const SearchModalSelectButtonColor = (
       color: color2,
     },
   }
+}
+
+export const PaginationMenu = {
+  display: 'flex',
+  alignItems: 'flex-end',
 }

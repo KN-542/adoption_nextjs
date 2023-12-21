@@ -37,6 +37,10 @@
       "auth": "認証する",
       "search": "検索"
     },
+    "pagination": {
+      "top": "ページ番号",
+      "size": "件"
+    },
     "validate": {
       "required": "は必須入力項目です",
       "required2": "必須入力項目です",
