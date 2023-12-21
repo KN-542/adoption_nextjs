@@ -6,12 +6,14 @@ import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import {
   ApplicantsTableBody,
+  CheckboxPropsField,
   SearchForm,
   SearchSelect,
   SearchSelectTerm,
   SearchSelected,
   SearchSortModel,
   SearchText,
+  SelectedCheckbox,
   TableHeader,
   TableSort,
 } from '@/types/management'
@@ -28,6 +30,7 @@ import {
   isEqual,
   isNull,
   map,
+  min,
   size,
 } from 'lodash'
 import {
@@ -79,7 +82,7 @@ import {
 } from '@/hooks/store'
 import Pagination from '@/components/Pagination'
 
-const APPLICANT_PAGE_SIZE = 20
+const APPLICANT_PAGE_SIZE = 30
 
 const Applicants = ({ api, isError, locale }) => {
   const router = useRouter()
@@ -97,10 +100,12 @@ const Applicants = ({ api, isError, locale }) => {
   const [bodies, setBodies] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
+  const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
 
-  const search = async () => {
+  const search = async (currentPage?: number) => {
     // API 応募者一覧
     const list: ApplicantsTableBody[] = []
+    const list2: SelectedCheckbox[] = []
     setIsLoading(true)
     await applicantsSearchCSR({
       site_id_list: map(
@@ -168,8 +173,23 @@ const Applicants = ({ api, isError, locale }) => {
             curriculumVitae: r.curriculum_vitae,
           })
         })
-
         setBodies(list)
+
+        if (currentPage) {
+          _.forEach(
+            res.data.applicants.slice(
+              APPLICANT_PAGE_SIZE * (currentPage - 1),
+              min([APPLICANT_PAGE_SIZE * currentPage, size(list)]),
+            ),
+            (r) => {
+              list2.push({
+                key: r.hash_key,
+                checked: false,
+              } as SelectedCheckbox)
+            },
+          )
+          setCheckedList(list2)
+        }
         setIsLoading(false)
       })
       .catch((error) => {
@@ -197,7 +217,7 @@ const Applicants = ({ api, isError, locale }) => {
 
   useEffect(() => {
     if (isError) router.push(RouterPath.ManagementError)
-    search()
+    search(1)
   }, [])
 
   const [searchObj, setSearchObj] = useState<SearchForm>({
@@ -714,7 +734,23 @@ const Applicants = ({ api, isError, locale }) => {
                 APPLICANT_PAGE_SIZE * (page - 1),
                 APPLICANT_PAGE_SIZE * page,
               )}
-              isCheckbox={true}
+              checkbox={
+                {
+                  checkedList: checkedList,
+                  onClick: (i: number, checked: boolean) => {
+                    const list = cloneDeep(checkedList)
+                    list[i].checked = !checked
+                    setCheckedList(list)
+                  },
+                  onClickAll: (b: boolean) => {
+                    const list = cloneDeep(checkedList)
+                    for (const item of list) {
+                      item.checked = b
+                    }
+                    setCheckedList(list)
+                  },
+                } as CheckboxPropsField
+              }
               changeTarget={changeTarget}
               search={search}
               changePage={changePage}

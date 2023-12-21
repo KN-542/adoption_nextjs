@@ -148,3 +148,16 @@ export type SearchSortModel = {
   key: string
   isAsc: boolean
 }
+
+// チェックボックス 選択済みリスト
+export type SelectedCheckbox = {
+  key: string
+  checked: boolean
+}
+
+// チェックボックス props
+export type CheckboxPropsField = {
+  checkedList: SelectedCheckbox[]
+  onClick: (i: number, b: boolean) => void
+  onClickAll: (b: boolean) => void
+}

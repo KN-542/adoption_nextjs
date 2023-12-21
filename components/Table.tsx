@@ -11,11 +11,10 @@ import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Checkbox from '@mui/material/Checkbox'
 import { useTranslations } from 'next-intl'
-import { TableHeader, TableSort } from '@/types/management'
-import { isEmpty, isEqual, keys, map, size } from 'lodash'
+import { CheckboxPropsField, TableHeader, TableSort } from '@/types/management'
+import { filter, isEmpty, isEqual, keys, map, size } from 'lodash'
 import {
   Cell,
-  ColorWhite,
   M0Auto,
   mb,
   minW,
@@ -26,19 +25,23 @@ import {
   w,
   ml,
   Bold,
+  CustomTableContainer,
+  BackGroundColor,
+  Color,
+  Padding,
+  CustomTableIcon,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
-import { useState } from 'react'
 import { Button } from '@mui/material'
 
 type Props = {
   headers: TableHeader[]
   bodies: Record<string, any>[]
-  isCheckbox?: boolean
+  checkbox?: CheckboxPropsField
   changeTarget: (s: TableSort) => void
-  search: () => void
+  search: (i?: number) => void
   changePage: (i: number) => void
 }
 
@@ -46,72 +49,75 @@ const CustomTable = (props: Props) => {
   const t = useTranslations()
   const setting = useSelector((state: RootState) => state.management.setting)
 
-  const [selected, setSelected] = useState<string[]>([])
-
-  const isSelected = (name: string) => selected.indexOf(name) !== -1
-
   return (
     <>
       {size(props.bodies) > 0 && (
         <Box sx={[w(90), M0Auto]}>
           <Paper sx={[mb(2)]}>
-            <TableContainer sx={{ maxHeight: '75vh', overflowY: 'auto' }}>
+            <TableContainer sx={CustomTableContainer}>
               <Table sx={minW(750)} aria-labelledby="tableTitle" size="medium">
                 <TableHead sx={TableHeaderSX}>
                   <TableRow>
-                    {props.isCheckbox && (
-                      <TableCell
-                        sx={[
-                          Cell,
-                          {
-                            backgroundColor: setting.color,
-                          },
-                        ]}
-                      ></TableCell>
+                    {!isEmpty(props.checkbox?.checkedList) && (
+                      <TableCell sx={[Cell, BackGroundColor(setting.color)]}>
+                        <Checkbox
+                          style={Color(common.white)}
+                          checked={isEqual(
+                            size(props.bodies),
+                            size(
+                              filter(
+                                props.checkbox?.checkedList,
+                                (item) => item.checked,
+                              ),
+                            ),
+                          )}
+                          onClick={() => {
+                            props.checkbox?.onClickAll(
+                              !isEqual(
+                                size(props.bodies),
+                                size(
+                                  filter(
+                                    props.checkbox?.checkedList,
+                                    (item) => item.checked,
+                                  ),
+                                ),
+                              ),
+                            )
+                          }}
+                        />
+                      </TableCell>
                     )}
                     <TableCell
-                      sx={[
-                        Cell,
-                        {
-                          backgroundColor: setting.color,
-                        },
-                      ]}
+                      sx={[Cell, BackGroundColor(setting.color)]}
                     ></TableCell>
                     {map(props.headers, (header) => (
                       <TableCell
                         key={header.id}
                         align="left"
                         padding="none"
-                        sx={[ColorWhite, { bgcolor: setting.color }]}
+                        sx={[
+                          Color(common.white),
+                          BackGroundColor(setting.color),
+                        ]}
                       >
                         {!isEmpty(header.sort) && (
                           <>
                             {!header.sort.target && (
                               <Button
                                 variant="text"
-                                sx={[
-                                  ColorWhite,
-                                  {
-                                    padding: 0,
-                                  },
-                                ]}
+                                sx={[Color(common.white), Padding(0)]}
                                 onClick={async () => {
                                   props.changePage(1)
                                   props.changeTarget(header.sort)
-                                  await props.search()
+                                  await props.search(1)
                                 }}
                               >
                                 {header.name}
                                 <ArrowDropUpIcon
                                   sx={[
                                     ml(0.25),
-                                    {
-                                      backgroundColor: setting.color,
-                                      padding: 0,
-                                      minWidth: 10,
-                                      ml: 1,
-                                      mr: 0,
-                                    },
+                                    BackGroundColor(setting.color),
+                                    CustomTableIcon,
                                   ]}
                                 />
                               </Button>
@@ -119,17 +125,11 @@ const CustomTable = (props: Props) => {
                             {header.sort.target && (
                               <Button
                                 variant="text"
-                                sx={[
-                                  ColorWhite,
-                                  Bold,
-                                  {
-                                    padding: 0,
-                                  },
-                                ]}
+                                sx={[Color(common.white), Bold, Padding(0)]}
                                 onClick={async () => {
                                   props.changePage(1)
                                   props.changeTarget(header.sort)
-                                  await props.search()
+                                  await props.search(1)
                                 }}
                               >
                                 {header.name}
@@ -137,26 +137,16 @@ const CustomTable = (props: Props) => {
                                   <ArrowDropUpIcon
                                     sx={[
                                       ml(0.25),
-                                      {
-                                        backgroundColor: setting.color,
-                                        padding: 0,
-                                        minWidth: 10,
-                                        ml: 1,
-                                        mr: 0,
-                                      },
+                                      BackGroundColor(setting.color),
+                                      CustomTableIcon,
                                     ]}
                                   />
                                 ) : (
                                   <ArrowDropDownIcon
                                     sx={[
                                       ml(0.25),
-                                      {
-                                        backgroundColor: setting.color,
-                                        padding: 0,
-                                        minWidth: 10,
-                                        ml: 1,
-                                        mr: 0,
-                                      },
+                                      BackGroundColor(setting.color),
+                                      CustomTableIcon,
                                     ]}
                                   />
                                 )}
@@ -172,32 +162,28 @@ const CustomTable = (props: Props) => {
 
                 <TableBody>
                   {map(props.bodies, (row, index) => {
-                    const isItemSelected = isSelected(String(row.name))
-
                     return (
-                      <TableRow
-                        hover
-                        role="checkbox"
-                        aria-checked={isItemSelected}
-                        tabIndex={-1}
-                        key={index}
-                        selected={isItemSelected}
-                      >
-                        {props.isCheckbox && (
+                      <TableRow hover role="checkbox" tabIndex={-1} key={index}>
+                        {!isEmpty(props.checkbox?.checkedList) && (
                           <TableCell
                             padding="checkbox"
                             sx={[
                               hBlock(75),
-                              ColorWhite,
-                              { bgcolor: common.white },
+                              Color(common.white),
+                              BackGroundColor(common.white),
                             ]}
                           >
                             <Checkbox
-                              style={{ color: setting.color }}
-                              checked={isItemSelected}
-                              inputProps={{
-                                'aria-labelledby': `enhanced-table-checkbox-${index}`,
-                              }}
+                              style={Color(setting.color)}
+                              checked={
+                                props.checkbox?.checkedList[index].checked
+                              }
+                              onClick={() =>
+                                props.checkbox?.onClick(
+                                  index,
+                                  props.checkbox?.checkedList[index].checked,
+                                )
+                              }
                             />
                           </TableCell>
                         )}

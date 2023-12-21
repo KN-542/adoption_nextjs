@@ -39,8 +39,17 @@ export const maxH = (h: number) => {
 export const hBlock = (h: number) => {
   return { height: h }
 }
+export const Padding = (p: number) => {
+  return { padding: p }
+}
 export const BorderRadius = (b: number) => {
   return { borderRadius: b }
+}
+export const Color = (c: string) => {
+  return { color: c }
+}
+export const BackGroundColor = (c: string) => {
+  return { backgroundColor: c }
 }
 
 export const TextCenter = {
@@ -236,7 +245,12 @@ export const SideBarBody = {
 
 export const Cell = { color: common.white, padding: 0.5 }
 
-export const TableHeaderSX = { position: 'sticky', top: 0, height: 48 }
+export const TableHeaderSX = {
+  position: 'sticky',
+  top: 0,
+  height: 48,
+  zIndex: 2,
+}
 
 export const SearchModalSelect = {
   minWidth: 280,
@@ -290,4 +304,13 @@ export const SearchModalSelectButtonColor = (
 export const PaginationMenu = {
   display: 'flex',
   alignItems: 'flex-end',
+}
+
+export const CustomTableContainer = { maxHeight: '75vh', overflowY: 'auto' }
+
+export const CustomTableIcon = {
+  padding: 0,
+  minWidth: 10,
+  ml: 1,
+  mr: 0,
 }
