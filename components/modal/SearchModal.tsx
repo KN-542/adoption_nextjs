@@ -45,7 +45,7 @@ type Props = {
   selectInit: (i: number) => void
   initInputs: () => void
   changeSearchObjByText(i: number, value: string): void
-  submit: () => void
+  submit: (i?: number) => void
   changePage: (i: number) => void
 }
 
@@ -170,7 +170,7 @@ const SearchModal = (props: Props) => {
             sx={[minW(180), ButtonColor(common.white, setting.color)]}
             onClick={async () => {
               props.changePage(1)
-              await props.submit()
+              await props.submit(1)
               props.closeModal()
             }}
           >

@@ -24,7 +24,7 @@ type Props = {
   currentPage: number
   listSize: number
   pageSize: number
-  search: () => void
+  search: (i?: number) => void
   changePage: (i: number) => void
 }
 
@@ -56,9 +56,6 @@ const Pagination = (props: Props) => {
     const mod = props.listSize % props.pageSize
     const intPart = Math.floor(props.listSize / props.pageSize)
     const size = intPart + (mod > 0 ? 1 : 0)
-    console.log(mod)
-    console.log(intPart)
-    console.log(size)
 
     if (size <= NOT_SKIP_PAGE_SIZE_MAX) {
       for (let i = 1; i <= size; i++) {
@@ -187,7 +184,7 @@ const Pagination = (props: Props) => {
               ]}
               onClick={async () => {
                 props.changePage(item.value)
-                await props.search()
+                await props.search(item.value)
               }}
             >
               {item.disp}

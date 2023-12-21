@@ -80,7 +80,6 @@ const Applicants = ({ list, isError }) => {
               role: t(dispRole(l.role)),
             }
           })}
-          isCheckbox={true}
         />
       </Box>
     </>
