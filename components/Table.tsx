@@ -39,6 +39,7 @@ type Props = {
   isCheckbox?: boolean
   changeTarget: (s: TableSort) => void
   search: () => void
+  changePage: (i: number) => void
 }
 
 const CustomTable = (props: Props) => {
@@ -95,6 +96,7 @@ const CustomTable = (props: Props) => {
                                   },
                                 ]}
                                 onClick={async () => {
+                                  props.changePage(1)
                                   props.changeTarget(header.sort)
                                   await props.search()
                                 }}
@@ -125,6 +127,7 @@ const CustomTable = (props: Props) => {
                                   },
                                 ]}
                                 onClick={async () => {
+                                  props.changePage(1)
                                   props.changeTarget(header.sort)
                                   await props.search()
                                 }}

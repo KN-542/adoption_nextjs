@@ -28,16 +28,15 @@ import {
   isEqual,
   isNull,
   map,
+  size,
 } from 'lodash'
 import {
-  ApplicantStatus,
   DocumentUploaded,
   SearchIndex,
   SearchSortKey,
   SearchTextIndex,
   Site,
   dispApplicantSite,
-  dispApplicantStatus,
 } from '@/enum/applicant'
 import UploadModal from '@/components/modal/UploadModal'
 import {
@@ -55,7 +54,18 @@ import {
 import _ from 'lodash'
 import { useRouter } from 'next/router'
 import NextHead from '@/components/Header'
-import { ml, mr, mt, Resume, TableMenu, TableMenuButtons } from '@/styles/index'
+import {
+  M0Auto,
+  mb,
+  ml,
+  mr,
+  mt,
+  Resume,
+  SpaceBetween,
+  TableMenu,
+  TableMenuButtons,
+  w,
+} from '@/styles/index'
 import { RouterPath } from '@/enum/router'
 import { Role } from '@/enum/user'
 import { APICommonCode } from '@/enum/apiError'
@@ -67,7 +77,9 @@ import {
   mgApplicantSearchTermList,
   mgApplicantSearchText,
 } from '@/hooks/store'
-import { table } from 'console'
+import Pagination from '@/components/Pagination'
+
+const APPLICANT_PAGE_SIZE = 20
 
 const Applicants = ({ api, isError, locale }) => {
   const router = useRouter()
@@ -83,10 +95,13 @@ const Applicants = ({ api, isError, locale }) => {
   const setting = useSelector((state: RootState) => state.management.setting)
 
   const [bodies, setBodies] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [page, setPage] = useState(1)
 
   const search = async () => {
     // API 応募者一覧
     const list: ApplicantsTableBody[] = []
+    setIsLoading(true)
     await applicantsSearchCSR({
       site_id_list: map(
         filter(applicantSearchTermList, (item) =>
@@ -155,6 +170,7 @@ const Applicants = ({ api, isError, locale }) => {
         })
 
         setBodies(list)
+        setIsLoading(false)
       })
       .catch((error) => {
         if (
@@ -589,31 +605,27 @@ const Applicants = ({ api, isError, locale }) => {
     store.dispatch(mgApplicantSearchSort(newSort))
   }
 
+  const changePage = (i: number) => {
+    setPage(i)
+  }
+
   return (
     <>
       <NextHead></NextHead>
-      {!isError && (
+      {every([!isError, !isLoading]) && (
         <>
           <Box sx={mt(12)}>
-            <Box sx={TableMenuButtons}>
-              <Button
-                variant="contained"
-                sx={[
-                  ml(1),
-                  {
-                    backgroundColor: setting.color,
-                    '&:hover': {
-                      backgroundColor: common.white,
-                      color: setting.color,
-                    },
-                  },
-                ]}
-                onClick={() => setSearchOpen(true)}
-              >
-                <ManageSearchIcon sx={mr(0.25)} />
-                {t('management.features.applicant.search')}
-              </Button>
-              {isEqual(user.role, Role.Admin) && (
+            <Box sx={[SpaceBetween, w(90), M0Auto]}>
+              {size(bodies) > APPLICANT_PAGE_SIZE && (
+                <Pagination
+                  currentPage={page}
+                  listSize={size(bodies)}
+                  pageSize={APPLICANT_PAGE_SIZE}
+                  search={search}
+                  changePage={changePage}
+                ></Pagination>
+              )}
+              <Box sx={[TableMenuButtons, , mb(3)]}>
                 <Button
                   variant="contained"
                   sx={[
@@ -626,12 +638,31 @@ const Applicants = ({ api, isError, locale }) => {
                       },
                     },
                   ]}
-                  onClick={() => setOpen(true)}
+                  onClick={() => setSearchOpen(true)}
                 >
-                  <UploadFileIcon sx={mr(0.25)} />
-                  {t('management.features.applicant.upload')}
+                  <ManageSearchIcon sx={mr(0.25)} />
+                  {t('management.features.applicant.search')}
                 </Button>
-              )}
+                {isEqual(user.role, Role.Admin) && (
+                  <Button
+                    variant="contained"
+                    sx={[
+                      ml(1),
+                      {
+                        backgroundColor: setting.color,
+                        '&:hover': {
+                          backgroundColor: common.white,
+                          color: setting.color,
+                        },
+                      },
+                    ]}
+                    onClick={() => setOpen(true)}
+                  >
+                    <UploadFileIcon sx={mr(0.25)} />
+                    {t('management.features.applicant.upload')}
+                  </Button>
+                )}
+              </Box>
             </Box>
             <CustomTable
               headers={tableHeader}
@@ -679,10 +710,14 @@ const Applicants = ({ api, isError, locale }) => {
                     </Button>
                   ),
                 }
-              })}
+              }).slice(
+                APPLICANT_PAGE_SIZE * (page - 1),
+                APPLICANT_PAGE_SIZE * page,
+              )}
               isCheckbox={true}
               changeTarget={changeTarget}
               search={search}
+              changePage={changePage}
             />
           </Box>
           <UploadModal
@@ -698,6 +733,7 @@ const Applicants = ({ api, isError, locale }) => {
             selectInit={selectInit}
             initInputs={initInputs}
             submit={search}
+            changePage={changePage}
             changeSearchObjByText={changeSearchObjByText}
           ></SearchModal>
         </>
