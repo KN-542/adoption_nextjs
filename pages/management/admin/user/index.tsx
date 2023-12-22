@@ -3,29 +3,87 @@ import { useSelector } from 'react-redux'
 import { RootState } from '@/hooks/store/store'
 import CustomTable from '@/components/Table'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
-import { UsersTableBody, TableHeader } from '@/types/management'
+import {
+  UsersTableBody,
+  TableHeader,
+  SelectedCheckbox,
+} from '@/types/management'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
 import { common } from '@mui/material/colors'
-import { map } from 'lodash'
-import { UserListSSG } from '@/api/repository'
+import { every, map, min, size } from 'lodash'
+import { UserListCSR } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
 import { RouterPath } from '@/enum/router'
-import { dispRole } from '@/enum/user'
 import NextHead from '@/components/Header'
-import { ml, mr, mt, TableMenu } from '@/styles/index'
+import {
+  ButtonColorInverse,
+  M0Auto,
+  mb,
+  ml,
+  mr,
+  mt,
+  SpaceBetween,
+  TableMenuButtons,
+  w,
+} from '@/styles/index'
+import Pagination from '@/components/Pagination'
 
-const Applicants = ({ list, isError }) => {
+const USER_PAGE_SIZE = 2
+
+const Applicants = ({ list, isError, locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
   const setting = useSelector((state: RootState) => state.management.setting)
 
   const [bodies, setBodies] = useState(list)
+  const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
+  const [page, setPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const search = async (currentPage?: number) => {
+    setIsLoading(true)
+
+    // API ユーザー一覧
+    const list: UsersTableBody[] = []
+    const list2: SelectedCheckbox[] = []
+    await UserListCSR().then((res) => {
+      _.forEach(res.data.users, (u, index) => {
+        list.push({
+          no: Number(index) + 1,
+          hashKey: u.hash_key,
+          name: u.name,
+          mail: u.email,
+          role: Number(u.role_id),
+          roleName: u[`role_name_${locale}`],
+        } as UsersTableBody)
+      })
+      setBodies(list)
+
+      if (currentPage) {
+        _.forEach(
+          res.data.users.slice(
+            USER_PAGE_SIZE * (currentPage - 1),
+            min([USER_PAGE_SIZE * currentPage, size(list)]),
+          ),
+          (r) => {
+            list2.push({
+              key: r.hash_key,
+              checked: false,
+            } as SelectedCheckbox)
+          },
+        )
+        setCheckedList(list2)
+      }
+      setIsLoading(false)
+    })
+  }
 
   useEffect(() => {
     if (isError) router.push(RouterPath.ManagementError)
+    search(1)
   }, [])
 
   const tableHeader: TableHeader[] = [
@@ -47,68 +105,63 @@ const Applicants = ({ list, isError }) => {
     },
   ]
 
+  const changePage = (i: number) => {
+    setPage(i)
+  }
+
   return (
     <>
       <NextHead></NextHead>
-      <Box sx={mt(12)}>
-        <Box sx={TableMenu}>
-          <Button
-            variant="contained"
-            sx={[
-              ml(1),
-              {
-                backgroundColor: setting.color,
-                '&:hover': {
-                  backgroundColor: common.white,
-                  color: setting.color,
-                },
-              },
-            ]}
-            onClick={() => router.push(RouterPath.ManagementUserCreate)}
-          >
-            <AddCircleOutlineIcon sx={mr(0.25)} />
-            {t('management.features.user.create')}
-          </Button>
-        </Box>
-        <CustomTable
-          headers={tableHeader}
-          bodies={map(bodies, (l) => {
-            return {
-              no: l.no,
-              name: l.name,
-              mail: l.mail,
-              role: t(dispRole(l.role)),
-            }
-          })}
-        />
-      </Box>
+      {every([!isError, !isLoading]) && (
+        <>
+          <Box sx={mt(12)}>
+            <Box sx={[SpaceBetween, w(90), M0Auto]}>
+              {size(bodies) > USER_PAGE_SIZE && (
+                <Pagination
+                  currentPage={page}
+                  listSize={size(bodies)}
+                  pageSize={USER_PAGE_SIZE}
+                  search={search}
+                  changePage={changePage}
+                ></Pagination>
+              )}
+              <Box sx={[TableMenuButtons, , mb(3)]}>
+                <Button
+                  variant="contained"
+                  sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
+                  onClick={() => router.push(RouterPath.ManagementUserCreate)}
+                >
+                  <AddCircleOutlineIcon sx={mr(0.25)} />
+                  {t('management.features.user.create')}
+                </Button>
+              </Box>
+            </Box>
+            <CustomTable
+              headers={tableHeader}
+              bodies={map(bodies, (u) => {
+                return {
+                  no: u.no,
+                  name: u.name,
+                  mail: u.mail,
+                  role: u.roleName,
+                }
+              }).slice(USER_PAGE_SIZE * (page - 1), USER_PAGE_SIZE * page)}
+            />
+          </Box>
+        </>
+      )}
     </>
   )
 }
 
 export const getStaticProps = async ({ locale }) => {
   let isError = false
-  const list: UsersTableBody[] = []
-  await UserListSSG()
-    .then((res) => {
-      _.forEach(res.data.users, (r, index) => {
-        list.push({
-          no: Number(index) + 1,
-          id: Number(r.id),
-          name: r.name,
-          mail: r.email,
-          role: Number(r.role_id),
-        })
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
 
   return {
     props: {
-      list,
+      api: {},
       isError,
+      locale,
       messages: (
         await import(`../../../../public/locales/${locale}/common.json`)
       ).default,

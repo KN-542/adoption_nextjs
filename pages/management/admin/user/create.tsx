@@ -22,6 +22,7 @@ import {
   w,
   mt,
   minW,
+  ButtonColor,
 } from '@/styles/index'
 import ErrorHandler from '@/components/ErrorHandler'
 import { common } from '@material-ui/core/colors'
@@ -260,15 +261,7 @@ const UserCreate = ({ roleList, isError }) => {
                 size="large"
                 type="submit"
                 variant="contained"
-                sx={[
-                  minW(180),
-                  {
-                    backgroundColor: setting.color,
-                    '&:hover': {
-                      backgroundColor: setting.color,
-                    },
-                  },
-                ]}
+                sx={[minW(180), ButtonColor(common.white, setting.color)]}
               >
                 <AddCircleOutlineIcon sx={mr(0.25)} />
                 {t('management.features.user.create')}

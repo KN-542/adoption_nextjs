@@ -55,6 +55,8 @@ export type ApplicantsTableBody = {
   mail: string
   // 媒体
   site: number
+  // 媒体(媒体名)
+  siteName: string
   // 年齢
   age: number
   // 選考状況
@@ -73,14 +75,16 @@ export type ApplicantsTableBody = {
 export type UsersTableBody = {
   // No
   no: number
-  // ID
-  id: number
+  // ハッシュキー
+  hashKey: number
   // 氏名
   name: string
   // メールアドレス
   mail: string
   // ロールID
   role: number
+  // ロール名
+  roleName: string
 }
 
 // table head sort

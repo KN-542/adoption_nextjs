@@ -40,9 +40,9 @@ type Props = {
   headers: TableHeader[]
   bodies: Record<string, any>[]
   checkbox?: CheckboxPropsField
-  changeTarget: (s: TableSort) => void
-  search: (i?: number) => void
-  changePage: (i: number) => void
+  changeTarget?: (s: TableSort) => void
+  search?: (i?: number) => void
+  changePage?: (i: number) => void
 }
 
 const CustomTable = (props: Props) => {

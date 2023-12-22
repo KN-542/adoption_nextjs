@@ -58,6 +58,7 @@ import _ from 'lodash'
 import { useRouter } from 'next/router'
 import NextHead from '@/components/Header'
 import {
+  ButtonColorInverse,
   M0Auto,
   mb,
   ml,
@@ -164,6 +165,7 @@ const Applicants = ({ api, isError, locale }) => {
             hashKey: r.hash_key,
             name: r.name,
             site: Number(r.site_id),
+            siteName: r[`site_name_${locale}`],
             mail: r.email,
             age: Number(r.age),
             status: Number(r.status),
@@ -648,16 +650,7 @@ const Applicants = ({ api, isError, locale }) => {
               <Box sx={[TableMenuButtons, , mb(3)]}>
                 <Button
                   variant="contained"
-                  sx={[
-                    ml(1),
-                    {
-                      backgroundColor: setting.color,
-                      '&:hover': {
-                        backgroundColor: common.white,
-                        color: setting.color,
-                      },
-                    },
-                  ]}
+                  sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
                   onClick={() => setSearchOpen(true)}
                 >
                   <ManageSearchIcon sx={mr(0.25)} />
@@ -668,13 +661,7 @@ const Applicants = ({ api, isError, locale }) => {
                     variant="contained"
                     sx={[
                       ml(1),
-                      {
-                        backgroundColor: setting.color,
-                        '&:hover': {
-                          backgroundColor: common.white,
-                          color: setting.color,
-                        },
-                      },
+                      ButtonColorInverse(common.white, setting.color),
                     ]}
                     onClick={() => setOpen(true)}
                   >
@@ -690,7 +677,7 @@ const Applicants = ({ api, isError, locale }) => {
                 return {
                   no: l.no,
                   name: l.name,
-                  site: t(dispApplicantSite(l.site)),
+                  site: l.siteName,
                   mail: l.mail,
                   age: l.age,
                   status: l.statusName,
