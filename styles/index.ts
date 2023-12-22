@@ -272,6 +272,16 @@ export const ButtonColor = (color: string, color2: string) => {
     },
   }
 }
+export const ButtonColorInverse = (color: string, color2: string) => {
+  return {
+    color: color,
+    backgroundColor: color2,
+    '&:hover': {
+      color: color2,
+      backgroundColor: color,
+    },
+  }
+}
 
 export const SearchModalSelectButtonColor = (
   isSelected: boolean,

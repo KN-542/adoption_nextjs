@@ -129,10 +129,11 @@ export const applicantsSearchSSG = async () => {
   return res
 }
 
-// ユーザー一覧 SSG
-export const UserListSSG = async () => {
+// ユーザー一覧 CSR
+export const UserListCSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSG_URL}/user/list`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/list`,
+    {},
     APICommonHeader,
   )
   return res

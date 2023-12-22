@@ -24,6 +24,7 @@ import {
   teal,
 } from '@mui/material/colors'
 import {
+  ButtonColor,
   ColorBox,
   ColorBoxChild,
   ColorBoxChildNowrap,
@@ -281,15 +282,7 @@ const Setting = () => {
               <Box key={index} sx={ColorBoxChildNowrap}>
                 <Button
                   variant="contained"
-                  sx={[
-                    ColorButton,
-                    {
-                      backgroundColor: obj.color,
-                      '&:hover': {
-                        backgroundColor: obj.color,
-                      },
-                    },
-                  ]}
+                  sx={[ColorButton, ButtonColor(common.white, obj.color)]}
                   onClick={(e) => {
                     e.preventDefault()
 

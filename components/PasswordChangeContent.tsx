@@ -8,6 +8,7 @@ import {
   Typography,
 } from '@mui/material'
 import {
+  ButtonColor,
   DialogContentMain,
   FormBox,
   FormButtons,
@@ -24,6 +25,7 @@ import { useSelector } from 'react-redux'
 import { FormValidation, FormValidationValue } from '@/hooks/validation'
 import { Pattern, ValidationType } from '@/enum/validation'
 import { SubmitHandler, useForm } from 'react-hook-form'
+import { common } from '@mui/material/colors'
 
 export type InputsPassword = {
   password: string
@@ -190,15 +192,7 @@ const PasswordChangeContent = (props: Props) => {
                 size="large"
                 type="submit"
                 variant="contained"
-                sx={[
-                  minW(180),
-                  {
-                    backgroundColor: setting.color,
-                    '&:hover': {
-                      backgroundColor: setting.color,
-                    },
-                  },
-                ]}
+                sx={[minW(180), ButtonColor(common.white, setting.color)]}
               >
                 {t('management.features.login.passwordButton')}
               </Button>
