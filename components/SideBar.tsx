@@ -24,7 +24,7 @@ import store, { RootState } from '@/hooks/store/store'
 import _, { isEqual } from 'lodash'
 import { mgSideBarChange, mgSignOut } from '@/hooks/store'
 import { RouterPath } from '@/enum/router'
-import { mb, mt, SideBarBody, SideBarName, wBlock } from '@/styles/index'
+import { Color, mb, mt, SideBarBody, SideBarName, wBlock } from '@/styles/index'
 import { HashKeyRequest } from '@/api/model/management'
 import { Role } from '@/enum/user'
 
@@ -46,42 +46,42 @@ const SideBar = (props: Props) => {
       id: 1,
       name: t('management.sidebar.applicant'),
       href: RouterPath.ManagementApplicant,
-      icon: <PersonIcon />,
+      icon: <PersonIcon sx={Color(setting.color)} />,
       role: true,
     },
     {
       id: 2,
       name: t('management.sidebar.reserver'),
       href: RouterPath.ManagementReserver,
-      icon: <CalendarMonthIcon />,
+      icon: <CalendarMonthIcon sx={Color(setting.color)} />,
       role: true,
     },
     {
       id: 3,
       name: t('management.sidebar.user'),
       href: RouterPath.ManagementUser,
-      icon: <CoPresentIcon />,
+      icon: <CoPresentIcon sx={Color(setting.color)} />,
       role: true,
     },
     {
       id: 4,
       name: t('management.sidebar.mail'),
       href: RouterPath.ManagementMailTemplate,
-      icon: <MailIcon />,
+      icon: <MailIcon sx={Color(setting.color)} />,
       role: isEqual(user.role, Role.Admin),
     },
     {
       id: 5,
       name: t('management.sidebar.analysis'),
       href: RouterPath.ManagementAnalysis,
-      icon: <EqualizerIcon />,
+      icon: <EqualizerIcon sx={Color(setting.color)} />,
       role: isEqual(user.role, Role.Admin),
     },
     {
       id: 6,
       name: t('management.sidebar.history'),
       href: RouterPath.ManagementHistory,
-      icon: <HistoryIcon />,
+      icon: <HistoryIcon sx={Color(setting.color)} />,
       role: isEqual(user.role, Role.Admin),
     },
   ]
@@ -90,14 +90,14 @@ const SideBar = (props: Props) => {
       id: 7,
       name: t('management.sidebar.setting'),
       href: RouterPath.ManagementSetting,
-      icon: <SettingsIcon />,
+      icon: <SettingsIcon sx={Color(setting.color)} />,
       role: true,
     },
     {
       id: 8,
       name: t('management.sidebar.logout'),
       href: '',
-      icon: <LogoutIcon />,
+      icon: <LogoutIcon sx={Color(setting.color)} />,
       role: true,
       button: async () => {
         await props.logout(

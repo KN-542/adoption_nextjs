@@ -1,46 +1,46 @@
-import { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
-import { RootState } from '@/hooks/store/store'
-import CustomTable from '@/components/Table'
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
-import {
-  UsersTableBody,
-  TableHeader,
-  SelectedCheckbox,
-  TopMenu,
-} from '@/types/management'
-import { useTranslations } from 'next-intl'
-import { Box, Button } from '@mui/material'
-import { common } from '@mui/material/colors'
-import { every, map, min, size } from 'lodash'
-import { UserListCSR } from '@/api/repository'
-import _ from 'lodash'
-import { useRouter } from 'next/router'
-import { RouterPath } from '@/enum/router'
+import { SearchUserGroupCSR } from '@/api/repository'
 import NextHead from '@/components/Header'
+import Pagination from '@/components/Pagination'
+import SelectedTopMenu from '@/components/SelectedTopMenu'
+import { RouterPath } from '@/enum/router'
+import { RootState } from '@/hooks/store/store'
 import {
   ButtonColorInverse,
+  DirectionColumnForTable,
   M0Auto,
+  SpaceBetween,
+  TableMenuButtons,
   mb,
   ml,
   mr,
   mt,
-  SpaceBetween,
-  TableMenuButtons,
   w,
 } from '@/styles/index'
-import Pagination from '@/components/Pagination'
-import SelectedTopMenu from '@/components/SelectedTopMenu'
+import {
+  SelectedCheckbox,
+  TableHeader,
+  TopMenu,
+  UserGroupTableBody,
+} from '@/types/management'
+import { Box, Button } from '@mui/material'
+import { common } from '@mui/material/colors'
+import _, { every, map, min, size } from 'lodash'
+import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
+import CustomTable from '@/components/Table'
 
 const USER_PAGE_SIZE = 20
 
-const User = ({ isError, locale }) => {
+const UserGroup = ({ isError }) => {
   const router = useRouter()
   const t = useTranslations()
 
   const setting = useSelector((state: RootState) => state.management.setting)
 
-  const [bodies, setBodies] = useState<UsersTableBody[]>([])
+  const [bodies, setBodies] = useState<UserGroupTableBody[]>([])
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
   const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
@@ -48,25 +48,23 @@ const User = ({ isError, locale }) => {
   const search = async (currentPage?: number) => {
     setIsLoading(true)
 
-    // API ユーザー一覧
-    const list: UsersTableBody[] = []
+    // API ユーザーグループ一覧
+    const list: UserGroupTableBody[] = []
     const list2: SelectedCheckbox[] = []
-    await UserListCSR().then((res) => {
-      _.forEach(res.data.users, (u, index) => {
+    await SearchUserGroupCSR().then((res) => {
+      _.forEach(res.data.user_groups, (u, index) => {
         list.push({
           no: Number(index) + 1,
           hashKey: u.hash_key,
           name: u.name,
-          mail: u.email,
-          role: Number(u.role_id),
-          roleName: u[`role_name_${locale}`],
-        } as UsersTableBody)
+          users: u.users.split(','),
+        } as UserGroupTableBody)
       })
       setBodies(list)
 
       if (currentPage) {
         _.forEach(
-          res.data.users.slice(
+          res.data.user_groups.slice(
             USER_PAGE_SIZE * (currentPage - 1),
             min([USER_PAGE_SIZE * currentPage, size(list)]),
           ),
@@ -95,32 +93,28 @@ const User = ({ isError, locale }) => {
     },
     {
       id: 2,
-      name: t('management.features.user.header.name'),
+      name: t('management.features.user.header.groupName'),
     },
     {
       id: 3,
-      name: t('management.features.user.header.mail'),
-    },
-    {
-      id: 4,
-      name: t('management.features.user.header.role'),
+      name: t('management.features.user.header.users'),
     },
   ]
 
-  const changePage = (i: number) => {
-    setPage(i)
-  }
-
   const topMenu: TopMenu[] = [
     {
-      name: t('common.title.user.group.list'),
-      router: RouterPath.ManagementUserGroup,
+      name: t('common.title.user.list'),
+      router: RouterPath.ManagementUser,
     },
     {
       name: t('common.title.user.calendar'),
       router: RouterPath.ManagementUserCalendar,
     },
   ]
+
+  const changePage = (i: number) => {
+    setPage(i)
+  }
 
   return (
     <>
@@ -145,10 +139,9 @@ const User = ({ isError, locale }) => {
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
-                  onClick={() => router.push(RouterPath.ManagementUserCreate)}
                 >
                   <AddCircleOutlineIcon sx={mr(0.25)} />
-                  {t('management.features.user.create')}
+                  {t('management.features.user.createGroup')}
                 </Button>
               </Box>
             </Box>
@@ -159,8 +152,13 @@ const User = ({ isError, locale }) => {
                 return {
                   no: u.no,
                   name: u.name,
-                  mail: u.mail,
-                  role: u.roleName,
+                  users: (
+                    <Box sx={DirectionColumnForTable}>
+                      {map(u.users, (user, index) => {
+                        return <Box key={index}>{user}</Box>
+                      })}
+                    </Box>
+                  ),
                 }
               }).slice(USER_PAGE_SIZE * (page - 1), USER_PAGE_SIZE * page)}
             />
@@ -180,10 +178,10 @@ export const getStaticProps = async ({ locale }) => {
       isError,
       locale,
       messages: (
-        await import(`../../../../public/locales/${locale}/common.json`)
+        await import(`../../../../../public/locales/${locale}/common.json`)
       ).default,
     },
   }
 }
 
-export default User
+export default UserGroup

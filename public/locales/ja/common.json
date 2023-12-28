@@ -12,7 +12,11 @@
       },
       "user": {
         "list": "ユーザー一覧",
-        "create": "ユーザー作成"
+        "create": "ユーザー作成",
+        "group": {
+          "list": "ユーザーグループ一覧"
+        },
+        "calendar": "ユーザーカレンダー"
       },
       "setting": {
         "index": "個人設定"
@@ -20,7 +24,8 @@
       "modal": {
         "upload": "ファイルアップロード",
         "createUser": "ログイン情報",
-        "search": "検索条件指定"
+        "search": "検索条件指定",
+        "calendar": "カレンダーの設定"
       }
     },
     "toast": {
@@ -135,6 +140,7 @@
       "user": {
         "user": "ユーザー",
         "create": "ユーザーを作成",
+        "createGroup": "ユーザーグループ作成",
         "backList": "ユーザー一覧へ戻る",
         "createMsg": "ユーザーを作成しました。",
         "createMsg2": "以下のログイン情報をご確認ください。",
@@ -143,11 +149,23 @@
           "admin": "最高責任者",
           "interviewer": "面接官"
         },
+        "calendar": {
+          "modal": {
+            "date": "年月日",
+            "start": "開始時刻",
+            "end": "終了時刻",
+            "msgStartEnd": "終了時刻は開始時刻より後の時刻を指定してください",
+            "user": "ユーザー・ユーザーグループ",
+            "create": "カレンダーを登録"
+          }
+        },
         "header": {
           "name": "氏名",
           "mail": "メールアドレス",
           "password": "パスワード",
-          "role": "ロール"
+          "role": "ロール",
+          "groupName": "グループ名",
+          "users": "所属ユーザー"
         }
       },
       "setting": {

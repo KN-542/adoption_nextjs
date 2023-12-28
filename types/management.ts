@@ -76,7 +76,7 @@ export type UsersTableBody = {
   // No
   no: number
   // ハッシュキー
-  hashKey: number
+  hashKey: string
   // 氏名
   name: string
   // メールアドレス
@@ -85,6 +85,18 @@ export type UsersTableBody = {
   role: number
   // ロール名
   roleName: string
+}
+
+// ユーザーグループ一覧 table body
+export type UserGroupTableBody = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // グループ名
+  name: string
+  // 所属ユーザー
+  users: string[]
 }
 
 // table head sort
@@ -164,4 +176,18 @@ export type CheckboxPropsField = {
   checkedList: SelectedCheckbox[]
   onClick: (i: number, b: boolean) => void
   onClickAll: (b: boolean) => void
+}
+
+// Topメニュー リスト
+export type TopMenu = {
+  name: string
+  router: string
+}
+
+// カレンダー 入力内容 モデル
+export type CalendarInputsModel = {
+  date: Date
+  start?: string
+  end?: string
+  titles?: string[]
 }

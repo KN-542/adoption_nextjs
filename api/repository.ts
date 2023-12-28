@@ -139,6 +139,16 @@ export const UserListCSR = async () => {
   return res
 }
 
+// ユーザーグループ一覧 CSR
+export const SearchUserGroupCSR = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_group`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}
+
 // ユーザー登録 CSR
 export const UserCreateCSR = async (req: UserCreateRequest) => {
   const res = await axios.post(

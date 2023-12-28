@@ -18,6 +18,8 @@ import AppMFA from '@/components/AppMFA'
 import AppPasswordChange from '@/components/AppPasswordChange'
 import { SettingModel } from '@/types/management'
 import { APICommonCode } from '@/enum/apiError'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 
 const App = ({ Component, pageProps }) => {
   const router = useRouter()
@@ -48,11 +50,13 @@ const App = ({ Component, pageProps }) => {
       <Provider store={store}>
         <PersistGate persistor={persistStore(store)}>
           <NextIntlClientProvider messages={pageProps.messages}>
-            <Admin
-              Component={Component}
-              pageProps={pageProps}
-              logout={logout}
-            />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <Admin
+                Component={Component}
+                pageProps={pageProps}
+                logout={logout}
+              />
+            </LocalizationProvider>
           </NextIntlClientProvider>
         </PersistGate>
       </Provider>
