@@ -672,6 +672,7 @@ const Applicants = ({ api, isError, locale }) => {
               </Box>
             </Box>
             <CustomTable
+              height={75}
               headers={tableHeader}
               bodies={map(bodies, (l) => {
                 return {

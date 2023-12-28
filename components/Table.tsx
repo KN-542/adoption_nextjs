@@ -43,6 +43,7 @@ type Props = {
   changeTarget?: (s: TableSort) => void
   search?: (i?: number) => void
   changePage?: (i: number) => void
+  height: number
 }
 
 const CustomTable = (props: Props) => {
@@ -54,7 +55,7 @@ const CustomTable = (props: Props) => {
       {size(props.bodies) > 0 && (
         <Box sx={[w(90), M0Auto]}>
           <Paper sx={[mb(2)]}>
-            <TableContainer sx={CustomTableContainer}>
+            <TableContainer sx={CustomTableContainer(props.height)}>
               <Table sx={minW(750)} aria-labelledby="tableTitle" size="medium">
                 <TableHead sx={TableHeaderSX}>
                   <TableRow>

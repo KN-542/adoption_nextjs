@@ -21,6 +21,9 @@ export const M0Auto = { m: '0 auto' }
 export const w = (w: number) => {
   return { width: `${w}%` }
 }
+export const h = (h: number) => {
+  return { height: `${h}%` }
+}
 export const wBlock = (w: number) => {
   return { width: w }
 }
@@ -50,6 +53,14 @@ export const Color = (c: string) => {
 }
 export const BackGroundColor = (c: string) => {
   return { backgroundColor: c }
+}
+
+export const DisplayFlex = {
+  display: 'flex',
+}
+
+export const CursorPointer = {
+  cursor: 'pointer',
 }
 
 export const TextCenter = {
@@ -120,7 +131,12 @@ export const DialogContentMain = {
   borderRadius: 20,
 }
 
-export const FormBox = {
+export const DirectionColumnForTable = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'left',
+}
+export const Column = {
   mt: 4,
   display: 'flex',
   flexFlow: 'column',
@@ -163,7 +179,22 @@ export const FormThreeButtons = {
   },
 }
 
-export const SearchModalMenu = {
+export const FormTwoButtons = {
+  display: 'flex',
+  justifyContent: 'center',
+  width: '100%',
+  m: '0 auto',
+  alignItems: 'center',
+  gap: '16px',
+  flexWrap: 'wrap',
+  '@media (min-width:950px)': {
+    flexDirection: 'row',
+    width: '90%',
+    justifyContent: 'flex-end',
+  },
+}
+
+export const FormModalMenu = {
   display: 'flex',
   flexWrap: 'wrap',
   gap: 10,
@@ -316,7 +347,9 @@ export const PaginationMenu = {
   alignItems: 'flex-end',
 }
 
-export const CustomTableContainer = { maxHeight: '75vh', overflowY: 'auto' }
+export const CustomTableContainer = (h: number) => {
+  return { maxHeight: `${h}vh`, overflowY: 'auto' }
+}
 
 export const CustomTableIcon = {
   padding: 0,
