@@ -95,6 +95,8 @@ export type UserGroupTableBody = {
   hashKey: string
   // グループ名
   name: string
+  // メールアドレス
+  mail: string
   // 所属ユーザー
   users: string[]
 }
@@ -189,5 +191,12 @@ export type CalendarInputsModel = {
   date: Date
   start?: string
   end?: string
-  titles?: string[]
+  titles?: CalendarTitlesModel[]
+}
+
+// カレンダー Titles
+export type CalendarTitlesModel = {
+  key: string
+  title: string
+  subTitle: string
 }

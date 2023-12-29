@@ -136,10 +136,17 @@ export const DirectionColumnForTable = {
   flexDirection: 'column',
   alignItems: 'left',
 }
-export const Column = {
+
+export const ColumnMt4 = {
   mt: 4,
   display: 'flex',
   flexFlow: 'column',
+}
+
+export const Column = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
 }
 
 export const FormRadio = {

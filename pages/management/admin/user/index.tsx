@@ -12,7 +12,7 @@ import {
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
 import { common } from '@mui/material/colors'
-import { every, map, min, size } from 'lodash'
+import { every, isEqual, map, min, size } from 'lodash'
 import { UserListCSR } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
@@ -31,6 +31,9 @@ import {
 } from '@/styles/index'
 import Pagination from '@/components/Pagination'
 import SelectedTopMenu from '@/components/SelectedTopMenu'
+import { APICommonCode } from '@/enum/apiError'
+import { toast } from 'react-toastify'
+import ClearIcon from '@mui/icons-material/Clear'
 
 const USER_PAGE_SIZE = 20
 
@@ -51,36 +54,58 @@ const User = ({ isError, locale }) => {
     // API ユーザー一覧
     const list: UsersTableBody[] = []
     const list2: SelectedCheckbox[] = []
-    await UserListCSR().then((res) => {
-      _.forEach(res.data.users, (u, index) => {
-        list.push({
-          no: Number(index) + 1,
-          hashKey: u.hash_key,
-          name: u.name,
-          mail: u.email,
-          role: Number(u.role_id),
-          roleName: u[`role_name_${locale}`],
-        } as UsersTableBody)
-      })
-      setBodies(list)
+    await UserListCSR()
+      .then((res) => {
+        _.forEach(res.data.users, (u, index) => {
+          list.push({
+            no: Number(index) + 1,
+            hashKey: u.hash_key,
+            name: u.name,
+            mail: u.email,
+            role: Number(u.role_id),
+            roleName: u[`role_name_${locale}`],
+          } as UsersTableBody)
+        })
+        setBodies(list)
 
-      if (currentPage) {
-        _.forEach(
-          res.data.users.slice(
-            USER_PAGE_SIZE * (currentPage - 1),
-            min([USER_PAGE_SIZE * currentPage, size(list)]),
-          ),
-          (r) => {
-            list2.push({
-              key: r.hash_key,
-              checked: false,
-            } as SelectedCheckbox)
-          },
-        )
-        setCheckedList(list2)
-      }
-      setIsLoading(false)
-    })
+        if (currentPage) {
+          _.forEach(
+            res.data.users.slice(
+              USER_PAGE_SIZE * (currentPage - 1),
+              min([USER_PAGE_SIZE * currentPage, size(list)]),
+            ),
+            (r) => {
+              list2.push({
+                key: r.hash_key,
+                checked: false,
+              } as SelectedCheckbox)
+            },
+          )
+          setCheckedList(list2)
+        }
+        setIsLoading(false)
+      })
+      .catch((error) => {
+        if (
+          every([500 <= error.response.status, error.response.status < 600])
+        ) {
+          router.push(RouterPath.ManagementError)
+          return
+        }
+
+        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response.data.code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+        }
+      })
   }
 
   useEffect(() => {

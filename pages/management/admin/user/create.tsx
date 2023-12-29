@@ -14,7 +14,7 @@ import {
   FormControlLabel,
 } from '@mui/material'
 import {
-  Column,
+  ColumnMt4,
   FormButtons,
   DialogContentMain,
   M0Auto,
@@ -171,7 +171,7 @@ const UserCreate = ({ roleList, isError }) => {
             component="form"
             onSubmit={handleSubmit(submit)}
             noValidate
-            sx={Column}
+            sx={ColumnMt4}
           >
             <FormLabel>
               {t('management.features.user.header.name') + '*'}
