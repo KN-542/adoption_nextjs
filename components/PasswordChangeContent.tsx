@@ -10,7 +10,7 @@ import {
 import {
   ButtonColor,
   DialogContentMain,
-  Column,
+  ColumnMt4,
   FormButtons,
   M0Auto,
   minW,
@@ -113,7 +113,7 @@ const PasswordChangeContent = (props: Props) => {
             component="form"
             onSubmit={handleSubmit(submit)}
             noValidate
-            sx={Column}
+            sx={ColumnMt4}
           >
             <FormLabel>
               {t('management.features.login.currentPassword') + '*'}

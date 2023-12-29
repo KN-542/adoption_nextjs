@@ -24,13 +24,16 @@ import {
 } from '@/types/management'
 import { Box, Button } from '@mui/material'
 import { common } from '@mui/material/colors'
-import _, { every, map, min, size } from 'lodash'
+import _, { every, isEqual, map, min, size } from 'lodash'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import CustomTable from '@/components/Table'
+import { APICommonCode } from '@/enum/apiError'
+import { toast } from 'react-toastify'
+import ClearIcon from '@mui/icons-material/Clear'
 
 const USER_PAGE_SIZE = 20
 
@@ -51,34 +54,56 @@ const UserGroup = ({ isError }) => {
     // API ユーザーグループ一覧
     const list: UserGroupTableBody[] = []
     const list2: SelectedCheckbox[] = []
-    await SearchUserGroupCSR().then((res) => {
-      _.forEach(res.data.user_groups, (u, index) => {
-        list.push({
-          no: Number(index) + 1,
-          hashKey: u.hash_key,
-          name: u.name,
-          users: u.users.split(','),
-        } as UserGroupTableBody)
-      })
-      setBodies(list)
+    await SearchUserGroupCSR()
+      .then((res) => {
+        _.forEach(res.data.user_groups, (u, index) => {
+          list.push({
+            no: Number(index) + 1,
+            hashKey: u.hash_key,
+            name: u.name,
+            users: u.users.split(','),
+          } as UserGroupTableBody)
+        })
+        setBodies(list)
 
-      if (currentPage) {
-        _.forEach(
-          res.data.user_groups.slice(
-            USER_PAGE_SIZE * (currentPage - 1),
-            min([USER_PAGE_SIZE * currentPage, size(list)]),
-          ),
-          (r) => {
-            list2.push({
-              key: r.hash_key,
-              checked: false,
-            } as SelectedCheckbox)
-          },
-        )
-        setCheckedList(list2)
-      }
-      setIsLoading(false)
-    })
+        if (currentPage) {
+          _.forEach(
+            res.data.user_groups.slice(
+              USER_PAGE_SIZE * (currentPage - 1),
+              min([USER_PAGE_SIZE * currentPage, size(list)]),
+            ),
+            (r) => {
+              list2.push({
+                key: r.hash_key,
+                checked: false,
+              } as SelectedCheckbox)
+            },
+          )
+          setCheckedList(list2)
+        }
+        setIsLoading(false)
+      })
+      .catch((error) => {
+        if (
+          every([500 <= error.response.status, error.response.status < 600])
+        ) {
+          router.push(RouterPath.ManagementError)
+          return
+        }
+
+        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response.data.code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+        }
+      })
   }
 
   useEffect(() => {

@@ -2,6 +2,8 @@ import { RootState } from '@/hooks/store/store'
 import {
   Bold,
   ButtonColor,
+  Color,
+  Column,
   DisplayFlex,
   FormModalMenu,
   FormTwoButtons,
@@ -14,25 +16,30 @@ import {
   w,
 } from '@/styles/index'
 import {
+  Autocomplete,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  ListItem,
   MenuItem,
   Select,
+  TextField,
   Typography,
+  createFilterOptions,
 } from '@mui/material'
-import { common } from '@mui/material/colors'
+import { common, grey } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'
 import { useSelector } from 'react-redux'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker'
 import dayjs, { Dayjs } from 'dayjs'
-import { useEffect } from 'react'
-import { filter, map } from 'lodash'
+import { useEffect, useState } from 'react'
+import { filter, includes, isEmpty, map } from 'lodash'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import ErrorHandler from '@/components/ErrorHandler'
 import { ValidationType } from '@/enum/validation'
@@ -40,11 +47,13 @@ import { FormValidation } from '@/hooks/validation'
 import { Time15 } from '@/hooks/common'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
-import { CalendarInputsModel } from '@/types/management'
+import { CalendarInputsModel, CalendarTitlesModel } from '@/types/management'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 
 type Props = {
   open: boolean
   model?: CalendarInputsModel
+  titles: CalendarTitlesModel[]
   close: () => void
   submit: (model: CalendarInputsModel) => void
 }
@@ -53,7 +62,6 @@ type Inputs = {
   date: Dayjs
   start: string
   end: string
-  titles: string[]
 }
 
 const time15: string[] = Time15()
@@ -76,6 +84,11 @@ const CalendarModal = (props: Props) => {
   const t = useTranslations()
 
   const setting = useSelector((state: RootState) => state.management.setting)
+
+  const [options, setOptions] = useState<CalendarTitlesModel[]>(props.titles)
+  const [selectedOptions, setSelectedOptions] = useState<CalendarTitlesModel[]>(
+    [],
+  )
 
   const formValidation: FormValidation = {
     date: [
@@ -127,19 +140,34 @@ const CalendarModal = (props: Props) => {
       return
     }
 
+    if (isEmpty(selectedOptions)) {
+      toast(t('management.features.user.calendar.modal.msgNoExistUser'), {
+        style: {
+          backgroundColor: setting.toastErrorColor,
+          color: common.white,
+          width: 600,
+        },
+        position: 'bottom-left',
+        hideProgressBar: true,
+        closeButton: () => <ClearIcon />,
+      })
+      return
+    }
+
     await props.submit({
       date: new Date(d.date.year(), d.date.month(), d.date.date()),
       start: d.start,
       end: d.end,
-      titles: d.titles,
+      titles: selectedOptions,
     } as CalendarInputsModel)
+
+    setSelectedOptions([])
   }
 
   useEffect(() => {
     setValue('date', dayjs(props.model.date))
     setValue('start', time15Start[0])
     setValue('end', time15[0])
-    setValue('titles', ['まみむめも企画室', '鬼人事部']) // TODO
   }, [props.model.date])
 
   return (
@@ -246,6 +274,80 @@ const CalendarModal = (props: Props) => {
                 </Box>
               </Box>
             </Box>
+            <Box sx={[DisplayFlex, w(90)]}>
+              <Box>
+                <Box sx={[mb(1)]}>
+                  <Box component="span" sx={[ml(4), mr(4), mt(0.5), Bold]}>
+                    {t('management.features.user.calendar.modal.user')}
+                  </Box>
+                </Box>
+                <Autocomplete
+                  multiple
+                  sx={[ml(4), mr(4), w(100)]}
+                  options={filter(
+                    options,
+                    (option) =>
+                      !includes(
+                        map(selectedOptions, (item) => {
+                          return item.key
+                        }),
+                        option.key,
+                      ),
+                  )}
+                  getOptionLabel={(option) => option.title}
+                  renderOption={(props, option) => (
+                    <ListItem {...props} sx={[w(100)]}>
+                      <AccountCircleIcon fontSize="large" sx={mr(2)} />
+                      <Box sx={[Column, w(100)]}>
+                        <Box sx={w(100)}>{option.title}</Box>
+                        {!isEmpty(option.subTitle) && (
+                          <Box
+                            sx={[
+                              w(100),
+                              ml(0.25),
+                              Color(grey[500]),
+                              { fontSize: 12 },
+                            ]}
+                          >
+                            {option.subTitle}
+                          </Box>
+                        )}
+                      </Box>
+                    </ListItem>
+                  )}
+                  filterOptions={createFilterOptions({
+                    matchFrom: 'any',
+                    stringify: (option) => `${option.title} ${option.subTitle}`,
+                  })}
+                  value={selectedOptions}
+                  onChange={(_e, value) => setSelectedOptions(value)}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        variant="outlined"
+                        label={option.title}
+                        {...getTagProps({ index })}
+                      />
+                    ))
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      sx={[mr(4), w(100), minW(500), Color(setting.color)]}
+                    />
+                  )}
+                />
+              </Box>
+            </Box>
+            <Box sx={[DisplayFlex, w(90)]}>
+              <Box>
+                <Box sx={[mb(1)]}>
+                  <Box component="span" sx={[ml(4), mr(4), mt(0.5), Bold]}>
+                    {t('management.features.user.calendar.modal.type')}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
           </Box>
         </Box>
       </DialogContent>
@@ -268,9 +370,6 @@ const CalendarModal = (props: Props) => {
             type="submit"
             variant="outlined"
             sx={[minW(180), ButtonColor(common.white, setting.color)]}
-            onClick={async () => {
-              props.close()
-            }}
           >
             <CalendarMonthIcon sx={mr(0.25)}></CalendarMonthIcon>
             {t('management.features.user.calendar.modal.create')}
