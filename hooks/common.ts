@@ -1,4 +1,4 @@
-// Date型をyyyy-mm-ddのstringに変更
+// Date型をyyyy-mm-ddTHH:mm:ssのstringに変更
 export const formatDate = (date: Date): string => {
   const pad = (num) => (num < 10 ? '0' + num : num)
 
@@ -29,3 +29,21 @@ export const Time15 = (): string[] => {
 
   return res
 }
+
+// 年を数値化
+export const getDayOfYear = (date: Date): number => {
+  const startOfYear = new Date(date.getFullYear(), 0, 1)
+  const diffInMilliSeconds = date.getTime() - startOfYear.getTime()
+  const dayOfYear = Math.floor(diffInMilliSeconds / (1000 * 60 * 60 * 24))
+
+  return dayOfYear + 1
+}
+
+// HH:mmに
+export const formatDateToHHMM = (date: Date): string => {
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+export const WEEKENDS = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']

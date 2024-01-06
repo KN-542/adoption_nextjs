@@ -13,3 +13,12 @@ export const dispRole = (n: number): string => {
       return 'TODO'
   }
 }
+
+// 登録種別
+export enum ScheduleTypes {
+  None = '',
+  Daily = 'daily',
+  Weekly = 'weekly',
+  Monthly = 'monthly',
+  Yearly = 'yearly',
+}

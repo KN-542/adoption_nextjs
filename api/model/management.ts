@@ -57,3 +57,12 @@ export type UserCreateRequest = {
   email: string
   role_id: number
 }
+
+// スケジュール登録 request
+export type CreateSchedulesRequest = {
+  user_hash_keys: string
+  freq_id: number
+  start: string
+  end: string
+  title: string
+}

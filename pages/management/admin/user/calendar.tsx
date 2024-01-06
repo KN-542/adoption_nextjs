@@ -13,16 +13,39 @@ import {
 } from '@/styles/index'
 import NextHead from '@/components/Header'
 import jaLocale from '@fullcalendar/core/locales/ja'
-import { formatDate } from '@/hooks/common'
-import CalendarModal from '@/components/modal/CalendarModal'
-import { every, forEach, isEmpty, isEqual, map, some } from 'lodash'
 import {
-  CalendarInputsModel,
+  WEEKENDS,
+  formatDate,
+  formatDateToHHMM,
+  getDayOfYear,
+} from '@/hooks/common'
+import CalendarModal from '@/components/modal/CalendarModal'
+import {
+  every,
+  filter,
+  find,
+  forEach,
+  isEmpty,
+  isEqual,
+  map,
+  some,
+} from 'lodash'
+import {
+  CalendarModel,
   CalendarTitlesModel,
   UserGroupTableBody,
+  ScheduleType,
   UsersTableBody,
+  Schedule,
 } from '@/types/management'
-import { SearchUserGroupCSR, UserListCSR } from '@/api/repository'
+import {
+  CreateSchedulesCSR,
+  DeleteSchedulesCSR,
+  SchedulesCSR,
+  SearchUserGroupCSR,
+  UserListCSR,
+  UserListScheduleTypeSSG,
+} from '@/api/repository'
 import { useRouter } from 'next/router'
 import { useTranslations } from 'next-intl'
 import { RootState } from '@/hooks/store/store'
@@ -32,8 +55,10 @@ import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
+import { ScheduleTypes } from '@/enum/user'
+import { CreateSchedulesRequest, HashKeyRequest } from '@/api/model/management'
 
-const UserCalendar = ({ isError, locale }) => {
+const UserCalendar = ({ isError, locale, api }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -42,60 +67,177 @@ const UserCalendar = ({ isError, locale }) => {
   const [events, setEvents] = useState([])
   const [currentDate, setCurrentDate] = useState(new Date())
   const [open, setOpen] = useState(false)
-  const [clickedDate, setClickedDate] = useState<Date>(null)
+  const [model, setModel] = useState<CalendarModel>({} as CalendarModel)
   const [users, setUsers] = useState<(UsersTableBody | UserGroupTableBody)[]>(
     [],
   )
+  const [calendars, setCalendars] = useState<Schedule[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const search = async () => {
     setIsLoading(true)
-    // API ユーザー一覧
     const list: (UsersTableBody | UserGroupTableBody)[] = []
-    await UserListCSR()
-      .then(async (res) => {
-        forEach(res.data.users, (u, _) => {
-          list.push({
-            hashKey: u.hash_key,
-            name: u.name,
-            mail: u.email,
-          } as UsersTableBody)
-        })
+    const list2: Schedule[] = []
+    const tempList = []
 
-        // API ユーザーグループ一覧
-        await SearchUserGroupCSR()
-          .then((res2) => {
-            forEach(res2.data.user_groups, (u, _) => {
-              list.push({
-                hashKey: u.hash_key,
-                name: u.name,
-                mail: '',
-              } as UserGroupTableBody)
-            })
-            setUsers(list)
-            setIsLoading(false)
-          })
-          .catch((error) => {
-            if (
-              every([500 <= error.response.status, error.response.status < 600])
-            ) {
-              router.push(RouterPath.ManagementError)
-              return
-            }
+    try {
+      // API ユーザー一覧
+      const res = await UserListCSR()
+      res.data.users.forEach((u) => {
+        list.push({
+          hashKey: u.hash_key,
+          name: u.name,
+          mail: u.email,
+        } as UsersTableBody)
+      })
 
-            if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-              toast(t(`common.api.code.${error.response.data.code}`), {
-                style: {
-                  backgroundColor: setting.toastErrorColor,
-                  color: common.white,
-                  width: 500,
-                },
-                position: 'bottom-left',
-                hideProgressBar: true,
-                closeButton: () => <ClearIcon />,
-              })
-            }
+      // API ユーザーグループ一覧
+      const res2 = await SearchUserGroupCSR()
+      res2.data.user_groups.forEach((u) => {
+        list.push({
+          hashKey: u.hash_key,
+          name: u.name,
+          mail: '',
+        } as UserGroupTableBody)
+      })
+
+      // API スケジュール一覧
+      const res3 = await SchedulesCSR()
+      for (const item of res3.data.list) {
+        list2.push({
+          hashKey: item.hash_key,
+          userHashKeys: item.user_hash_keys.split(','),
+          start: new Date(item.start),
+          end: new Date(item.end),
+          title: item.title,
+          freqId: Number(item.freq_id),
+          freq: item.freq,
+        } as Schedule)
+
+        const start = formatDateToHHMM(new Date(item.start))
+        const end = formatDateToHHMM(new Date(item.end))
+
+        if (isEmpty(item.freq)) {
+          tempList.push({
+            id: item.hash_key,
+            title: `${start}~${end} ${item.title}`,
+            start: new Date(item.start),
+            allDay: true,
+            color: setting.color,
           })
+        } else if (isEqual(item.freq, ScheduleTypes.Daily)) {
+          tempList.push({
+            id: item.hash_key,
+            title: `${start}~${end} ${item.title}`,
+            start: new Date(item.start),
+            allDay: true,
+            color: setting.color,
+            rrule: {
+              freq: ScheduleTypes.Daily,
+              interval: 1,
+              dtstart: new Date(item.start),
+            },
+          })
+        } else if (isEqual(item.freq, ScheduleTypes.Weekly)) {
+          tempList.push({
+            id: item.hash_key,
+            title: `${start}~${end} ${item.title}`,
+            start: new Date(item.start),
+            allDay: true,
+            color: setting.color,
+            rrule: {
+              freq: ScheduleTypes.Weekly,
+              interval: 1,
+              byweekday: WEEKENDS[new Date(item.start).getDay()],
+              dtstart: new Date(item.start),
+            },
+          })
+        } else if (isEqual(item.freq, ScheduleTypes.Monthly)) {
+          tempList.push({
+            id: item.hash_key,
+            title: `${start}~${end} ${item.title}`,
+            start: new Date(item.start),
+            allDay: true,
+            color: setting.color,
+            rrule: {
+              freq: ScheduleTypes.Monthly,
+              interval: 1,
+              bymonthday: new Date(item.start).getDate(),
+              dtstart: new Date(item.start),
+            },
+          })
+        } else if (isEqual(item.freq, ScheduleTypes.Yearly)) {
+          tempList.push({
+            id: item.hash_key,
+            title: `${start}~${end} ${item.title}`,
+            start: new Date(item.start),
+            allDay: true,
+            color: setting.color,
+            rrule: {
+              freq: ScheduleTypes.Yearly,
+              interval: 1,
+              byyearday: getDayOfYear(new Date(item.start)),
+              dtstart: new Date(item.start),
+            },
+          })
+        }
+      }
+      setUsers(list)
+      setCalendars(list2)
+      setEvents(tempList)
+    } catch (error) {
+      if (error.response) {
+        if (500 <= error.response.status && error.response.status < 600) {
+          router.push(RouterPath.ManagementError)
+          return
+        }
+
+        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response.data.code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+        }
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const calendarSetting = async (m: CalendarModel) => {
+    const start = new Date(
+      m.date.getFullYear(),
+      m.date.getMonth(),
+      m.date.getDate(),
+      Number(m.start.split(':')[0]),
+      Number(m.start.split(':')[1]),
+    ).toISOString()
+    const end = new Date(
+      m.date.getFullYear(),
+      m.date.getMonth(),
+      m.date.getDate(),
+      Number(m.end.split(':')[0]),
+      Number(m.end.split(':')[1]),
+    ).toISOString()
+
+    // API スケジュール登録
+    await CreateSchedulesCSR({
+      user_hash_keys: map(m.users, (item) => {
+        return item.key
+      }).join(','),
+      freq_id: Number(m.type.value),
+      start: start,
+      end: end,
+      title: m.title,
+    } as CreateSchedulesRequest)
+      .then(() => {
+        setCurrentDate(m.date)
       })
       .catch((error) => {
         if (
@@ -120,42 +262,32 @@ const UserCalendar = ({ isError, locale }) => {
       })
   }
 
-  const handleAddEvent = () => {
-    // const newEvent = {
-    //   id: Date.now().toString(),
-    //   title: eventTitle,
-    //   start: new Date(),
-    //   allDay: false,
-    // }
-    // ここで繰り返しルールを設定
-    // const newEvent = {
-    //   id: Date.now().toString(),
-    //   title: eventTitle,
-    //   rrule: {
-    //     freq: 'weekly',
-    //     interval: 1,
-    //     byweekday: ['th'], // ここを適切な曜日に変更
-    //     dtstart: formatDate(new Date()),
-    //   },
-    //   duration: '01:00', // 1時間のイベント
-    // }
-    // setEvents((currentEvents) => [...currentEvents, newEvent])
-  }
-
-  const calendarSetting = async (m: CalendarInputsModel) => {
-    const list = [...events]
-    for (const item of m.titles) {
-      list.push({
-        id: 'TODO', // TODO API後に
-        title: `${m.start}~${m.end}\n${item.title}`,
-        start: m.date,
-        allDay: true,
+  const deleteSchedule = async (id: string, date: Date) => {
+    await DeleteSchedulesCSR({ hash_key: id } as HashKeyRequest)
+      .then(() => {
+        setCurrentDate(date)
       })
-    }
+      .catch((error) => {
+        if (
+          every([500 <= error.response.status, error.response.status < 600])
+        ) {
+          router.push(RouterPath.ManagementError)
+          return
+        }
 
-    setEvents(list)
-    setOpen(false)
-    setCurrentDate(m.date)
+        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response.data.code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+        }
+      })
   }
 
   useEffect(() => {
@@ -171,7 +303,6 @@ const UserCalendar = ({ isError, locale }) => {
           <Box sx={[w(90), M0Auto, CustomTableContainer(80), mt(12)]}>
             <FullCalendar
               plugins={[dayGridPlugin, rrulePlugin]}
-              initialEvents={[]}
               initialDate={currentDate}
               locale={jaLocale}
               initialView="dayGridMonth"
@@ -197,8 +328,18 @@ const UserCalendar = ({ isError, locale }) => {
                         ])
                       )
                         return
-                      setClickedDate(e.date)
+
+                      setModel({
+                        id: null,
+                        date: e.date,
+                        start: null,
+                        end: null,
+                        title: null,
+                        users: [],
+                        type: null,
+                      } as CalendarModel)
                       setOpen(true)
+                      console.log(11)
                     }}
                     sx={[h(100), CursorPointer]}
                   >
@@ -208,32 +349,70 @@ const UserCalendar = ({ isError, locale }) => {
               }}
               contentHeight={667}
               key={events.length}
-              eventClick={(eventInfo) => {
-                console.log('Title:', eventInfo.event.title)
-                console.log('Start:', eventInfo.event.start.toISOString())
-                if (eventInfo.event.end) {
-                  console.log('End:', eventInfo.event.end.toISOString())
-                } else {
-                  console.log('End: Not specified')
+              eventClick={(info) => {
+                const obj = find(calendars, (c) =>
+                  isEqual(c.hashKey, info.event.id),
+                )
+                if (isEmpty(obj)) {
+                  router.push(RouterPath.ManagementError)
+                  return
                 }
 
-                setEvents([])
+                setModel({
+                  id: info.event.id,
+                  date: new Date(obj.start),
+                  start: formatDateToHHMM(new Date(obj.start)),
+                  end: formatDateToHHMM(new Date(obj.end)),
+                  title: obj.title,
+                  users: map(obj.userHashKeys, (hash) => {
+                    return {
+                      key: hash,
+                    } as CalendarTitlesModel
+                  }),
+                  type: { value: String(obj.freqId) } as ScheduleType,
+                } as CalendarModel)
+                setOpen(true)
+                console.log(22)
               }}
             />
           </Box>
-          <CalendarModal
-            open={open}
-            model={{ date: clickedDate } as CalendarInputsModel}
-            titles={map(users, (user) => {
-              return {
-                key: user.hashKey,
-                title: user.name,
-                subTitle: user.mail,
-              } as CalendarTitlesModel
-            })}
-            close={() => setOpen(false)}
-            submit={calendarSetting}
-          ></CalendarModal>
+          {open && (
+            <CalendarModal
+              open={open}
+              model={
+                {
+                  id: model.id,
+                  date: model.date,
+                  start: model.start,
+                  end: model.end,
+                  title: model.title,
+                  users: model.users,
+                  type: model.type,
+                } as CalendarModel
+              }
+              users={map(users, (user) => {
+                return {
+                  key: user.hashKey,
+                  title: user.name,
+                  subTitle: user.mail,
+                } as CalendarTitlesModel
+              })}
+              radios={api.scheduleList}
+              isEdit={!isEmpty(model.start)}
+              close={() => setOpen(false)}
+              delete={async (id: string, date: Date) => {
+                await deleteSchedule(id, date)
+                await search()
+              }}
+              submit={async (m: CalendarModel) => {
+                // TODO 絶対に編集用APIを作ること！(面倒なので一旦こうしてる)
+                // 削除 → 登録にするとしても、1つのAPIで同一トランザクションにて処理したい
+                if (!isEmpty(m.id)) await deleteSchedule(m.id, m.date)
+                await calendarSetting(m)
+                await search()
+              }}
+            ></CalendarModal>
+          )}
         </>
       )}
     </>
@@ -243,9 +422,23 @@ const UserCalendar = ({ isError, locale }) => {
 export const getStaticProps = async ({ locale }) => {
   let isError = false
 
+  // API スケジュール登録種別一覧
+  const scheduleList: ScheduleType[] = []
+  await UserListScheduleTypeSSG().then((res) => {
+    for (const item of res.data.list) {
+      scheduleList.push({
+        value: String(item.id),
+        name: item[`name_${locale}`],
+        freq: item.freq,
+      } as ScheduleType)
+    }
+  })
+
   return {
     props: {
-      api: {},
+      api: {
+        scheduleList: scheduleList,
+      },
       isError,
       locale,
       messages: (
