@@ -101,6 +101,16 @@ export type UserGroupTableBody = {
   users: string[]
 }
 
+// スケジュール 登録種別
+export type ScheduleType = {
+  // value
+  value: string
+  // 名前
+  name: string
+  // 頻度
+  freq: string
+}
+
 // table head sort
 export type TableSort = {
   key: string
@@ -186,12 +196,26 @@ export type TopMenu = {
   router: string
 }
 
-// カレンダー 入力内容 モデル
-export type CalendarInputsModel = {
+// カレンダー model
+export type CalendarModel = {
+  id?: string
   date: Date
   start?: string
   end?: string
-  titles?: CalendarTitlesModel[]
+  title: string
+  users?: CalendarTitlesModel[]
+  type: ScheduleType
+}
+
+// スケジュール
+export type Schedule = {
+  hashKey: string
+  userHashKeys: string[]
+  start: Date
+  end: Date
+  title: string
+  freqId: number
+  freq: string
 }
 
 // カレンダー Titles

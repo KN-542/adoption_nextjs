@@ -4,6 +4,7 @@ import {
   ApplicantDocumentDownloadRequest,
   ApplicantSearchRequest,
   ApplicantsDownloadRequest,
+  CreateSchedulesRequest,
   HashKeyRequest,
   LoginRequest,
   MFARequest,
@@ -159,10 +160,50 @@ export const UserCreateCSR = async (req: UserCreateRequest) => {
   return res
 }
 
+// スケジュール登録 CSR
+export const CreateSchedulesCSR = async (req: CreateSchedulesRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_schedule`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// スケジュール削除 CSR
+export const DeleteSchedulesCSR = async (req: HashKeyRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete_schedule`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// スケジュール一覧 CSR
+export const SchedulesCSR = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/schedules`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}
+
 // ユーザーロール一覧 SSG
 export const UserRoleListSSG = async () => {
   const res = await axios.post(
     `${process.env.NEXT_SSG_URL}/user/role_list`,
+    APICommonHeader,
+  )
+  return res
+}
+
+// スケジュール登録種別一覧 SSG
+export const UserListScheduleTypeSSG = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSG_URL}/user/schedule_type`,
+    {},
     APICommonHeader,
   )
   return res
