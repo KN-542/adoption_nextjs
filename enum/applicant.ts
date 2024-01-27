@@ -119,4 +119,6 @@ export enum SearchSortKey {
   Site = 'site_id',
   // 選考状況
   Status = 'status',
+  // 面接希望日時
+  IntervierDate = 'desired_at',
 }

@@ -82,6 +82,7 @@ import {
   mgApplicantSearchText,
 } from '@/hooks/store'
 import Pagination from '@/components/Pagination'
+import { formatDate2 } from '@/hooks/common'
 
 const APPLICANT_PAGE_SIZE = 30
 
@@ -170,10 +171,10 @@ const Applicants = ({ api, isError, locale }) => {
             age: Number(r.age),
             status: Number(r.status),
             statusName: r[`status_name_${locale}`],
-            interviewerDate: r.desired_at,
+            interviewerDate: new Date(r.desired_at),
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
-          })
+          } as ApplicantsTableBody)
         })
         setBodies(list)
 
@@ -585,7 +586,13 @@ const Applicants = ({ api, isError, locale }) => {
     {
       id: 7,
       name: t('management.features.applicant.header.interviewerDate'),
-      sort: null,
+      sort: {
+        key: SearchSortKey.IntervierDate,
+        target: isEqual(SearchSortKey.Status, applicantSearchSort.key),
+        isAsc: isEqual(SearchSortKey.Status, applicantSearchSort.key)
+          ? applicantSearchSort.isAsc
+          : true,
+      },
     },
     {
       id: 8,
@@ -682,9 +689,10 @@ const Applicants = ({ api, isError, locale }) => {
                   mail: l.mail,
                   age: l.age,
                   status: l.statusName,
-                  interviewerDate: isEmpty(l.interviewerDate)
-                    ? '-'
-                    : l.interviewerDate,
+                  interviewerDate:
+                    l.interviewerDate.getFullYear() < 2
+                      ? '-'
+                      : formatDate2(l.interviewerDate),
                   resume: isEmpty(l.resume) ? (
                     <>{t('management.features.applicant.documents.f')}</>
                   ) : (
