@@ -64,7 +64,7 @@ export type ApplicantsTableBody = {
   // 選考状況(ステータス名)
   statusName: string
   // 面接予定日
-  interviewerDate: string
+  interviewerDate: Date
   // 履歴書
   resume: JSX.Element
   // 職務経歴書
