@@ -154,6 +154,7 @@
           "interviewer": "面接官"
         },
         "calendar": {
+          "calendar": "カレンダー",
           "modal": {
             "date": "年月日",
             "title": "タイトル",

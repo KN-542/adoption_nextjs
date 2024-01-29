@@ -237,6 +237,21 @@ const UserCalendar = ({ isError, locale, api }) => {
       title: m.title,
     } as CreateSchedulesRequest)
       .then(() => {
+        toast(
+          t('management.features.user.calendar.calendar') +
+            t('common.toast.create'),
+          {
+            style: {
+              backgroundColor: setting.toastSuccessColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
+
         setCurrentDate(m.date)
       })
       .catch((error) => {
