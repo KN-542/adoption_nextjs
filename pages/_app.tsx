@@ -3,7 +3,7 @@ import { Provider } from 'react-redux'
 import { persistStore } from 'redux-persist'
 import { PersistGate } from 'redux-persist/integration/react'
 import '@/styles/index.css'
-import _, { isEqual } from 'lodash'
+import _ from 'lodash'
 import { appWithTranslation } from 'next-i18next'
 import { NextIntlClientProvider } from 'next-intl'
 import store from '@/hooks/store/store'
@@ -37,15 +37,28 @@ const App = ({ Component, pageProps }) => {
         router.push(RouterPath.ManagementLogin)
       })
       .catch((error) => {
-        isEqual(error.response.data.code, APICommonCode.BadRequest)
+        _.isEqual(error.response.data.code, APICommonCode.BadRequest)
           ? router.push(RouterPath.ManagementLogin)
           : router.push(RouterPath.ManagementError)
         return
       })
   }
 
-  // management/admin 配下の場合
-  if (_.includes(router.pathname, 'management/admin')) {
+  if (_.includes(router.pathname, 'management/admin/auth')) {
+    if (_.isEqual(router.pathname, RouterPath.ManagementAuthGoogleMeet)) {
+      return (
+        <Provider store={store}>
+          <PersistGate persistor={persistStore(store)}>
+            <NextIntlClientProvider messages={pageProps.messages}>
+              <Component {...pageProps} />
+              <ToastContainer />
+            </NextIntlClientProvider>
+          </PersistGate>
+        </Provider>
+      )
+    }
+  } else if (_.includes(router.pathname, 'management/admin')) {
+    // management/admin 配下の場合
     return (
       <Provider store={store}>
         <PersistGate persistor={persistStore(store)}>
@@ -62,7 +75,7 @@ const App = ({ Component, pageProps }) => {
       </Provider>
     )
   } else {
-    if (isEqual(router.pathname, RouterPath.ManagementLoginMFA)) {
+    if (_.isEqual(router.pathname, RouterPath.ManagementLoginMFA)) {
       return (
         <Provider store={store}>
           <PersistGate persistor={persistStore(store)}>
@@ -77,7 +90,7 @@ const App = ({ Component, pageProps }) => {
         </Provider>
       )
     }
-    if (isEqual(router.pathname, RouterPath.ManagementLoginPasswordChange)) {
+    if (_.isEqual(router.pathname, RouterPath.ManagementLoginPasswordChange)) {
       return (
         <Provider store={store}>
           <PersistGate persistor={persistStore(store)}>

@@ -14,12 +14,13 @@ import {
   SearchSortModel,
   SearchText,
   SelectedCheckbox,
+  SelectedMenuModel,
   TableHeader,
   TableSort,
 } from '@/types/management'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
-import { common } from '@mui/material/colors'
+import { blue, common } from '@mui/material/colors'
 import {
   cloneDeep,
   every,
@@ -39,17 +40,19 @@ import {
   SearchSortKey,
   SearchTextIndex,
   Site,
-  dispApplicantSite,
 } from '@/enum/applicant'
 import UploadModal from '@/components/modal/UploadModal'
 import {
   ApplicantDocumentDownloadRequest,
   ApplicantSearchRequest,
   ApplicantsDownloadRequest,
+  GoogleMeetURLRequest,
+  HashKeyRequest,
 } from '@/api/model/management'
 import {
   ApplicantSitesSSG,
   ApplicantStatusListSSG,
+  GoogleAuth,
   applicantDocumentDownloadCSR,
   applicantsDownloadCSR,
   applicantsSearchCSR,
@@ -59,14 +62,15 @@ import { useRouter } from 'next/router'
 import NextHead from '@/components/Header'
 import {
   ButtonColorInverse,
+  FontSize,
   M0Auto,
+  maxW,
   mb,
   ml,
   mr,
   mt,
   Resume,
   SpaceBetween,
-  TableMenu,
   TableMenuButtons,
   w,
 } from '@/styles/index'
@@ -75,6 +79,7 @@ import { Role } from '@/enum/user'
 import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
 import SearchModal from '@/components/modal/SearchModal'
 import {
   mgApplicantSearchSort,
@@ -83,6 +88,7 @@ import {
 } from '@/hooks/store'
 import Pagination from '@/components/Pagination'
 import { formatDate2 } from '@/hooks/common'
+import SelectedMenu from '@/components/SelectedMenu'
 
 const APPLICANT_PAGE_SIZE = 30
 
@@ -429,6 +435,36 @@ const Applicants = ({ api, isError, locale }) => {
     setSearchObj(newObj)
   }
 
+  // 選択済みメニュー表示
+  const dispMenu: SelectedMenuModel[] = [
+    // Google Meet
+    {
+      name: t('management.features.applicant.menu.googleMeet'),
+      icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
+      color: blue[300],
+      condition: isEqual(size(filter(checkedList, (c) => c.checked)), 1),
+      onClick: async () => {
+        const hashKey = filter(checkedList, (c) => c.checked)[0].key
+
+        // API Google認証URL作成
+        await GoogleAuth({
+          applicant: {
+            hash_key: hashKey,
+          } as HashKeyRequest,
+          user_hash_key: user.hashKey,
+        } as GoogleMeetURLRequest)
+          .then((res) => {
+            window.open(res.data?.url, '_blank', 'noopener,noreferrer')
+            return
+          })
+          .catch(() => {
+            router.push(RouterPath.ManagementError)
+            return
+          })
+      },
+    },
+  ]
+
   const [open, setOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -654,7 +690,21 @@ const Applicants = ({ api, isError, locale }) => {
                   changePage={changePage}
                 ></Pagination>
               )}
-              <Box sx={[TableMenuButtons, , mb(3)]}>
+              {size(filter(checkedList, (c) => c.checked)) > 0 && (
+                <SelectedMenu
+                  menu={dispMenu}
+                  size={size(filter(checkedList, (c) => c.checked))}
+                ></SelectedMenu>
+              )}
+              <Box
+                sx={[
+                  TableMenuButtons,
+                  mb(3),
+                  size(filter(checkedList, (c) => c.checked)) > 0
+                    ? maxW(300)
+                    : null,
+                ]}
+              >
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}

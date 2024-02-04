@@ -224,3 +224,12 @@ export type CalendarTitlesModel = {
   title: string
   subTitle: string
 }
+
+// 選択済みメニュー
+export type SelectedMenuModel = {
+  name: string
+  icon: JSX.Element
+  color: string
+  condition: boolean
+  onClick?
+}

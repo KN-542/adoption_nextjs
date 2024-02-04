@@ -5,6 +5,7 @@ import {
   ApplicantSearchRequest,
   ApplicantsDownloadRequest,
   CreateSchedulesRequest,
+  GoogleMeetURLRequest,
   HashKeyRequest,
   LoginRequest,
   MFARequest,
@@ -185,6 +186,26 @@ export const SchedulesCSR = async () => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/user/schedules`,
     {},
+    APICommonHeader,
+  )
+  return res
+}
+
+// Google認証URL作成 CSR
+export const GoogleAuth = async (req: GoogleMeetURLRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get_url`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// Google認証URL作成 CSR
+export const GoogleMeetURL = async (req: GoogleMeetURLRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get_google_meet_url`,
+    req,
     APICommonHeader,
   )
   return res
