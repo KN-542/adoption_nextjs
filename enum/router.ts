@@ -22,6 +22,8 @@ export enum RouterPath {
   ManagementHistory = '/management/admin/history',
   // 個人設定
   ManagementSetting = '/management/admin/setting',
+  // 認証
+  ManagementAuthGoogleMeet = '/management/admin/auth/google',
 }
 
 export const decideTitle = (path: string) => {
@@ -51,6 +53,9 @@ export const decideTitle = (path: string) => {
     // 個人設定
     case RouterPath.ManagementSetting:
       return 'common.title.setting.index'
+    // 認証
+    case RouterPath.ManagementAuthGoogleMeet:
+      return 'common.title.auth'
     default:
       return '404' // TODO
   }

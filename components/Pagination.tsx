@@ -1,7 +1,7 @@
 import { RouterPath } from '@/enum/router'
 import { RootState } from '@/hooks/store/store'
 import { Box, Button } from '@mui/material'
-import { cloneDeep, every, isEqual, map, min, some } from 'lodash'
+import { every, isEqual, map, min, size, some } from 'lodash'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
@@ -14,8 +14,8 @@ import {
   PaginationMenu,
   ml,
   TextCenter,
-  mr,
   BorderRadius,
+  w,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'
@@ -36,6 +36,7 @@ type Option = {
 
 const NOT_SKIP_PAGE_SIZE_MAX = 5
 const SKIP_PAGE_SIZE = 3
+const MIN_EL_SIZE = 284
 
 const Pagination = (props: Props) => {
   const router = useRouter()
@@ -160,10 +161,14 @@ const Pagination = (props: Props) => {
   }, [])
 
   return (
-    <Box sx={[minW(1000), mb(1.5), PaginationMenu]}>
-      <Box component="span" sx={mr(1)}>
-        {t('common.pagination.top') + ':'}
-      </Box>
+    <Box
+      sx={[
+        w(100),
+        maxW(MIN_EL_SIZE + 24 * size(displayList)),
+        mb(1.5),
+        PaginationMenu,
+      ]}
+    >
       {map(displayList, (item, index) => {
         if (item.isButton) {
           const flg = isEqual(props.currentPage, item.value)
@@ -205,9 +210,7 @@ const Pagination = (props: Props) => {
         {`${props.pageSize * (props.currentPage - 1) + 1} ~ ${min([
           props.pageSize * props.currentPage,
           props.listSize,
-        ])}${t('common.pagination.size')} / ${props.listSize}${t(
-          'common.pagination.size',
-        )}`}
+        ])} / ${props.listSize}${t('common.pagination.size')}`}
       </Box>
     </Box>
   )

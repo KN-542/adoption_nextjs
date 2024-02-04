@@ -42,6 +42,9 @@ export const maxH = (h: number) => {
 export const hBlock = (h: number) => {
   return { height: h }
 }
+export const FontSize = (s: number) => {
+  return { fontSize: s }
+}
 export const Padding = (p: number) => {
   return { padding: p }
 }
@@ -363,4 +366,26 @@ export const CustomTableIcon = {
   minWidth: 10,
   ml: 1,
   mr: 0,
+}
+
+export const SelectMenu = {
+  border: '2px solid',
+  borderColor: grey[300],
+}
+
+export const MenuDisp = (color: string) => {
+  return {
+    color: color,
+    '&:hover': {
+      color: color,
+      backgroundColor: common.white,
+    },
+    textTransform: 'none',
+  }
+}
+
+export const TextBottom = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-end',
 }

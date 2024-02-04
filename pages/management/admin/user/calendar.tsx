@@ -13,23 +13,9 @@ import {
 } from '@/styles/index'
 import NextHead from '@/components/Header'
 import jaLocale from '@fullcalendar/core/locales/ja'
-import {
-  WEEKENDS,
-  formatDate,
-  formatDateToHHMM,
-  getDayOfYear,
-} from '@/hooks/common'
+import { WEEKENDS, formatDateToHHMM, getDayOfYear } from '@/hooks/common'
 import CalendarModal from '@/components/modal/CalendarModal'
-import {
-  every,
-  filter,
-  find,
-  forEach,
-  isEmpty,
-  isEqual,
-  map,
-  some,
-} from 'lodash'
+import { every, find, isEmpty, isEqual, map, some } from 'lodash'
 import {
   CalendarModel,
   CalendarTitlesModel,
@@ -58,7 +44,7 @@ import ClearIcon from '@mui/icons-material/Clear'
 import { ScheduleTypes } from '@/enum/user'
 import { CreateSchedulesRequest, HashKeyRequest } from '@/api/model/management'
 
-const UserCalendar = ({ isError, locale, api }) => {
+const UserCalendar = ({ isError, api }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -278,8 +264,24 @@ const UserCalendar = ({ isError, locale, api }) => {
   }
 
   const deleteSchedule = async (id: string, date: Date) => {
+    // API カレンダー削除
     await DeleteSchedulesCSR({ hash_key: id } as HashKeyRequest)
       .then(() => {
+        toast(
+          t('management.features.user.calendar.calendar') +
+            t('common.toast.delete'),
+          {
+            style: {
+              backgroundColor: setting.toastSuccessColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
+
         setCurrentDate(date)
       })
       .catch((error) => {
@@ -354,7 +356,6 @@ const UserCalendar = ({ isError, locale, api }) => {
                         type: null,
                       } as CalendarModel)
                       setOpen(true)
-                      console.log(11)
                     }}
                     sx={[h(100), CursorPointer]}
                   >
@@ -387,7 +388,6 @@ const UserCalendar = ({ isError, locale, api }) => {
                   type: { value: String(obj.freqId) } as ScheduleType,
                 } as CalendarModel)
                 setOpen(true)
-                console.log(22)
               }}
             />
           </Box>

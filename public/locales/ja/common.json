@@ -21,6 +21,7 @@
       "setting": {
         "index": "個人設定"
       },
+      "auth": "認証",
       "modal": {
         "upload": "ファイルアップロード",
         "createUser": "ログイン情報",
@@ -33,7 +34,9 @@
       }
     },
     "toast": {
-      "create": "が正常に登録されました"
+      "create": "が正常に登録されました",
+      "edit": "が正常に編集されました",
+      "delete": "が正常に削除されました"
     },
     "table": {
       "rowsPerPage": "ページあたりの行数",
@@ -47,8 +50,10 @@
       "search": "検索"
     },
     "pagination": {
-      "top": "ページ番号",
       "size": "件"
+    },
+    "menu": {
+      "size": "件選択中"
     },
     "validate": {
       "required": "は必須入力項目です",
@@ -139,6 +144,9 @@
         "documents": {
           "t": "あり",
           "f": "なし"
+        },
+        "menu": {
+          "googleMeet": "Google Meet"
         }
       },
       "user": {

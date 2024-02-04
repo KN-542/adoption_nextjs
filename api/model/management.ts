@@ -66,3 +66,10 @@ export type CreateSchedulesRequest = {
   end: string
   title: string
 }
+
+// Google認証URL作成 request
+export type GoogleMeetURLRequest = {
+  applicant: HashKeyRequest
+  user_hash_key: string
+  code: string
+}
