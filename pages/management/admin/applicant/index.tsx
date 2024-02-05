@@ -52,6 +52,7 @@ import {
 import {
   ApplicantSitesSSG,
   ApplicantStatusListSSG,
+  GetApplicantCSR,
   GoogleAuth,
   applicantDocumentDownloadCSR,
   applicantsDownloadCSR,
@@ -105,7 +106,7 @@ const Applicants = ({ api, isError, locale }) => {
   const user = useSelector((state: RootState) => state.management.user)
   const setting = useSelector((state: RootState) => state.management.setting)
 
-  const [bodies, setBodies] = useState([])
+  const [bodies, setBodies] = useState<ApplicantsTableBody[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
@@ -178,6 +179,7 @@ const Applicants = ({ api, isError, locale }) => {
             status: Number(r.status),
             statusName: r[`status_name_${locale}`],
             interviewerDate: new Date(r.desired_at),
+            google: r.google_meet_url,
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
           } as ApplicantsTableBody)
@@ -442,25 +444,70 @@ const Applicants = ({ api, isError, locale }) => {
       name: t('management.features.applicant.menu.googleMeet'),
       icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
       color: blue[300],
-      condition: isEqual(size(filter(checkedList, (c) => c.checked)), 1),
+      condition: every([
+        isEqual(size(filter(checkedList, (c) => c.checked)), 1),
+        findIndex(bodies, (item) =>
+          isEqual(item.hashKey, filter(checkedList, (c) => c.checked)[0]?.key),
+        ) > -1,
+        !isEmpty(
+          bodies[
+            findIndex(bodies, (item) =>
+              isEqual(
+                item.hashKey,
+                filter(checkedList, (c) => c.checked)[0]?.key,
+              ),
+            )
+          ]?.resume,
+        ),
+      ]),
       onClick: async () => {
         const hashKey = filter(checkedList, (c) => c.checked)[0].key
 
-        // API Google認証URL作成
-        await GoogleAuth({
-          applicant: {
+        try {
+          // API 応募者取得(1件)
+          const res = await GetApplicantCSR({
             hash_key: hashKey,
-          } as HashKeyRequest,
-          user_hash_key: user.hashKey,
-        } as GoogleMeetURLRequest)
-          .then((res) => {
-            window.open(res.data?.url, '_blank', 'noopener,noreferrer')
+          } as HashKeyRequest)
+
+          if (!isEmpty(res.data?.google_meet_url)) {
+            window.open(
+              res.data?.google_meet_url,
+              '_blank',
+              'noopener,noreferrer',
+            )
             return
-          })
-          .catch(() => {
-            router.push(RouterPath.ManagementError)
-            return
-          })
+          }
+
+          // API Google認証URL作成
+          const res2 = await GoogleAuth({
+            applicant: {
+              hash_key: hashKey,
+            } as HashKeyRequest,
+            user_hash_key: user.hashKey,
+          } as GoogleMeetURLRequest)
+
+          window.open(res2.data?.url, '_blank', 'noopener,noreferrer')
+        } catch (error) {
+          if (error.response) {
+            if (500 <= error.response.status && error.response.status < 600) {
+              router.push(RouterPath.ManagementError)
+              return
+            }
+
+            if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+              toast(t(`common.api.code.${error.response.data.code}`), {
+                style: {
+                  backgroundColor: setting.toastErrorColor,
+                  color: common.white,
+                  width: 500,
+                },
+                position: 'bottom-left',
+                hideProgressBar: true,
+                closeButton: () => <ClearIcon />,
+              })
+            }
+          }
+        }
       },
     },
   ]
