@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { useRouter } from 'next/router'
-import store, { RootState } from '@/hooks/store/store'
+import { RootState } from '@/hooks/store/store'
 import { GoogleMeetURL } from '@/api/repository'
 import { RouterPath } from '@/enum/router'
 import _ from 'lodash'
-import { GoogleMeetURLRequest, HashKeyRequest } from '@/api/model/management'
+import { GoogleMeetURLRequest } from '@/api/model/management'
 import {} from '@/hooks/store'
 
 const GoogleMeet = () => {
@@ -15,10 +15,10 @@ const GoogleMeet = () => {
   const user = useSelector((state: RootState) => state.management.user)
 
   const getGoogleMeetURL = async () => {
-    // if (_.isEmpty(code)) {
-    //   router.push(RouterPath.ManagementError)
-    //   return
-    // }
+    if (_.isEmpty(code)) {
+      router.push(RouterPath.ManagementError)
+      return
+    }
 
     await GoogleMeetURL({
       user_hash_key: user.hashKey,
@@ -28,7 +28,7 @@ const GoogleMeet = () => {
         window.location.href = res.data.google_meet_url
       })
       .catch(() => {
-        // router.push(RouterPath.ManagementError)
+        router.push(RouterPath.ManagementError)
         return
       })
   }
@@ -40,17 +40,6 @@ const GoogleMeet = () => {
   }, [router.isReady])
 
   return <></>
-}
-
-export const getStaticProps = async ({ locale }) => {
-  return {
-    props: {
-      locale,
-      messages: (
-        await import(`../../../../public/locales/${locale}/common.json`)
-      ).default,
-    },
-  }
 }
 
 export default GoogleMeet

@@ -211,6 +211,16 @@ export const GoogleMeetURL = async (req: GoogleMeetURLRequest) => {
   return res
 }
 
+// 応募者取得(1件) CSR
+export const GetApplicantCSR = async (req: HashKeyRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
 // ユーザーロール一覧 SSG
 export const UserRoleListSSG = async () => {
   const res = await axios.post(

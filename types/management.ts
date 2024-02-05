@@ -65,10 +65,12 @@ export type ApplicantsTableBody = {
   statusName: string
   // 面接予定日
   interviewerDate: Date
+  // Google Meet URL
+  google: string
   // 履歴書
-  resume: JSX.Element
+  resume: string
   // 職務経歴書
-  curriculumVitae: JSX.Element
+  curriculumVitae: string
 }
 
 // ユーザー一覧 table body
