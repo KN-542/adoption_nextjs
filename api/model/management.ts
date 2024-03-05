@@ -58,8 +58,10 @@ export type UserCreateRequest = {
   role_id: number
 }
 
-// スケジュール登録 request
-export type CreateSchedulesRequest = {
+// スケジュール関連 request
+export type SchedulesRequest = {
+  hash_key: string
+  applicant_hash_key: string
   user_hash_keys: string
   freq_id: number
   start: string

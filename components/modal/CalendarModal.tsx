@@ -61,7 +61,7 @@ import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import {
   CalendarModel,
-  CalendarTitlesModel,
+  SelectTitlesModel,
   ScheduleType,
 } from '@/types/management'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
@@ -69,7 +69,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 type Props = {
   open: boolean
   model?: CalendarModel
-  users: CalendarTitlesModel[]
+  users: SelectTitlesModel[]
   radios?: ScheduleType[]
   isEdit: boolean
   close: () => void
@@ -112,8 +112,8 @@ const CalendarModal = (props: Props) => {
 
   const setting = useSelector((state: RootState) => state.management.setting)
 
-  const [options, _] = useState<CalendarTitlesModel[]>(props.users)
-  const [selectedOptions, setSelectedOptions] = useState<CalendarTitlesModel[]>(
+  const [options, _] = useState<SelectTitlesModel[]>(props.users)
+  const [selectedOptions, setSelectedOptions] = useState<SelectTitlesModel[]>(
     filter(props.users, (option) =>
       includes(
         map(props.model.users, (item) => {

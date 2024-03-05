@@ -71,6 +71,12 @@ export type ApplicantsTableBody = {
   resume: string
   // 職務経歴書
   curriculumVitae: string
+  // 担当面接官
+  users: string[]
+  // 担当面接官氏名
+  userNames: string[]
+  // カレンダーハッシュキー
+  calendarHashKey: string
 }
 
 // ユーザー一覧 table body
@@ -205,7 +211,7 @@ export type CalendarModel = {
   start?: string
   end?: string
   title: string
-  users?: CalendarTitlesModel[]
+  users?: SelectTitlesModel[]
   type: ScheduleType
 }
 
@@ -221,7 +227,7 @@ export type Schedule = {
 }
 
 // カレンダー Titles
-export type CalendarTitlesModel = {
+export type SelectTitlesModel = {
   key: string
   title: string
   subTitle: string

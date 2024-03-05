@@ -139,14 +139,19 @@
           "status": "選考状況",
           "interviewerDate": "面接予定日",
           "resume": "履歴書",
-          "curriculumVitae": "職務経歴書"
+          "curriculumVitae": "職務経歴書",
+          "users": "担当面接官"
+        },
+        "assign": {
+          "subTitle": "ユーザー"
         },
         "documents": {
           "t": "あり",
           "f": "なし"
         },
         "menu": {
-          "googleMeet": "Google Meet"
+          "googleMeet": "Google Meet",
+          "user": "面接官割振り"
         }
       },
       "user": {

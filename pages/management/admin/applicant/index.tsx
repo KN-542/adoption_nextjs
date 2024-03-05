@@ -13,10 +13,12 @@ import {
   SearchSelected,
   SearchSortModel,
   SearchText,
+  SelectTitlesModel,
   SelectedCheckbox,
   SelectedMenuModel,
   TableHeader,
   TableSort,
+  UsersTableBody,
 } from '@/types/management'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
@@ -48,12 +50,15 @@ import {
   ApplicantsDownloadRequest,
   GoogleMeetURLRequest,
   HashKeyRequest,
+  SchedulesRequest,
 } from '@/api/model/management'
 import {
   ApplicantSitesSSG,
   ApplicantStatusListSSG,
   GetApplicantCSR,
   GoogleAuth,
+  UpdateSchedulesCSR,
+  UserListCSR,
   applicantDocumentDownloadCSR,
   applicantsDownloadCSR,
   applicantsSearchCSR,
@@ -63,6 +68,7 @@ import { useRouter } from 'next/router'
 import NextHead from '@/components/Header'
 import {
   ButtonColorInverse,
+  DirectionColumnForTable,
   FontSize,
   M0Auto,
   maxW,
@@ -90,6 +96,7 @@ import {
 import Pagination from '@/components/Pagination'
 import { formatDate2 } from '@/hooks/common'
 import SelectedMenu from '@/components/SelectedMenu'
+import ItemsSelectModal from '@/components/modal/ItemsSelectModal'
 
 const APPLICANT_PAGE_SIZE = 30
 
@@ -107,9 +114,14 @@ const Applicants = ({ api, isError, locale }) => {
   const setting = useSelector((state: RootState) => state.management.setting)
 
   const [bodies, setBodies] = useState<ApplicantsTableBody[]>([])
+  const [users, setUsers] = useState<UsersTableBody[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
+
+  const [open, setOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [userSelectOpen, setUserSelectOpen] = useState(false)
 
   const search = async (currentPage?: number) => {
     // API 応募者一覧
@@ -182,6 +194,9 @@ const Applicants = ({ api, isError, locale }) => {
             google: r.google_meet_url,
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
+            users: String(r.users).split(','),
+            userNames: String(r.user_names).split(','),
+            calendarHashKey: r.calendar_hash_key,
           } as ApplicantsTableBody)
         })
         setBodies(list)
@@ -437,6 +452,57 @@ const Applicants = ({ api, isError, locale }) => {
     setSearchObj(newObj)
   }
 
+  const submitUsers = async (hashKeys: string[]) => {
+    const applicantHashKey = filter(checkedList, (c) => c.checked)[0].key
+    const calendarHashKey = filter(bodies, (b) =>
+      isEqual(b.hashKey, applicantHashKey),
+    )[0].calendarHashKey
+    await UpdateSchedulesCSR({
+      hash_key: calendarHashKey,
+      applicant_hash_key: applicantHashKey,
+      user_hash_keys: hashKeys.join(','),
+    } as SchedulesRequest)
+      .then(async () => {
+        toast(
+          t('management.features.applicant.menu.user') +
+            t('common.toast.create'),
+          {
+            style: {
+              backgroundColor: setting.toastSuccessColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
+
+        await search(1)
+      })
+      .catch((error) => {
+        if (
+          every([500 <= error.response.status, error.response.status < 600])
+        ) {
+          router.push(RouterPath.ManagementError)
+          return
+        }
+
+        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response.data.code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+        }
+      })
+  }
+
   // 選択済みメニュー表示
   const dispMenu: SelectedMenuModel[] = [
     // Google Meet
@@ -510,10 +576,72 @@ const Applicants = ({ api, isError, locale }) => {
         }
       },
     },
-  ]
+    // 面接官割振り
+    {
+      name: t('management.features.applicant.menu.user'),
+      icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
+      color: common.black,
+      condition: every([
+        isEqual(size(filter(checkedList, (c) => c.checked)), 1),
+        findIndex(bodies, (item) =>
+          isEqual(item.hashKey, filter(checkedList, (c) => c.checked)[0]?.key),
+        ) > -1,
+        !isEmpty(
+          bodies[
+            findIndex(bodies, (item) =>
+              isEqual(
+                item.hashKey,
+                filter(checkedList, (c) => c.checked)[0]?.key,
+              ),
+            )
+          ]?.resume,
+        ),
+        isEqual(user.role, Role.Admin),
+      ]),
+      onClick: async () => {
+        const hashKey = filter(checkedList, (c) => c.checked)[0].key
 
-  const [open, setOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
+        // API ユーザー一覧
+        const list: UsersTableBody[] = []
+        await UserListCSR()
+          .then((res) => {
+            _.forEach(res.data.users, (u, index) => {
+              list.push({
+                no: Number(index) + 1,
+                hashKey: u.hash_key,
+                name: u.name,
+                mail: u.email,
+                role: Number(u.role_id),
+                roleName: u[`role_name_${locale}`],
+              } as UsersTableBody)
+            })
+            setUsers(list)
+            setUserSelectOpen(true)
+          })
+          .catch((error) => {
+            if (
+              every([500 <= error.response.status, error.response.status < 600])
+            ) {
+              router.push(RouterPath.ManagementError)
+              return
+            }
+
+            if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
+              toast(t(`common.api.code.${error.response.data.code}`), {
+                style: {
+                  backgroundColor: setting.toastErrorColor,
+                  color: common.white,
+                  width: 500,
+                },
+                position: 'bottom-left',
+                hideProgressBar: true,
+                closeButton: () => <ClearIcon />,
+              })
+            }
+          })
+      },
+    },
+  ]
 
   const readTextFile = async (file: File) => {
     const reader = new FileReader()
@@ -679,11 +807,16 @@ const Applicants = ({ api, isError, locale }) => {
     },
     {
       id: 8,
-      name: t('management.features.applicant.header.resume'),
+      name: t('management.features.applicant.header.users'),
       sort: null,
     },
     {
       id: 9,
+      name: t('management.features.applicant.header.resume'),
+      sort: null,
+    },
+    {
+      id: 10,
       name: t('management.features.applicant.header.curriculumVitae'),
       sort: null,
     },
@@ -790,6 +923,13 @@ const Applicants = ({ api, isError, locale }) => {
                     l.interviewerDate.getFullYear() < 2
                       ? '-'
                       : formatDate2(l.interviewerDate),
+                  users: (
+                    <Box sx={DirectionColumnForTable}>
+                      {map(l.userNames, (user, index) => {
+                        return <Box key={index}>{user}</Box>
+                      })}
+                    </Box>
+                  ),
                   resume: isEmpty(l.resume) ? (
                     <>{t('management.features.applicant.documents.f')}</>
                   ) : (
@@ -865,6 +1005,31 @@ const Applicants = ({ api, isError, locale }) => {
             changePage={changePage}
             changeSearchObjByText={changeSearchObjByText}
           ></SearchModal>
+          <ItemsSelectModal
+            open={userSelectOpen}
+            items={map(users, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.name,
+                subTitle: u.mail,
+              } as SelectTitlesModel
+            })}
+            selectedItems={
+              isEmpty(filter(checkedList, (c) => c.checked))
+                ? []
+                : filter(bodies, (b) =>
+                    isEqual(
+                      b.hashKey,
+                      filter(checkedList, (c) => c.checked)[0].key,
+                    ),
+                  )[0].users
+            }
+            title={t('management.features.applicant.menu.user')}
+            subTitle={t('management.features.applicant.assign.subTitle')}
+            buttonTitle={t('management.features.applicant.menu.user')}
+            submit={submitUsers}
+            close={() => setUserSelectOpen(false)}
+          ></ItemsSelectModal>
         </>
       )}
     </>
