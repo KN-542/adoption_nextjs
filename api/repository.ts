@@ -4,7 +4,7 @@ import {
   ApplicantDocumentDownloadRequest,
   ApplicantSearchRequest,
   ApplicantsDownloadRequest,
-  CreateSchedulesRequest,
+  SchedulesRequest,
   GoogleMeetURLRequest,
   HashKeyRequest,
   LoginRequest,
@@ -162,9 +162,19 @@ export const UserCreateCSR = async (req: UserCreateRequest) => {
 }
 
 // スケジュール登録 CSR
-export const CreateSchedulesCSR = async (req: CreateSchedulesRequest) => {
+export const CreateSchedulesCSR = async (req: SchedulesRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_schedule`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// スケジュール更新 CSR
+export const UpdateSchedulesCSR = async (req: SchedulesRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/update_schedule`,
     req,
     APICommonHeader,
   )

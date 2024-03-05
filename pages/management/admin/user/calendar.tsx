@@ -18,7 +18,7 @@ import CalendarModal from '@/components/modal/CalendarModal'
 import { every, find, isEmpty, isEqual, map, some } from 'lodash'
 import {
   CalendarModel,
-  CalendarTitlesModel,
+  SelectTitlesModel,
   UserGroupTableBody,
   ScheduleType,
   UsersTableBody,
@@ -42,7 +42,7 @@ import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
 import { ScheduleTypes } from '@/enum/user'
-import { CreateSchedulesRequest, HashKeyRequest } from '@/api/model/management'
+import { SchedulesRequest, HashKeyRequest } from '@/api/model/management'
 
 const UserCalendar = ({ isError, api }) => {
   const router = useRouter()
@@ -221,7 +221,7 @@ const UserCalendar = ({ isError, api }) => {
       start: start,
       end: end,
       title: m.title,
-    } as CreateSchedulesRequest)
+    } as SchedulesRequest)
       .then(() => {
         toast(
           t('management.features.user.calendar.calendar') +
@@ -383,7 +383,7 @@ const UserCalendar = ({ isError, api }) => {
                   users: map(obj.userHashKeys, (hash) => {
                     return {
                       key: hash,
-                    } as CalendarTitlesModel
+                    } as SelectTitlesModel
                   }),
                   type: { value: String(obj.freqId) } as ScheduleType,
                 } as CalendarModel)
@@ -410,7 +410,7 @@ const UserCalendar = ({ isError, api }) => {
                   key: user.hashKey,
                   title: user.name,
                   subTitle: user.mail,
-                } as CalendarTitlesModel
+                } as SelectTitlesModel
               })}
               radios={api.scheduleList}
               isEdit={!isEmpty(model.start)}
