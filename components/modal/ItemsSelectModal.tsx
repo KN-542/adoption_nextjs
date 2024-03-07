@@ -15,7 +15,7 @@ import {
   createFilterOptions,
 } from '@mui/material'
 import { useTranslations } from 'next-intl'
-import _, { every, filter, includes, isEmpty, map } from 'lodash'
+import _, { filter, includes, isEmpty, map } from 'lodash'
 import {
   Bold,
   ButtonColor,
