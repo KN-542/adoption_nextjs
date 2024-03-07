@@ -103,8 +103,12 @@ export enum SearchTextIndex {
   Name = 0,
   // メールアドレス
   Mail,
+}
+
+// 検索項目 AutoComplete
+export enum SearchAutoCompIndex {
   // 面接官
-  Interviewer,
+  Interviewer = 0,
   // 面接官(サブ)
   SubInterviewer,
 }

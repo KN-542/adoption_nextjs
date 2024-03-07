@@ -135,13 +135,15 @@ export type TableHeader = {
 
 // 検索 項目
 export type SearchForm = {
-  selectList: SearchSelect[]
-  textForm: SearchText[]
+  selectList?: SearchSelect[]
+  textForm?: SearchText[]
+  autoCompForm?: SearchAutoComplete[]
 }
 // 検索 model
 export type SearchModel = {
   selectedList: SearchSelected[]
   textForm: SearchText[]
+  autoCompForm: SearchAutoComplete[]
   sort: SearchSortModel
 }
 
@@ -162,6 +164,14 @@ export type SearchText = {
   id: number
   name: string
   value: string
+}
+
+// 検索 AutoComplete
+export type SearchAutoComplete = {
+  id: number
+  name: string
+  items: SelectTitlesModel[]
+  selectedItems: SelectTitlesModel[]
 }
 
 // 検索ストレージ
@@ -219,6 +229,7 @@ export type CalendarModel = {
 export type Schedule = {
   hashKey: string
   userHashKeys: string[]
+  interviewFlg: number
   start: Date
   end: Date
   title: string

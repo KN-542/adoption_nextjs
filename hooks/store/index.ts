@@ -1,13 +1,15 @@
-import { SearchTextIndex } from '@/enum/applicant'
+import { SearchAutoCompIndex, SearchTextIndex } from '@/enum/applicant'
 import { green, indigo, red } from '@mui/material/colors'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { cloneDeep } from 'lodash'
 import {
   ApplicantModel,
+  SearchAutoComplete,
   SearchModel,
   SearchSelected,
   SearchSortModel,
   SearchText,
+  SelectTitlesModel,
   SettingModel,
   SideBarStoreModel,
   UserModel,
@@ -30,6 +32,13 @@ const state = {
             value: '',
           },
         ] as SearchText[],
+        autoCompForm: [
+          {
+            id: SearchAutoCompIndex.Interviewer,
+            name: 'management.features.applicant.header.users',
+            selectedItems: [] as SelectTitlesModel[],
+          },
+        ] as SearchAutoComplete[],
         sort: {
           key: '',
           isAsc: true,
@@ -84,6 +93,12 @@ export const slice = createSlice({
     mgApplicantSearchText: (state, action: PayloadAction<SearchText[]>) => {
       state.management.applicant.search.textForm = cloneDeep(action.payload)
     },
+    mgApplicantSearchAutoComp: (
+      state,
+      action: PayloadAction<SearchAutoComplete[]>,
+    ) => {
+      state.management.applicant.search.autoCompForm = cloneDeep(action.payload)
+    },
     mgApplicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
       Object.assign(state.management.applicant.search.sort, action.payload)
     },
@@ -97,5 +112,6 @@ export const {
   mgSignOut,
   mgApplicantSearchTermList,
   mgApplicantSearchText,
+  mgApplicantSearchAutoComp,
   mgApplicantSearchSort,
 } = slice.actions

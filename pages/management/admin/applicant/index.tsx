@@ -7,6 +7,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import {
   ApplicantsTableBody,
   CheckboxPropsField,
+  SearchAutoComplete,
   SearchForm,
   SearchSelect,
   SearchSelectTerm,
@@ -38,6 +39,7 @@ import {
 } from 'lodash'
 import {
   DocumentUploaded,
+  SearchAutoCompIndex,
   SearchIndex,
   SearchSortKey,
   SearchTextIndex,
@@ -59,6 +61,7 @@ import {
   GoogleAuth,
   UpdateSchedulesCSR,
   UserListCSR,
+  UserListSSG,
   applicantDocumentDownloadCSR,
   applicantsDownloadCSR,
   applicantsSearchCSR,
@@ -89,6 +92,7 @@ import ClearIcon from '@mui/icons-material/Clear'
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
 import SearchModal from '@/components/modal/SearchModal'
 import {
+  mgApplicantSearchAutoComp,
   mgApplicantSearchSort,
   mgApplicantSearchTermList,
   mgApplicantSearchText,
@@ -109,12 +113,12 @@ const Applicants = ({ api, isError, locale }) => {
   )
   const applicantSearchTermList = cloneDeep(applicant.search.selectedList)
   const applicantSearchText = cloneDeep(applicant.search.textForm)
+  const applicantSearchAutoCompForm = cloneDeep(applicant.search.autoCompForm)
   const applicantSearchSort = Object.assign({}, applicant.search.sort)
   const user = useSelector((state: RootState) => state.management.user)
   const setting = useSelector((state: RootState) => state.management.setting)
 
   const [bodies, setBodies] = useState<ApplicantsTableBody[]>([])
-  const [users, setUsers] = useState<UsersTableBody[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
@@ -175,6 +179,15 @@ const Applicants = ({ api, isError, locale }) => {
           )[0],
       name: applicantSearchText[SearchTextIndex.Name].value.trim(),
       email: applicantSearchText[SearchTextIndex.Mail].value.trim(),
+      users: map(
+        applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
+          .selectedItems,
+        (item) => {
+          return item.key
+        },
+      )
+        .join(',')
+        .trim(),
       sort_key: applicantSearchSort.key,
       sort_asc: applicantSearchSort.isAsc,
     } as ApplicantSearchRequest)
@@ -240,11 +253,6 @@ const Applicants = ({ api, isError, locale }) => {
         }
       })
   }
-
-  useEffect(() => {
-    if (isError) router.push(RouterPath.ManagementError)
-    search(1)
-  }, [])
 
   const [searchObj, setSearchObj] = useState<SearchForm>({
     selectList: [
@@ -357,6 +365,24 @@ const Applicants = ({ api, isError, locale }) => {
         value: applicantSearchText[SearchTextIndex.Mail].value,
       },
     ] as SearchText[],
+    autoCompForm: [
+      {
+        id: applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer].id,
+        name: t(
+          applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer].name,
+        ),
+        items: map(api.users, (u) => {
+          return {
+            key: u.hashKey,
+            title: u.name,
+            subTitle: u.mail,
+          } as SelectTitlesModel
+        }) as SelectTitlesModel[],
+        selectedItems:
+          applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
+            .selectedItems,
+      },
+    ] as SearchAutoComplete[],
   })
 
   const changeSearchObjBySelect = (
@@ -430,6 +456,21 @@ const Applicants = ({ api, isError, locale }) => {
     setSearchObj(newObj)
   }
 
+  const changeSearchObjByAutoComp = (
+    index: number,
+    selectedItems: SelectTitlesModel[],
+  ) => {
+    const newObj = Object.assign({}, searchObj)
+    newObj.autoCompForm[index].selectedItems.length = 0
+    applicantSearchAutoCompForm[index].selectedItems.length = 0
+    for (const item of selectedItems) {
+      newObj.autoCompForm[index].selectedItems.push(item)
+      applicantSearchAutoCompForm[index].selectedItems.push(item)
+    }
+    store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
+    setSearchObj(newObj)
+  }
+
   const initInputs = () => {
     const newObj = Object.assign({}, searchObj)
 
@@ -446,9 +487,16 @@ const Applicants = ({ api, isError, locale }) => {
     for (const item of applicantSearchText) {
       item.value = ''
     }
+    for (const item of newObj.autoCompForm) {
+      item.selectedItems.length = 0
+    }
+    for (const item of applicantSearchAutoCompForm) {
+      item.selectedItems.length = 0
+    }
 
     store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
     store.dispatch(mgApplicantSearchText(applicantSearchText))
+    store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
     setSearchObj(newObj)
   }
 
@@ -599,46 +647,7 @@ const Applicants = ({ api, isError, locale }) => {
         isEqual(user.role, Role.Admin),
       ]),
       onClick: async () => {
-        const hashKey = filter(checkedList, (c) => c.checked)[0].key
-
-        // API ユーザー一覧
-        const list: UsersTableBody[] = []
-        await UserListCSR()
-          .then((res) => {
-            _.forEach(res.data.users, (u, index) => {
-              list.push({
-                no: Number(index) + 1,
-                hashKey: u.hash_key,
-                name: u.name,
-                mail: u.email,
-                role: Number(u.role_id),
-                roleName: u[`role_name_${locale}`],
-              } as UsersTableBody)
-            })
-            setUsers(list)
-            setUserSelectOpen(true)
-          })
-          .catch((error) => {
-            if (
-              every([500 <= error.response.status, error.response.status < 600])
-            ) {
-              router.push(RouterPath.ManagementError)
-              return
-            }
-
-            if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-              toast(t(`common.api.code.${error.response.data.code}`), {
-                style: {
-                  backgroundColor: setting.toastErrorColor,
-                  color: common.white,
-                  width: 500,
-                },
-                position: 'bottom-left',
-                hideProgressBar: true,
-                closeButton: () => <ClearIcon />,
-              })
-            }
-          })
+        setUserSelectOpen(true)
       },
     },
   ]
@@ -854,6 +863,12 @@ const Applicants = ({ api, isError, locale }) => {
     setPage(i)
   }
 
+  useEffect(() => {
+    if (isError) router.push(RouterPath.ManagementError)
+
+    search(1)
+  }, [])
+
   return (
     <>
       <NextHead></NextHead>
@@ -1004,10 +1019,11 @@ const Applicants = ({ api, isError, locale }) => {
             submit={search}
             changePage={changePage}
             changeSearchObjByText={changeSearchObjByText}
+            changeSearchObjByAutoComp={changeSearchObjByAutoComp}
           ></SearchModal>
           <ItemsSelectModal
             open={userSelectOpen}
-            items={map(users, (u) => {
+            items={map(api.users, (u) => {
               return {
                 key: u.hashKey,
                 title: u.name,
@@ -1061,11 +1077,30 @@ export const getStaticProps = async ({ locale }) => {
       isError = true
     })
 
+  const users: UsersTableBody[] = []
+  await UserListSSG()
+    .then((res) => {
+      _.forEach(res.data.users, (u, index) => {
+        users.push({
+          no: Number(index) + 1,
+          hashKey: u.hash_key,
+          name: u.name,
+          mail: u.email,
+          role: Number(u.role_id),
+          roleName: u[`role_name_${locale}`],
+        } as UsersTableBody)
+      })
+    })
+    .catch(() => {
+      isError = true
+    })
+
   return {
     props: {
       api: {
         applicantStatusList: applicantStatusList,
         applicantSites: applicantSites,
+        users: users as UsersTableBody[],
       },
       isError,
       locale,

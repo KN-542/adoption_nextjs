@@ -33,6 +33,8 @@ export type ApplicantSearchRequest = {
   name: string
   // メールアドレス
   email: string
+  // 面接官
+  users: string
   // ソート(key)
   sort_key: string
   // ソート(向き)
@@ -64,6 +66,7 @@ export type SchedulesRequest = {
   applicant_hash_key: string
   user_hash_keys: string
   freq_id: number
+  interview_flg: number
   start: string
   end: string
   title: string

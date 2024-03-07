@@ -41,7 +41,7 @@ import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
-import { ScheduleTypes } from '@/enum/user'
+import { InterviewerStatus, ScheduleTypes } from '@/enum/user'
 import { SchedulesRequest, HashKeyRequest } from '@/api/model/management'
 
 const UserCalendar = ({ isError, api }) => {
@@ -93,6 +93,7 @@ const UserCalendar = ({ isError, api }) => {
         list2.push({
           hashKey: item.hash_key,
           userHashKeys: item.user_hash_keys.split(','),
+          interviewFlg: item.interview_flg,
           start: new Date(item.start),
           end: new Date(item.end),
           title: item.title,
@@ -218,6 +219,7 @@ const UserCalendar = ({ isError, api }) => {
         return item.key
       }).join(','),
       freq_id: Number(m.type.value),
+      interview_flg: InterviewerStatus.None,
       start: start,
       end: end,
       title: m.title,
@@ -373,6 +375,9 @@ const UserCalendar = ({ isError, api }) => {
                   router.push(RouterPath.ManagementError)
                   return
                 }
+
+                if (isEqual(obj.interviewFlg, InterviewerStatus.Interview))
+                  return
 
                 setModel({
                   id: info.event.id,

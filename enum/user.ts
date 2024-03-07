@@ -22,3 +22,9 @@ export enum ScheduleTypes {
   Monthly = 'monthly',
   Yearly = 'yearly',
 }
+
+// 面接フラグ
+export enum InterviewerStatus {
+  None = 0,
+  Interview = 1,
+}
