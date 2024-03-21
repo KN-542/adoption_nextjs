@@ -5,5 +5,5 @@ RUN apt update \
     && npx playwright install \
     && npx playwright install-deps \
     && npx playwright install chrome \
-    && npx playwright install msedge \
+    && npx playwright install msedge
 EXPOSE 3000
