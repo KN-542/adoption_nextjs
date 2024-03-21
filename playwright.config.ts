@@ -35,21 +35,25 @@ export default defineConfig({
     /* Configure projects for major browsers */
     projects: [
         {
-            name: 'Google Chrome',
-            use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-        },
-        {
-            name: 'Microsoft Edge',
-            use: { ...devices['Desktop Edge'], channel: 'msedge' }, // or "msedge-beta" or 'msedge-dev'
-        },
-        {
-            name: 'firefox',
-            use: { ...devices['Desktop Firefox'] },
-        },
-        {
-            name: 'webkit',
-            use: { ...devices['Desktop Safari'] },
-        },
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+        }
+        // {
+        //     name: 'Google Chrome',
+        //     use: { ...devices['Desktop Chrome'], channel: 'chrome' },
+        // },
+        // {
+        //     name: 'Microsoft Edge',
+        //     use: { ...devices['Desktop Edge'], channel: 'msedge' }, // or "msedge-beta" or 'msedge-dev'
+        // },
+        // {
+        //     name: 'firefox',
+        //     use: { ...devices['Desktop Firefox'] },
+        // },
+        // {
+        //     name: 'webkit',
+        //     use: { ...devices['Desktop Safari'] },
+        // },
         /* Test against mobile viewports. */
         // {
         //   name: 'Mobile Chrome',

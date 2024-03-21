@@ -4,6 +4,5 @@ RUN apt update \
     && yarn install \
     && npx playwright install \
     && npx playwright install-deps \
-    && npx playwright install chrome \
-    && npx playwright install msedge
+    && npx playwright install chromium
 EXPOSE 3000
