@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx playwright test && next build",
+    "build": "yarn test && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test-init": "yarn playwright install-deps && yarn playwright install",
+    "test": "yarn playwright test"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

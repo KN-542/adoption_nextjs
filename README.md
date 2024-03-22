@@ -2,7 +2,13 @@
 
 ```
 yarn
+yarn test-init
 yarn dev
+```
+
+テストを実行する場合
+```
+yarn test
 ```
 
 その後、ブラウザにて以下を実行
