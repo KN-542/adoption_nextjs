@@ -463,10 +463,20 @@ const Applicants = ({ api, isError, locale }) => {
     const newObj = Object.assign({}, searchObj)
     newObj.autoCompForm[index].selectedItems.length = 0
     applicantSearchAutoCompForm[index].selectedItems.length = 0
-    for (const item of selectedItems) {
-      newObj.autoCompForm[index].selectedItems.push(item)
-      applicantSearchAutoCompForm[index].selectedItems.push(item)
+
+    if (isEmpty(selectedItems)) {
+      store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
+      setSearchObj(newObj)
+      return
     }
+
+    newObj.autoCompForm[index].selectedItems.push(
+      selectedItems[size(selectedItems) - 1],
+    )
+    applicantSearchAutoCompForm[index].selectedItems.push(
+      selectedItems[size(selectedItems) - 1],
+    )
+
     store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
     setSearchObj(newObj)
   }
