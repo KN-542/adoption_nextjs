@@ -9,11 +9,11 @@ export enum Site {
 export const dispApplicantSite = (n: number): string => {
   switch (n) {
     case Site.Recruit:
-      return 'management.features.applicant.site.recruit'
+      return 'features.applicant.site.recruit'
     case Site.Mynavi:
-      return 'management.features.applicant.site.mynavi'
+      return 'features.applicant.site.mynavi'
     case Site.Doda:
-      return 'management.features.applicant.site.doda'
+      return 'features.applicant.site.doda'
     default:
       return 'TODO'
   }
@@ -49,29 +49,29 @@ export enum ApplicantStatus {
 export const dispApplicantStatus = (n: number): string => {
   switch (n) {
     case ApplicantStatus.ScheduleUnanswered:
-      return 'management.features.applicant.status.scheduleUnanswered'
+      return 'features.applicant.status.scheduleUnanswered'
     case ApplicantStatus.ScheduleAnswered:
-      return 'management.features.applicant.status.scheduleAnswered'
+      return 'features.applicant.status.scheduleAnswered'
     case ApplicantStatus.DocumentsSubmitted:
-      return 'management.features.applicant.status.documentsSubmitted'
+      return 'features.applicant.status.documentsSubmitted'
     case ApplicantStatus.Offer:
-      return 'management.features.applicant.status.offer'
+      return 'features.applicant.status.offer'
     case ApplicantStatus.InternalCommitments:
-      return 'management.features.applicant.status.internalCommitments'
+      return 'features.applicant.status.internalCommitments'
     case ApplicantStatus.CalendarAnswerDeadlineExceeded:
-      return 'management.features.applicant.status.calendarAnswerDeadlineExceeded'
+      return 'features.applicant.status.calendarAnswerDeadlineExceeded'
     case ApplicantStatus.DeadlineForSubmissionOfBooksExceeds:
-      return 'management.features.applicant.status.deadlineForSubmissionOfBooksExceeds'
+      return 'features.applicant.status.deadlineForSubmissionOfBooksExceeds'
     case ApplicantStatus.FailingToPassThePhysicalExamination:
-      return 'management.features.applicant.status.failingToPassThePhysicalExamination'
+      return 'features.applicant.status.failingToPassThePhysicalExamination'
     case ApplicantStatus.FailingAnInterview:
-      return 'management.features.applicant.status.failingAnInterview'
+      return 'features.applicant.status.failingAnInterview'
     case ApplicantStatus.Withdrawal:
-      return 'management.features.applicant.status.withdrawal'
+      return 'features.applicant.status.withdrawal'
     case ApplicantStatus.InternalizedDismissal:
-      return 'management.features.applicant.status.internalizedDismissal'
+      return 'features.applicant.status.internalizedDismissal'
     case ApplicantStatus.DismissalAfterInternalCommitment:
-      return 'management.features.applicant.status.dismissalAfterInternalCommitment'
+      return 'features.applicant.status.dismissalAfterInternalCommitment'
     default:
       return 'TODO'
   }

@@ -7,11 +7,13 @@ yarn dev
 ```
 
 テストを実行する場合
+
 ```
 yarn test
 ```
 
 その後、ブラウザにて以下を実行
+
 ```
-localhost:3000/management/login
+localhost:3000/login
 ```

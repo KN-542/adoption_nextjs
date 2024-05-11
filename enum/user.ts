@@ -1,3 +1,9 @@
+// 言語
+export enum Lang {
+  JA = 'ja',
+  EN = 'en',
+}
+
 // ロール
 export enum Role {
   Admin = 1,
@@ -6,9 +12,9 @@ export enum Role {
 export const dispRole = (n: number): string => {
   switch (n) {
     case Role.Admin:
-      return 'management.features.user.role.admin'
+      return 'features.user.role.admin'
     case Role.Interviewer:
-      return 'management.features.user.role.interviewer'
+      return 'features.user.role.interviewer'
     default:
       return 'TODO'
   }
