@@ -1,61 +1,72 @@
 export enum RouterPath {
+  // 根幹
+  Admin = '/admin',
+  Management = '/management',
   // ログイン
-  ManagementLogin = '/management/login',
-  ManagementLoginMFA = '/management/login/mfa',
-  ManagementLoginPasswordChange = '/management/login/password',
+  Login = '/login',
+  ManagementLoginMFA = '/login/mfa',
+  ManagementLoginPasswordChange = '/login/password',
   // エラー
-  ManagementError = '/management/error',
+  Error = '/error',
   // 応募者
-  ManagementApplicant = '/management/admin/applicant',
-  // 予約者
-  ManagementReserver = '/management/admin/reserver',
+  Applicant = '/applicant',
   // ユーザー
-  ManagementUser = '/management/admin/user',
-  ManagementUserCreate = '/management/admin/user/create',
-  ManagementUserGroup = '/management/admin/user/group',
-  ManagementUserCalendar = '/management/admin/user/calendar',
+  User = '/user',
+  UserCreate = '/user/create',
+  UserGroup = '/user/group',
+  UserCalendar = '/user/calendar',
+  // ロール
+  Role = '/role',
   // メールテンプレート
-  ManagementMailTemplate = '/management/admin/mail',
+  Mail = '/mail',
   // データ集計
-  ManagementAnalysis = '/management/admin/analysis',
+  Analysis = '/analysis',
   // 操作ログ
-  ManagementHistory = '/management/admin/history',
+  History = '/history',
   // 個人設定
-  ManagementSetting = '/management/admin/setting',
+  Setting = '/setting',
   // 認証
-  ManagementAuthGoogleMeet = '/management/admin/auth/google',
+  AuthGoogleMeet = '/auth/google',
+  // 企業
+  Company = '/company',
 }
 
+// ブラウザタイトル決定
 export const decideTitle = (path: string) => {
   switch (path) {
     // ログイン
-    case RouterPath.ManagementLogin:
+    case RouterPath.Login:
       return 'common.title.login.login'
     case RouterPath.ManagementLoginMFA:
       return 'common.title.login.login'
     case RouterPath.ManagementLoginPasswordChange:
       return 'common.title.login.login'
     // エラー
-    case RouterPath.ManagementError:
+    case RouterPath.Error:
       return 'common.title.error.500'
     // 応募者
-    case RouterPath.ManagementApplicant:
+    case RouterPath.Management + RouterPath.Applicant:
       return 'common.title.applicant.list'
     // ユーザー
-    case RouterPath.ManagementUser:
+    case RouterPath.Management + RouterPath.User:
       return 'common.title.user.list'
-    case RouterPath.ManagementUserCreate:
+    case RouterPath.Management + RouterPath.UserCreate:
       return 'common.title.user.create'
-    case RouterPath.ManagementUserGroup:
+    case RouterPath.Management + RouterPath.UserGroup:
       return 'common.title.user.group.list'
-    case RouterPath.ManagementUserCalendar:
+    case RouterPath.Management + RouterPath.UserCalendar:
       return 'common.title.user.calendar'
     // 個人設定
-    case RouterPath.ManagementSetting:
+    case RouterPath.Admin + RouterPath.Setting:
+      return 'common.title.setting.index'
+    case RouterPath.Management + RouterPath.Setting:
       return 'common.title.setting.index'
     // 認証
-    case RouterPath.ManagementAuthGoogleMeet:
+    case RouterPath.Management + RouterPath.AuthGoogleMeet:
       return 'common.title.auth'
+    // 企業
+    case RouterPath.Admin + RouterPath.Company:
+      return 'common.title.company.list'
     default:
       return '404' // TODO
   }

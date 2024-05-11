@@ -11,7 +11,11 @@ import {
   MFARequest,
   PasswordChangeRequest,
   UserCreateRequest,
-} from './model/management'
+  MFACreateRequest,
+  LogoutRequest,
+  JWTDecodeRequest,
+  SidebarRequest,
+} from './model/request'
 
 // Login CSR
 export const loginCSR = async (req: LoginRequest) => {
@@ -24,7 +28,7 @@ export const loginCSR = async (req: LoginRequest) => {
 }
 
 // Logout CSR
-export const LogoutCSR = async (req: HashKeyRequest) => {
+export const LogoutCSR = async (req: LogoutRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/logout`,
     req,
@@ -44,7 +48,7 @@ export const MFACSR = async (req: MFARequest) => {
 }
 
 // MFA create CSR
-export const MFACreateCSR = async (req: HashKeyRequest) => {
+export const MFACreateCSR = async (req: MFACreateRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/code_gen`,
     req,
@@ -54,7 +58,7 @@ export const MFACreateCSR = async (req: HashKeyRequest) => {
 }
 
 // JWT Decode CSR
-export const JWTDecodeCSR = async (req: HashKeyRequest) => {
+export const JWTDecodeCSR = async (req: JWTDecodeRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/decode`,
     req,
@@ -63,10 +67,20 @@ export const JWTDecodeCSR = async (req: HashKeyRequest) => {
   return res
 }
 
-// JWT Decode CSR
+// パスワード変更 CSR
 export const PasswordChangeCSR = async (req: PasswordChangeRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/password_change`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// サイドバー CSR
+export const SidebarCSR = async (req: SidebarRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/sidebar`,
     req,
     APICommonHeader,
   )

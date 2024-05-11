@@ -1,4 +1,5 @@
 import { SearchAutoCompIndex, SearchTextIndex } from '@/enum/applicant'
+import { Lang } from '@/enum/user'
 import { green, indigo, red } from '@mui/material/colors'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import { cloneDeep } from 'lodash'
@@ -11,57 +12,51 @@ import {
   SearchText,
   SelectTitlesModel,
   SettingModel,
-  SideBarStoreModel,
   UserModel,
 } from 'types/management'
 
 const state = {
-  management: {
-    applicant: {
-      search: {
-        selectedList: [] as SearchSelected[],
-        textForm: [
-          {
-            id: SearchTextIndex.Name,
-            name: 'management.features.applicant.header.name',
-            value: '',
-          },
-          {
-            id: SearchTextIndex.Mail,
-            name: 'management.features.applicant.header.mail',
-            value: '',
-          },
-        ] as SearchText[],
-        autoCompForm: [
-          {
-            id: SearchAutoCompIndex.Interviewer,
-            name: 'management.features.applicant.header.users',
-            selectedItems: [] as SelectTitlesModel[],
-          },
-        ] as SearchAutoComplete[],
-        sort: {
-          key: '',
-          isAsc: true,
-        } as SearchSortModel,
-      } as SearchModel,
-    } as ApplicantModel,
-    user: {
-      hashKey: '',
-      name: '',
-      mail: '',
-      role: 0,
-    } as UserModel,
-    sidebar: {
-      targetId: 0,
-      targetName: '',
-    } as SideBarStoreModel,
-    setting: {
-      color: indigo[500],
-      toastSuccessColor: green[500],
-      toastErrorColor: red[500],
-      errorMsg: '',
-    } as SettingModel,
-  },
+  applicant: {
+    search: {
+      selectedList: [] as SearchSelected[],
+      textForm: [
+        {
+          id: SearchTextIndex.Name,
+          name: 'features.applicant.header.name',
+          value: '',
+        },
+        {
+          id: SearchTextIndex.Mail,
+          name: 'features.applicant.header.mail',
+          value: '',
+        },
+      ] as SearchText[],
+      autoCompForm: [
+        {
+          id: SearchAutoCompIndex.Interviewer,
+          name: 'features.applicant.header.users',
+          selectedItems: [] as SelectTitlesModel[],
+        },
+      ] as SearchAutoComplete[],
+      sort: {
+        key: '',
+        isAsc: true,
+      } as SearchSortModel,
+    } as SearchModel,
+  } as ApplicantModel,
+  user: {
+    hashKey: '',
+    name: '',
+    mail: '',
+    path: '',
+  } as UserModel,
+  setting: {
+    lang: Lang.JA,
+    color: indigo[500],
+    toastSuccessColor: green[500],
+    toastErrorColor: red[500],
+    errorMsg: '',
+  } as SettingModel,
 }
 
 const initState = Object.assign({}, state)
@@ -71,45 +66,40 @@ export const slice = createSlice({
   initialState: state,
   // Action
   reducers: {
-    mgUserSignIn: (state, action: PayloadAction<UserModel>) => {
-      Object.assign(state.management.user, action.payload)
-    },
-    mgSideBarChange: (state, action: PayloadAction<SideBarStoreModel>) => {
-      Object.assign(state.management.sidebar, action.payload)
+    userModel: (state, action: PayloadAction<UserModel>) => {
+      Object.assign(state.user, action.payload)
     },
     mgChangeSetting: (state, action: PayloadAction<SettingModel>) => {
-      Object.assign(state.management.setting, action.payload)
+      Object.assign(state.setting, action.payload)
     },
-    mgSignOut: (state) => {
-      Object.assign(state.management.sidebar, initState.management.sidebar)
-      Object.assign(state.management.user, initState.management.user)
+    signOut: (state) => {
+      Object.assign(state.user, initState.user)
     },
     mgApplicantSearchTermList: (
       state,
       action: PayloadAction<SearchSelected[]>,
     ) => {
-      state.management.applicant.search.selectedList = cloneDeep(action.payload)
+      state.applicant.search.selectedList = cloneDeep(action.payload)
     },
     mgApplicantSearchText: (state, action: PayloadAction<SearchText[]>) => {
-      state.management.applicant.search.textForm = cloneDeep(action.payload)
+      state.applicant.search.textForm = cloneDeep(action.payload)
     },
     mgApplicantSearchAutoComp: (
       state,
       action: PayloadAction<SearchAutoComplete[]>,
     ) => {
-      state.management.applicant.search.autoCompForm = cloneDeep(action.payload)
+      state.applicant.search.autoCompForm = cloneDeep(action.payload)
     },
     mgApplicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
-      Object.assign(state.management.applicant.search.sort, action.payload)
+      Object.assign(state.applicant.search.sort, action.payload)
     },
   },
 })
 
 export const {
-  mgUserSignIn,
-  mgSideBarChange,
+  userModel,
   mgChangeSetting,
-  mgSignOut,
+  signOut,
   mgApplicantSearchTermList,
   mgApplicantSearchText,
   mgApplicantSearchAutoComp,

@@ -1,17 +1,8 @@
 // レフトメニュー model
-export type SideBarModel = {
-  id: number
+export type SidebarModel = {
   name: string
   href: string
-  icon: JSX.Element
-  role: boolean
   button?: () => void
-}
-
-// レフトメニュー store用model
-export type SideBarStoreModel = {
-  targetId: number
-  targetName: string
 }
 
 // コンテンツ
@@ -32,11 +23,12 @@ export type UserModel = {
   hashKey: string
   name: string
   mail: string
-  role: number
+  path: string
 }
 
 // 設定 model
 export type SettingModel = {
+  lang?: string
   color: string
   toastSuccessColor: string
   toastErrorColor: string

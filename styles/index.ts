@@ -72,7 +72,9 @@ export const TextCenter = {
 
 export const FlexGrow = { flexGrow: 1 }
 
+export const Center = { display: 'flex', justifyContent: 'center' }
 export const SpaceBetween = { display: 'flex', justifyContent: 'space-between' }
+export const SpaceEvenly = { display: 'flex', justifyContent: 'space-evenly' }
 
 export const SpaceBetweenContent = {
   display: 'none',
@@ -88,7 +90,8 @@ export const ToolBarMlMedia = {
   },
 }
 
-export const modalResponsive = {
+export const ModalResponsive = {
+  borderRadius: '50px',
   '@media (min-width:1100px)': {
     m: 10,
   },
@@ -268,12 +271,12 @@ export const DialogValue = {
   padding: 2,
 }
 
-export const SideBarName = {
+export const SidebarName = {
   textDecoration: 'none',
   color: 'grey',
   ml: 4,
 }
-export const SideBarBody = {
+export const SidebarBody = {
   height: 100,
   display: 'flex',
   flexDirection: 'column',
