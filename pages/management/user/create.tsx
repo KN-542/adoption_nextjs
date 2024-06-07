@@ -28,7 +28,7 @@ import ErrorHandler from '@/components/common/ErrorHandler'
 import { common } from '@material-ui/core/colors'
 import { RootState } from '@/hooks/store/store'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
-import _, { filter, keys, map, min, size, trim } from 'lodash'
+import _ from 'lodash'
 import { Role, dispRole } from '@/enum/user'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { FormValidation, FormValidationValue } from '@/hooks/validation'
@@ -38,15 +38,15 @@ import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import { UserCreateCSR, UserRoleListSSG } from '@/api/repository'
 import { UserCreateRequest } from '@/api/model/request'
-import UserCreateModal from '@/components/modal/UserCreateModal'
 import { useEffect, useState } from 'react'
-import { Contents } from '@/types/management'
+import { Contents } from '@/types/common/index'
+import UserCreateModal from '@/components/common/modal/UserCreateModal'
 
 const UserCreate = ({ roleList, isError }) => {
   const router = useRouter()
   const t = useTranslations()
 
-  const [open, setOpen] = useState(false)
+  const [open, isOpen] = useState(false)
   const [userData, setUserData] = useState([])
 
   const setting = useSelector((state: RootState) => state.setting)
@@ -57,7 +57,7 @@ const UserCreate = ({ roleList, isError }) => {
 
   type Inputs = {
     name: string
-    mail: string
+    email: string
     role: string
   }
   const {
@@ -71,30 +71,30 @@ const UserCreate = ({ roleList, isError }) => {
     name: {
       max: 30,
     },
-    mail: {
+    email: {
       max: 50,
-      pattern: new RegExp(Pattern.Mail),
+      pattern: new RegExp(Pattern.Email),
     },
     role: {},
   }
 
   const formValidation: FormValidation = {
-    mail: [
+    email: [
       {
         type: ValidationType.Required,
-        message: t('features.login.mail') + t('common.validate.required'),
+        message: t('features.login.email') + t('common.validate.required'),
       },
       {
         type: ValidationType.MaxLength,
         message:
-          t('features.login.mail') +
+          t('features.login.email') +
           t('common.validate.is') +
-          String(formValidationValue.mail.max) +
+          String(formValidationValue.email.max) +
           t('common.validate.maxLength'),
       },
       {
         type: ValidationType.Pattern,
-        message: t('common.validate.pattern.mail'),
+        message: t('common.validate.pattern.email'),
       },
     ],
     name: [
@@ -125,14 +125,14 @@ const UserCreate = ({ roleList, isError }) => {
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
     await UserCreateCSR({
       name: d.name,
-      email: d.mail,
+      email: d.email,
       role_id: Number(d.role),
     } as UserCreateRequest)
       .then((res) => {
         // モーダルへ
         setUserData([
           {
-            key: t('features.user.header.mail'),
+            key: t('features.user.header.email'),
             element: <>{res.data.email}</>,
           },
           {
@@ -140,7 +140,7 @@ const UserCreate = ({ roleList, isError }) => {
             element: <>{res.data.init_password}</>,
           },
         ] as Contents[])
-        setOpen(true)
+        isOpen(true)
         toast(t('features.user.user') + t('common.toast.create'), {
           style: {
             backgroundColor: setting.toastSuccessColor,
@@ -177,7 +177,7 @@ const UserCreate = ({ roleList, isError }) => {
               {...register('name', {
                 required: true,
                 maxLength: formValidationValue.name.max,
-                setValueAs: (value) => trim(value),
+                setValueAs: (value) => _.trim(value),
               })}
               aria-invalid={errors.name ? 'true' : 'false'}
             />
@@ -187,23 +187,23 @@ const UserCreate = ({ roleList, isError }) => {
             ></ErrorHandler>
 
             <FormLabel sx={mt(6)}>
-              {t('features.user.header.mail') + '*'}
+              {t('features.user.header.email') + '*'}
             </FormLabel>
             <TextField
               margin="normal"
               required
               style={w(100)}
-              {...register('mail', {
+              {...register('email', {
                 required: true,
-                maxLength: formValidationValue.mail.max,
-                pattern: formValidationValue.mail.pattern,
-                setValueAs: (value) => trim(value),
+                maxLength: formValidationValue.email.max,
+                pattern: formValidationValue.email.pattern,
+                setValueAs: (value) => _.trim(value),
               })}
-              aria-invalid={errors.mail ? 'true' : 'false'}
+              aria-invalid={errors.email ? 'true' : 'false'}
             />
             <ErrorHandler
-              validations={formValidation.mail}
-              type={errors.mail?.type}
+              validations={formValidation.email}
+              type={errors.email?.type}
             ></ErrorHandler>
             <FormLabel sx={mt(6)}>
               {t('features.user.header.role') + '*'}
@@ -217,7 +217,7 @@ const UserCreate = ({ roleList, isError }) => {
               className="form-radio"
               style={w(100)}
             >
-              {map(roleList, (item) => {
+              {_.map(roleList, (item) => {
                 return (
                   <FormControlLabel
                     key={item.id}

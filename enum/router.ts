@@ -4,10 +4,10 @@ export enum RouterPath {
   Management = '/management',
   // ログイン
   Login = '/login',
-  ManagementLoginMFA = '/login/mfa',
-  ManagementLoginPasswordChange = '/login/password',
   // エラー
   Error = '/error',
+  // ホーム
+  Home = '',
   // 応募者
   Applicant = '/applicant',
   // ユーザー
@@ -18,7 +18,7 @@ export enum RouterPath {
   // ロール
   Role = '/role',
   // メールテンプレート
-  Mail = '/mail',
+  Email = '/email',
   // データ集計
   Analysis = '/analysis',
   // 操作ログ
@@ -36,14 +36,15 @@ export const decideTitle = (path: string) => {
   switch (path) {
     // ログイン
     case RouterPath.Login:
-      return 'common.title.login.login'
-    case RouterPath.ManagementLoginMFA:
-      return 'common.title.login.login'
-    case RouterPath.ManagementLoginPasswordChange:
-      return 'common.title.login.login'
+      return 'common.title.login'
     // エラー
     case RouterPath.Error:
       return 'common.title.error.500'
+    // ホーム
+    case RouterPath.Admin + RouterPath.Home:
+      return 'common.title.home'
+    case RouterPath.Management + RouterPath.Home:
+      return 'common.title.home'
     // 応募者
     case RouterPath.Management + RouterPath.Applicant:
       return 'common.title.applicant.list'

@@ -1,14 +1,14 @@
 import Content from '@/components/common/Content'
 import { mgChangeSetting } from '@/hooks/store'
 import store, { RootState } from '@/hooks/store/store'
-import { Color, Contents } from '@/types/management'
+import { Color, Contents } from '@/types/common/index'
 import { deepPurple, indigo, red } from '@material-ui/core/colors'
 import { Box, Button, Typography } from '@mui/material'
 import { useTranslations } from 'next-intl'
 import { useSelector } from 'react-redux'
 import { useRouter } from 'next/router'
 import { RouterPath } from '@/enum/router'
-import { map } from 'lodash'
+import _ from 'lodash'
 import NextHead from '@/components/common/Header'
 import {
   amber,
@@ -266,7 +266,7 @@ const Setting = () => {
       element: <>{'面接官1'}</>,
     },
     {
-      key: t('features.setting.mail'),
+      key: t('features.setting.email'),
       element: <>{'a@au.com'}</>,
     },
     {
@@ -278,7 +278,7 @@ const Setting = () => {
       element: (
         <Box sx={ColorBox}>
           <Box sx={ColorBoxChild}>
-            {map(colorSet, (obj, index) => (
+            {_.map(colorSet, (obj, index) => (
               <Box key={index} sx={ColorBoxChildNowrap}>
                 <Button
                   variant="contained"

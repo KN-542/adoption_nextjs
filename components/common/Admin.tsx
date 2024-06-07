@@ -8,10 +8,10 @@ import store, { RootState } from '@/hooks/store/store'
 import { JWTDecodeCSR, LogoutCSR } from '@/api/repository'
 import { RouterPath } from '@/enum/router'
 import { APICommonCode, APISessionCheckCode } from '@/enum/apiError'
-import _, { every, isEqual } from 'lodash'
 import { ToastContainer } from 'react-toastify'
-import { mgChangeSetting, signOut, userModel } from '@/hooks/store'
-import { SettingModel, UserModel } from '@/types/management'
+import { mgChangeSetting, signOut } from '@/hooks/store'
+import _ from 'lodash'
+import { SettingModel, UserModel } from '@/types/common/index'
 import { useTranslations } from 'next-intl'
 import { JWTDecodeRequest, LogoutRequest } from '@/api/model/request'
 
@@ -36,7 +36,7 @@ const Admin = ({ Component, pageProps }) => {
         router.push(RouterPath.Login)
       })
       .catch((error) => {
-        _.isEqual(error.response.data.code, APICommonCode.BadRequest)
+        _.isEqual(error.response?.data.code, APICommonCode.BadRequest)
           ? router.push(RouterPath.Login)
           : router.push(RouterPath.Error)
         return
@@ -53,19 +53,22 @@ const Admin = ({ Component, pageProps }) => {
       })
       .catch(async (error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
         let msg = ''
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.code.${error.response.data.code}`)
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          msg = t(`common.api.code.${error.response?.data.code}`)
         } else if (
-          isEqual(error.response.data.code, APISessionCheckCode.LoginRequired)
+          _.isEqual(
+            error.response?.data.code,
+            APISessionCheckCode.LoginRequired,
+          )
         ) {
-          msg = t(`common.api.code.expired${error.response.data.code}`)
+          msg = t(`common.api.code.expired${error.response?.data.code}`)
         }
 
         store.dispatch(

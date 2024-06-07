@@ -1,6 +1,6 @@
-import { Contents } from '@/types/management'
+import { Contents } from '@/types/common/index'
 import { DialogContent, Box, Divider } from '@mui/material'
-import { map } from 'lodash'
+import _ from 'lodash'
 import {
   DialogKey,
   DialogContentMain,
@@ -17,7 +17,7 @@ type Props = {
 const Content = (props: Props) => {
   return (
     <DialogContent sx={[DialogContentMain, mt(props.mt ?? 15)]}>
-      {map(props.data, (item, index) => {
+      {_.map(props.data, (item, index) => {
         return (
           <Box key={index} sx={DialogKey}>
             <Box sx={DialogKeyChild}>{item.key}</Box>

@@ -5,7 +5,6 @@ import CustomTable from '@/components/common/Table'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import {
-  ApplicantsTableBody,
   CheckboxPropsField,
   SearchAutoComplete,
   SearchForm,
@@ -20,23 +19,10 @@ import {
   TableHeader,
   TableSort,
   UsersTableBody,
-} from '@/types/management'
+} from '@/types/common/index'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
 import { blue, common } from '@mui/material/colors'
-import {
-  cloneDeep,
-  every,
-  filter,
-  find,
-  findIndex,
-  isEmpty,
-  isEqual,
-  isNull,
-  map,
-  min,
-  size,
-} from 'lodash'
 import {
   DocumentUploaded,
   SearchAutoCompIndex,
@@ -45,26 +31,29 @@ import {
   SearchTextIndex,
   Site,
 } from '@/enum/applicant'
-import UploadModal from '@/components/modal/UploadModal'
 import {
   ApplicantDocumentDownloadRequest,
+  ApplicantDownloadSubRequest,
   ApplicantSearchRequest,
+  ApplicantStatusListRequest,
   ApplicantsDownloadRequest,
   GoogleMeetURLRequest,
   HashKeyRequest,
+  RolesRequest,
   SchedulesRequest,
+  UserSearchRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
-  ApplicantStatusListSSG,
   GetApplicantCSR,
   GoogleAuth,
   UpdateSchedulesCSR,
-  UserListCSR,
-  UserListSSG,
+  UserSearchCSR,
   applicantDocumentDownloadCSR,
-  applicantsDownloadCSR,
-  applicantsSearchCSR,
+  ApplicantsDownloadCSR,
+  ApplicantsSearchCSR,
+  RolesCSR,
+  ApplicantStatusListCSR,
 } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
@@ -85,12 +74,10 @@ import {
   w,
 } from '@/styles/index'
 import { RouterPath } from '@/enum/router'
-import { Role } from '@/enum/user'
 import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
-import SearchModal from '@/components/modal/SearchModal'
 import {
   mgApplicantSearchAutoComp,
   mgApplicantSearchSort,
@@ -100,115 +87,227 @@ import {
 import Pagination from '@/components/common/Pagination'
 import { formatDate2 } from '@/hooks/common'
 import SelectedMenu from '@/components/common/SelectedMenu'
-import ItemsSelectModal from '@/components/modal/ItemsSelectModal'
+import ItemsSelectModal from '@/components/common/modal/ItemsSelectModal'
+import UploadModal from '@/components/management/modal/UploadModal'
+import SearchModal from '@/components/common/modal/SearchModal'
+import { HttpStatusCode } from 'axios'
+import { Operation } from '@/enum/common'
+import {
+  ApplicantSearchDTO,
+  ApplicantStatusListDTO,
+  UserSearchDTO,
+} from '@/api/model/dto'
+import Papa from 'papaparse'
+import { Pattern } from '@/enum/validation'
+import Spinner from '@/components/common/modal/Spinner'
+
+type Props = {
+  isError: boolean
+  locale: string
+  sites: ApplicantStatusListDTO[]
+}
 
 const APPLICANT_PAGE_SIZE = 30
 
-const Applicants = ({ api, isError, locale }) => {
+const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
   const router = useRouter()
   const t = useTranslations()
 
   const applicant = useSelector((state: RootState) => state.applicant)
-  const applicantSearchTermList = cloneDeep(applicant.search.selectedList)
-  const applicantSearchText = cloneDeep(applicant.search.textForm)
-  const applicantSearchAutoCompForm = cloneDeep(applicant.search.autoCompForm)
+  const applicantSearchTermList: SearchSelected[] = _.cloneDeep(
+    applicant.search.selectedList,
+  )
+  const applicantSearchText = _.cloneDeep(applicant.search.textForm)
+  const applicantSearchAutoCompForm = _.cloneDeep(applicant.search.autoCompForm)
   const applicantSearchSort = Object.assign({}, applicant.search.sort)
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [bodies, setBodies] = useState<ApplicantsTableBody[]>([])
-  const [loading, IsLoading] = useState(true)
-  const [page, setPage] = useState(1)
+  const [bodies, setBodies] = useState<ApplicantSearchDTO[]>([])
+  const [statusList, setStatusList] = useState<ApplicantStatusListDTO[]>([])
+  const [usersBelongTeam, setUsersBelongTeam] = useState<UserSearchDTO[]>([])
+  const [page, setPage] = useState<number>(1)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
+  const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
 
-  const [open, setOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [userSelectOpen, setUserSelectOpen] = useState(false)
+  const [loading, isLoading] = useState<boolean>(true)
+  const [open, isOpen] = useState<boolean>(false)
+  const [searchOpen, isSearchOpen] = useState<boolean>(false)
+  const [userSelectOpen, isUserSelectOpen] = useState<boolean>(false)
+  const [noContent, isNoContent] = useState<boolean>(false)
+  const [init, isInit] = useState<boolean>(true)
+  const [spinner, isSpinner] = useState<boolean>(false)
+
+  const inits = async () => {
+    try {
+      // API 使用可能ロール一覧
+      const res = await RolesCSR({
+        hash_key: user.hashKey,
+      } as RolesRequest)
+
+      setRoles(res.data.map as { [key: string]: boolean })
+
+      // API 応募者ステータス一覧取得
+      const res2: ApplicantStatusListDTO[] = []
+
+      if (res.data.map[Operation.ManagementApplicantRead]) {
+        const tempList = await ApplicantStatusListCSR({
+          user_hash_key: user.hashKey,
+        } as ApplicantStatusListRequest)
+
+        if (_.isEqual(tempList.data.code, HttpStatusCode.NoContent)) {
+          isNoContent(true)
+          return
+        }
+
+        _.forEach(tempList.data.list, (item, index) => {
+          res2.push({
+            id: Number(index) + 1,
+            hashKey: item.hash_key,
+            name: item.status_name,
+          } as ApplicantStatusListDTO)
+        })
+        setStatusList(res2)
+      }
+
+      // API ユーザー検索
+      const res3: UserSearchDTO[] = []
+
+      if (res.data.map[Operation.ManagementUserRead]) {
+        const tempList = await UserSearchCSR({
+          hash_key: user.hashKey,
+        } as UserSearchRequest)
+
+        if (_.isEqual(tempList.data.code, HttpStatusCode.NoContent)) {
+          isNoContent(true)
+          return
+        }
+
+        _.forEach(tempList.data.list, (item, index) => {
+          res3.push({
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            name: item.name,
+            email: item.email,
+          } as UserSearchDTO)
+        })
+        setUsersBelongTeam(res3)
+      }
+    } catch (error) {
+      if (
+        _.every([500 <= error.response?.status, error.response?.status < 600])
+      ) {
+        router.push(RouterPath.Error)
+        return
+      }
+
+      if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+        toast(t(`common.api.code.${error.response?.data.code}`), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+      } else {
+        router.push(RouterPath.Error)
+        return
+      }
+    } finally {
+      isInit(false)
+    }
+  }
 
   const search = async (currentPage?: number) => {
-    // API 応募者一覧
-    const list: ApplicantsTableBody[] = []
+    isLoading(true)
+
+    // API 応募者検索
+    const list: ApplicantSearchDTO[] = []
     const list2: SelectedCheckbox[] = []
-    IsLoading(true)
-    await applicantsSearchCSR({
-      site_id_list: map(
-        filter(applicantSearchTermList, (item) =>
-          isEqual(item.index, SearchIndex.Site),
+
+    const resume = _.filter(applicantSearchTermList, (item) =>
+      _.isEqual(item.index, SearchIndex.Resume),
+    )
+    const curriculumVitae = _.filter(applicantSearchTermList, (item) =>
+      _.isEqual(item.index, SearchIndex.CurriculumVitae),
+    )
+
+    await ApplicantsSearchCSR({
+      // ユーザーハッシュキー
+      user_hash_key: user.hashKey,
+      // サイト一覧
+      sites: _.map(
+        _.filter(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, SearchIndex.Site),
         ),
         (item2) => {
-          return item2.id
+          return item2.hashKey
         },
       ),
-      applicant_status_list: map(
-        filter(applicantSearchTermList, (item) =>
-          isEqual(item.index, SearchIndex.Status),
+      // 応募者ステータス
+      applicant_status_list: _.map(
+        _.filter(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, SearchIndex.Status),
         ),
         (item2) => {
-          return item2.id
+          return item2.hashKey
         },
       ),
-      resume: isEmpty(
-        filter(applicantSearchTermList, (item) =>
-          isEqual(item.index, SearchIndex.Resume),
-        ),
-      )
+      // 履歴書
+      resume_flg: _.isEmpty(resume)
         ? null
-        : map(
-            filter(applicantSearchTermList, (item) =>
-              isEqual(item.index, SearchIndex.Resume),
-            ),
-            (item2) => {
-              return item2.id
-            },
-          )[0],
-      curriculum_vitae: isEmpty(
-        filter(applicantSearchTermList, (item) =>
-          isEqual(item.index, SearchIndex.CurriculumVitae),
-        ),
-      )
+        : _.map(resume, (item) => {
+            return item.id
+          })[0],
+      // 職務経歴書
+      curriculum_vitae_flg: _.isEmpty(curriculumVitae)
         ? null
-        : map(
-            filter(applicantSearchTermList, (item) =>
-              isEqual(item.index, SearchIndex.CurriculumVitae),
-            ),
-            (item2) => {
-              return item2.id
-            },
-          )[0],
+        : _.map(curriculumVitae, (item) => {
+            return item.id
+          })[0],
+      // 氏名
       name: applicantSearchText[SearchTextIndex.Name].value.trim(),
-      email: applicantSearchText[SearchTextIndex.Mail].value.trim(),
-      users: map(
+      // メールアドレス
+      email: applicantSearchText[SearchTextIndex.Email].value.trim(),
+      // 面接官
+      users: _.map(
         applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
           .selectedItems,
         (item) => {
-          return item.key
+          return item.key.trim()
         },
-      )
-        .join(',')
-        .trim(),
+      ),
+      // ソート(key)
       sort_key: applicantSearchSort.key,
+      // ソート(向き)
       sort_asc: applicantSearchSort.isAsc,
     } as ApplicantSearchRequest)
       .then((res) => {
-        _.forEach(res.data.applicants, (r, index) => {
+        if (_.isEqual(res.data.code, HttpStatusCode.NoContent)) {
+          isNoContent(true)
+          return
+        }
+
+        _.forEach(res.data.list, (r, index) => {
           list.push({
             no: Number(index) + 1,
             hashKey: r.hash_key,
             name: r.name,
             site: Number(r.site_id),
-            siteName: r[`site_name_${locale}`],
-            mail: r.email,
-            age: Number(r.age),
+            siteName: r.site_name,
+            email: r.email,
             status: Number(r.status),
-            statusName: r[`status_name_${locale}`],
-            interviewerDate: new Date(r.desired_at),
+            interviewerDate: new Date(r.start),
             google: r.google_meet_url,
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
             users: String(r.users).split(','),
             userNames: String(r.user_names).split(','),
             calendarHashKey: r.calendar_hash_key,
-          } as ApplicantsTableBody)
+          } as ApplicantSearchDTO)
         })
         setBodies(list)
 
@@ -216,7 +315,7 @@ const Applicants = ({ api, isError, locale }) => {
           _.forEach(
             res.data.applicants.slice(
               APPLICANT_PAGE_SIZE * (currentPage - 1),
-              min([APPLICANT_PAGE_SIZE * currentPage, size(list)]),
+              _.min([APPLICANT_PAGE_SIZE * currentPage, _.size(list)]),
             ),
             (r) => {
               list2.push({
@@ -227,18 +326,18 @@ const Applicants = ({ api, isError, locale }) => {
           )
           setCheckedList(list2)
         }
-        IsLoading(false)
+        isLoading(false)
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -257,15 +356,15 @@ const Applicants = ({ api, isError, locale }) => {
       {
         name: t('features.applicant.header.status'),
         isRadio: false,
-        list: map(api.applicantStatusList, (item) => {
+        list: _.map(statusList, (item) => {
           return {
             id: Number(item.id),
-            value: item[`status_name_${locale}`],
-            isSelected: !isEmpty(
-              find(applicantSearchTermList, (option) => {
-                return every([
-                  isEqual(option.id, Number(item.id)),
-                  isEqual(option.index, SearchIndex.Status),
+            value: item.name,
+            isSelected: !_.isEmpty(
+              _.find(applicantSearchTermList, (option) => {
+                return _.every([
+                  _.isEqual(option.id, Number(item.id)),
+                  _.isEqual(option.index, SearchIndex.Status),
                 ])
               }),
             ),
@@ -275,15 +374,15 @@ const Applicants = ({ api, isError, locale }) => {
       {
         name: t('features.applicant.header.site'),
         isRadio: false,
-        list: map(api.applicantSites, (item) => {
+        list: _.map(sites, (item) => {
           return {
             id: Number(item.id),
-            value: item[`site_name_${locale}`],
-            isSelected: !isEmpty(
-              find(applicantSearchTermList, (option) => {
-                return every([
-                  isEqual(option.id, Number(item.id)),
-                  isEqual(option.index, SearchIndex.Site),
+            value: item.name,
+            isSelected: !_.isEmpty(
+              _.find(applicantSearchTermList, (option) => {
+                return _.every([
+                  _.isEqual(option.id, Number(item.id)),
+                  _.isEqual(option.index, SearchIndex.Site),
                 ])
               }),
             ),
@@ -297,11 +396,11 @@ const Applicants = ({ api, isError, locale }) => {
           {
             id: DocumentUploaded.Exist,
             value: t('features.applicant.documents.t'),
-            isSelected: !isEmpty(
-              find(applicantSearchTermList, (option) => {
-                return every([
-                  isEqual(option.id, DocumentUploaded.Exist),
-                  isEqual(option.index, SearchIndex.Resume),
+            isSelected: !_.isEmpty(
+              _.find(applicantSearchTermList, (option) => {
+                return _.every([
+                  _.isEqual(option.id, DocumentUploaded.Exist),
+                  _.isEqual(option.index, SearchIndex.Resume),
                 ])
               }),
             ),
@@ -309,11 +408,11 @@ const Applicants = ({ api, isError, locale }) => {
           {
             id: DocumentUploaded.NotExist,
             value: t('features.applicant.documents.f'),
-            isSelected: !isEmpty(
-              find(applicantSearchTermList, (option) => {
-                return every([
-                  isEqual(option.id, DocumentUploaded.NotExist),
-                  isEqual(option.index, SearchIndex.Resume),
+            isSelected: !_.isEmpty(
+              _.find(applicantSearchTermList, (option) => {
+                return _.every([
+                  _.isEqual(option.id, DocumentUploaded.NotExist),
+                  _.isEqual(option.index, SearchIndex.Resume),
                 ])
               }),
             ),
@@ -327,11 +426,11 @@ const Applicants = ({ api, isError, locale }) => {
           {
             id: DocumentUploaded.Exist,
             value: t('features.applicant.documents.t'),
-            isSelected: !isEmpty(
-              find(applicantSearchTermList, (option) => {
-                return every([
-                  isEqual(option.id, DocumentUploaded.Exist),
-                  isEqual(option.index, SearchIndex.CurriculumVitae),
+            isSelected: !_.isEmpty(
+              _.find(applicantSearchTermList, (option) => {
+                return _.every([
+                  _.isEqual(option.id, DocumentUploaded.Exist),
+                  _.isEqual(option.index, SearchIndex.CurriculumVitae),
                 ])
               }),
             ),
@@ -339,11 +438,11 @@ const Applicants = ({ api, isError, locale }) => {
           {
             id: DocumentUploaded.NotExist,
             value: t('features.applicant.documents.f'),
-            isSelected: !isEmpty(
-              find(applicantSearchTermList, (option) => {
-                return every([
-                  isEqual(option.id, DocumentUploaded.NotExist),
-                  isEqual(option.index, SearchIndex.CurriculumVitae),
+            isSelected: !_.isEmpty(
+              _.find(applicantSearchTermList, (option) => {
+                return _.every([
+                  _.isEqual(option.id, DocumentUploaded.NotExist),
+                  _.isEqual(option.index, SearchIndex.CurriculumVitae),
                 ])
               }),
             ),
@@ -358,9 +457,9 @@ const Applicants = ({ api, isError, locale }) => {
         value: applicantSearchText[SearchTextIndex.Name].value,
       },
       {
-        id: applicantSearchText[SearchTextIndex.Mail].id,
-        name: t(applicantSearchText[SearchTextIndex.Mail].name),
-        value: applicantSearchText[SearchTextIndex.Mail].value,
+        id: applicantSearchText[SearchTextIndex.Email].id,
+        name: t(applicantSearchText[SearchTextIndex.Email].name),
+        value: applicantSearchText[SearchTextIndex.Email].value,
       },
     ] as SearchText[],
     autoCompForm: [
@@ -369,11 +468,11 @@ const Applicants = ({ api, isError, locale }) => {
         name: t(
           applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer].name,
         ),
-        items: map(api.users, (u) => {
+        items: _.map(usersBelongTeam, (u) => {
           return {
             key: u.hashKey,
             title: u.name,
-            subTitle: u.mail,
+            subTitle: u.email,
           } as SelectTitlesModel
         }) as SelectTitlesModel[],
         selectedItems:
@@ -395,12 +494,12 @@ const Applicants = ({ api, isError, locale }) => {
         option.isSelected = false
       }
       while (
-        findIndex(applicantSearchTermList, (item) =>
-          isEqual(item.index, index),
+        _.findIndex(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, index),
         ) > -1
       ) {
-        const i = findIndex(applicantSearchTermList, (item) =>
-          isEqual(item.index, index),
+        const i = _.findIndex(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, index),
         )
         applicantSearchTermList.splice(i, 1)
       }
@@ -417,8 +516,8 @@ const Applicants = ({ api, isError, locale }) => {
       } as SearchSelected)
       store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
     } else {
-      const i = findIndex(applicantSearchTermList, (item) =>
-        every([isEqual(item.index, index), isEqual(item.id, optionId)]),
+      const i = _.findIndex(applicantSearchTermList, (item) =>
+        _.every([_.isEqual(item.index, index), _.isEqual(item.id, optionId)]),
       )
       applicantSearchTermList.splice(i, 1)
 
@@ -433,11 +532,12 @@ const Applicants = ({ api, isError, locale }) => {
       option.isSelected = false
     }
     while (
-      findIndex(applicantSearchTermList, (item) => isEqual(item.index, index)) >
-      -1
+      _.findIndex(applicantSearchTermList, (item) =>
+        _.isEqual(item.index, index),
+      ) > -1
     ) {
-      const i = findIndex(applicantSearchTermList, (item) =>
-        isEqual(item.index, index),
+      const i = _.findIndex(applicantSearchTermList, (item) =>
+        _.isEqual(item.index, index),
       )
       applicantSearchTermList.splice(i, 1)
     }
@@ -462,17 +562,17 @@ const Applicants = ({ api, isError, locale }) => {
     newObj.autoCompForm[index].selectedItems.length = 0
     applicantSearchAutoCompForm[index].selectedItems.length = 0
 
-    if (isEmpty(selectedItems)) {
+    if (_.isEmpty(selectedItems)) {
       store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
       setSearchObj(newObj)
       return
     }
 
     newObj.autoCompForm[index].selectedItems.push(
-      selectedItems[size(selectedItems) - 1],
+      selectedItems[_.size(selectedItems) - 1],
     )
     applicantSearchAutoCompForm[index].selectedItems.push(
-      selectedItems[size(selectedItems) - 1],
+      selectedItems[_.size(selectedItems) - 1],
     )
 
     store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
@@ -509,9 +609,9 @@ const Applicants = ({ api, isError, locale }) => {
   }
 
   const submitUsers = async (hashKeys: string[]) => {
-    const applicantHashKey = filter(checkedList, (c) => c.checked)[0].key
-    const calendarHashKey = filter(bodies, (b) =>
-      isEqual(b.hashKey, applicantHashKey),
+    const applicantHashKey = _.filter(checkedList, (c) => c.checked)[0].key
+    const calendarHashKey = _.filter(bodies, (b) =>
+      _.isEqual(b.hashKey, applicantHashKey),
     )[0].calendarHashKey
     await UpdateSchedulesCSR({
       hash_key: calendarHashKey,
@@ -534,14 +634,14 @@ const Applicants = ({ api, isError, locale }) => {
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -562,24 +662,27 @@ const Applicants = ({ api, isError, locale }) => {
       name: t('features.applicant.menu.googleMeet'),
       icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
       color: blue[300],
-      condition: every([
-        isEqual(size(filter(checkedList, (c) => c.checked)), 1),
-        findIndex(bodies, (item) =>
-          isEqual(item.hashKey, filter(checkedList, (c) => c.checked)[0]?.key),
+      condition: _.every([
+        _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
+        _.findIndex(bodies, (item) =>
+          _.isEqual(
+            item.hashKey,
+            _.filter(checkedList, (c) => c.checked)[0]?.key,
+          ),
         ) > -1,
-        !isEmpty(
+        !_.isEmpty(
           bodies[
-            findIndex(bodies, (item) =>
-              isEqual(
+            _.findIndex(bodies, (item) =>
+              _.isEqual(
                 item.hashKey,
-                filter(checkedList, (c) => c.checked)[0]?.key,
+                _.filter(checkedList, (c) => c.checked)[0]?.key,
               ),
             )
           ]?.resume,
         ),
       ]),
       onClick: async () => {
-        const hashKey = filter(checkedList, (c) => c.checked)[0].key
+        const hashKey = _.filter(checkedList, (c) => c.checked)[0].key
 
         try {
           // API 応募者取得(1件)
@@ -587,7 +690,7 @@ const Applicants = ({ api, isError, locale }) => {
             hash_key: hashKey,
           } as HashKeyRequest)
 
-          if (!isEmpty(res.data?.google_meet_url)) {
+          if (!_.isEmpty(res.data?.google_meet_url)) {
             window.open(
               res.data?.google_meet_url,
               '_blank',
@@ -607,13 +710,15 @@ const Applicants = ({ api, isError, locale }) => {
           window.open(res2.data?.url, '_blank', 'noopener,noreferrer')
         } catch (error) {
           if (error.response) {
-            if (500 <= error.response.status && error.response.status < 600) {
+            if (500 <= error.response?.status && error.response?.status < 600) {
               router.push(RouterPath.Error)
               return
             }
 
-            if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-              toast(t(`common.api.code.${error.response.data.code}`), {
+            if (
+              _.isEqual(error.response?.data.code, APICommonCode.BadRequest)
+            ) {
+              toast(t(`common.api.code.${error.response?.data.code}`), {
                 style: {
                   backgroundColor: setting.toastErrorColor,
                   color: common.white,
@@ -633,79 +738,234 @@ const Applicants = ({ api, isError, locale }) => {
       name: t('features.applicant.menu.user'),
       icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
       color: common.black,
-      condition: every([
-        isEqual(size(filter(checkedList, (c) => c.checked)), 1),
-        findIndex(bodies, (item) =>
-          isEqual(item.hashKey, filter(checkedList, (c) => c.checked)[0]?.key),
+      condition: _.every([
+        _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
+        _.findIndex(bodies, (item) =>
+          _.isEqual(
+            item.hashKey,
+            _.filter(checkedList, (c) => c.checked)[0]?.key,
+          ),
         ) > -1,
-        !isEmpty(
+        !_.isEmpty(
           bodies[
-            findIndex(bodies, (item) =>
-              isEqual(
+            _.findIndex(bodies, (item) =>
+              _.isEqual(
                 item.hashKey,
-                filter(checkedList, (c) => c.checked)[0]?.key,
+                _.filter(checkedList, (c) => c.checked)[0]?.key,
               ),
             )
           ]?.resume,
         ),
-        isEqual(user.role, Role.Admin),
+        roles[Operation.ManagementApplicantAssignUser],
       ]),
       onClick: async () => {
-        setUserSelectOpen(true)
+        isUserSelectOpen(true)
       },
     },
   ]
 
-  const readTextFile = async (file: File) => {
+  // ファイル読み込み
+  const readCSVFile = async (file): Promise<string[][]> => {
     const reader = new FileReader()
+
     return new Promise((resolve, reject) => {
       reader.onload = (event) => {
         if (event.target) {
-          resolve(event.target.result)
+          Papa.parse(event.target.result, {
+            header: false,
+            complete: (results) => {
+              resolve(results.data)
+            },
+            error: (error) => {
+              reject(error)
+            },
+          })
         }
       }
+
       reader.onerror = (event) => {
         if (event.target) {
           reject(event.target.error)
         }
       }
-      reader.readAsText(file, 'SHIFT-JIS') // リクナビの仕様上、SHIFT-JIS エンコーディングを指定
+
+      reader.readAsText(file, 'SHIFT-JIS')
     })
   }
+
+  // ファイル読み込み後の処理
   const readFile = async (file: File) => {
-    if (_.isEqual(file.type, 'text/plain')) {
-      const text = String(await readTextFile(file))
-
-      const lines = text.split('\n')
-      // const header = lines[0].split(',')
-      const body: string[][] = []
-      _.forEach(lines, (values, index) => {
-        if (index > 0) {
-          const list: string[] = []
-          for (const value of values.split(',')) {
-            list.push(value)
-          }
-          body.push(list)
-        }
-      })
-      body.pop()
-      console.dir(body)
-
-      // API通信
-      const req: ApplicantsDownloadRequest = {
-        values: body,
-        site: Site.Recruit,
+    // もろもろチェック
+    if (
+      _.every([
+        roles[Operation.ManagementApplicantDownload],
+        file,
+        _.some([
+          _.isEqual(file.type, 'text/plain'),
+          _.isEqual(file.type, 'text/csv'),
+        ]),
+      ])
+    ) {
+      // ファイル名チェック
+      const site: ApplicantStatusListDTO = _.find(sites, (s) =>
+        file.name.includes(s.fileName),
+      )
+      if (_.isEmpty(site)) {
+        toast(t('common.file.nameError'), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+        return
       }
-      await applicantsDownloadCSR(req)
-        .then(() => {
-          router.reload()
-          // router.push(RouterPath.Applicant) // これだと画面が固まる…
+
+      const csv: string[][] = []
+
+      // ファイル読み込み
+      try {
+        const data = await readCSVFile(file) // TODO バリデーションをもっと細かくできるといい
+        data.pop()
+        data.shift()
+
+        for (let i = 0; i < _.size(data); i++) {
+          if (!_.isEqual(_.size(data[i]), site.columns + 1)) {
+            toast(`${site.name}${t('features.applicant.uploadMsg3')}`, {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 600,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+            return
+          }
+        }
+
+        for (const item of data) {
+          csv.push(item)
+        }
+      } catch (_) {
+        toast(t('common.file.error'), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
         })
-        .catch(() => {
-          router.push(RouterPath.Error)
-        })
+        return
+      }
+
+      isSpinner(true)
+
+      try {
+        // API 応募者ダウンロード リクエスト生成
+        const subRequest: ApplicantDownloadSubRequest[] = []
+        for (const item of csv) {
+          const outerId = item[site.outerIndex]
+          const name =
+            site.nameCheckType > 0
+              ? item[site.nameIndex]
+              : `${item[site.nameIndex]} ${item[site.nameIndex + 1]}`
+          const email = item[site.emailIndex]
+          const tel = _.isEmpty(item[site.telIndex])
+            ? item[site.telIndex + 1]
+            : item[site.telIndex]
+
+          const age = item[site.ageIndex].match(/\d+/)
+          if (
+            _.some([
+              _.isEmpty(outerId),
+              _.isEmpty(name),
+              _.isEmpty(email),
+              _.size(outerId) > 100,
+              _.size(name) > 50,
+              _.size(email) > 100,
+              _.isNull(age),
+              !new RegExp(Pattern.Email).test(email),
+              !new RegExp(Pattern.HalfNum).test(tel),
+            ])
+          ) {
+            toast(`${site.name}${t('features.applicant.uploadMsg3')}`, {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 600,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+            return
+          }
+
+          subRequest.push({
+            outer_id: outerId,
+            name: name,
+            email: email,
+            tel: tel,
+            age: Number(age[0]),
+          } as ApplicantDownloadSubRequest)
+        }
+
+        const request: ApplicantsDownloadRequest = {
+          user_hash_key: user.hashKey,
+          site_hash_key: site.hashKey,
+          applicants: subRequest,
+        }
+
+        // API 応募者ダウンロード
+        await ApplicantsDownloadCSR(request)
+      } catch (error) {
+        if (error.response) {
+          if (500 <= error.response?.status && error.response?.status < 600) {
+            router.push(RouterPath.Error)
+            return
+          }
+
+          if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+            toast(t(`common.api.code.${error.response?.data.code}`), {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 500,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+          }
+        }
+      }
+
+      await search(1)
+
+      isOpen(false)
+      isSpinner(false)
+
+      //     router.reload()
+      //     // router.push(RouterPath.Applicant) // これだと画面が固まる…
     } else {
-      console.error('選択されたファイルはtxtファイルではありません。')
+      toast(t('common.file.typeError'), {
+        style: {
+          backgroundColor: setting.toastErrorColor,
+          color: common.white,
+          width: 500,
+        },
+        position: 'bottom-left',
+        hideProgressBar: true,
+        closeButton: () => <ClearIcon />,
+      })
+      return
     }
   }
 
@@ -731,14 +991,14 @@ const Applicants = ({ api, isError, locale }) => {
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -763,8 +1023,8 @@ const Applicants = ({ api, isError, locale }) => {
       name: t('features.applicant.header.name'),
       sort: {
         key: SearchSortKey.Name,
-        target: isEqual(SearchSortKey.Name, applicantSearchSort.key),
-        isAsc: isEqual(SearchSortKey.Name, applicantSearchSort.key)
+        target: _.isEqual(SearchSortKey.Name, applicantSearchSort.key),
+        isAsc: _.isEqual(SearchSortKey.Name, applicantSearchSort.key)
           ? applicantSearchSort.isAsc
           : false,
       },
@@ -774,62 +1034,57 @@ const Applicants = ({ api, isError, locale }) => {
       name: t('features.applicant.header.site'),
       sort: {
         key: SearchSortKey.Site,
-        target: isEqual(SearchSortKey.Site, applicantSearchSort.key),
-        isAsc: isEqual(SearchSortKey.Site, applicantSearchSort.key)
+        target: _.isEqual(SearchSortKey.Site, applicantSearchSort.key),
+        isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSort.key)
           ? applicantSearchSort.isAsc
           : false,
       },
     },
     {
       id: 4,
-      name: t('features.applicant.header.mail'),
+      name: t('features.applicant.header.email'),
       sort: {
-        key: SearchSortKey.Mail,
-        target: isEqual(SearchSortKey.Mail, applicantSearchSort.key),
-        isAsc: isEqual(SearchSortKey.Mail, applicantSearchSort.key)
+        key: SearchSortKey.Email,
+        target: _.isEqual(SearchSortKey.Email, applicantSearchSort.key),
+        isAsc: _.isEqual(SearchSortKey.Email, applicantSearchSort.key)
           ? applicantSearchSort.isAsc
           : false,
       },
     },
     {
       id: 5,
-      name: t('features.applicant.header.age'),
-      sort: null,
-    },
-    {
-      id: 6,
       name: t('features.applicant.header.status'),
       sort: {
         key: SearchSortKey.Status,
-        target: isEqual(SearchSortKey.Status, applicantSearchSort.key),
-        isAsc: isEqual(SearchSortKey.Status, applicantSearchSort.key)
+        target: _.isEqual(SearchSortKey.Status, applicantSearchSort.key),
+        isAsc: _.isEqual(SearchSortKey.Status, applicantSearchSort.key)
+          ? applicantSearchSort.isAsc
+          : true,
+      },
+    },
+    {
+      id: 6,
+      name: t('features.applicant.header.interviewerDate'),
+      sort: {
+        key: SearchSortKey.IntervierDate,
+        target: _.isEqual(SearchSortKey.Status, applicantSearchSort.key),
+        isAsc: _.isEqual(SearchSortKey.Status, applicantSearchSort.key)
           ? applicantSearchSort.isAsc
           : true,
       },
     },
     {
       id: 7,
-      name: t('features.applicant.header.interviewerDate'),
-      sort: {
-        key: SearchSortKey.IntervierDate,
-        target: isEqual(SearchSortKey.Status, applicantSearchSort.key),
-        isAsc: isEqual(SearchSortKey.Status, applicantSearchSort.key)
-          ? applicantSearchSort.isAsc
-          : true,
-      },
-    },
-    {
-      id: 8,
       name: t('features.applicant.header.users'),
       sort: null,
     },
     {
-      id: 9,
+      id: 8,
       name: t('features.applicant.header.resume'),
       sort: null,
     },
     {
-      id: 10,
+      id: 9,
       name: t('features.applicant.header.curriculumVitae'),
       sort: null,
     },
@@ -837,13 +1092,13 @@ const Applicants = ({ api, isError, locale }) => {
 
   const changeTarget = (sort: TableSort) => {
     const newObj = Object.assign({}, searchObj)
-    const list = cloneDeep(tableHeader)
+    const list = _.cloneDeep(tableHeader)
 
-    const index = findIndex(list, (item) =>
-      every([!isNull(item.sort), isEqual(item.sort?.key, sort.key)]),
+    const index = _.findIndex(list, (item) =>
+      _.every([!_.isNull(item.sort), _.isEqual(item.sort?.key, sort.key)]),
     )
 
-    for (const item of filter(list, (el) => !isEmpty(el.sort))) {
+    for (const item of _.filter(list, (el) => !_.isEmpty(el.sort))) {
       item.sort.target = false
       item.sort.isAsc = true
     }
@@ -868,38 +1123,56 @@ const Applicants = ({ api, isError, locale }) => {
   }
 
   useEffect(() => {
-    if (isError) router.push(RouterPath.Error)
+    const initialize = async () => {
+      try {
+        if (isError) {
+          router.push(RouterPath.Error)
+          return
+        }
 
-    search(1)
+        if (init) await inits()
+
+        await search(1)
+      } finally {
+        isLoading(false)
+      }
+    }
+
+    initialize()
   }, [])
 
   return (
     <>
       <NextHead></NextHead>
-      {every([!isError, !loading]) && (
+      {_.every([
+        !isError,
+        !loading,
+        roles[Operation.ManagementApplicantRead],
+      ]) && (
         <>
+          {spinner && <Spinner></Spinner>}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              {size(bodies) > APPLICANT_PAGE_SIZE && (
+              {_.size(bodies) > APPLICANT_PAGE_SIZE && (
                 <Pagination
                   currentPage={page}
-                  listSize={size(bodies)}
+                  listSize={_.size(bodies)}
                   pageSize={APPLICANT_PAGE_SIZE}
                   search={search}
                   changePage={changePage}
                 ></Pagination>
               )}
-              {size(filter(checkedList, (c) => c.checked)) > 0 && (
+              {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
                 <SelectedMenu
                   menu={dispMenu}
-                  size={size(filter(checkedList, (c) => c.checked))}
+                  size={_.size(_.filter(checkedList, (c) => c.checked))}
                 ></SelectedMenu>
               )}
               <Box
                 sx={[
                   TableMenuButtons,
                   mb(3),
-                  size(filter(checkedList, (c) => c.checked)) > 0
+                  _.size(_.filter(checkedList, (c) => c.checked)) > 0
                     ? maxW(300)
                     : null,
                 ]}
@@ -907,19 +1180,19 @@ const Applicants = ({ api, isError, locale }) => {
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
-                  onClick={() => setSearchOpen(true)}
+                  onClick={() => isSearchOpen(true)}
                 >
                   <ManageSearchIcon sx={mr(0.25)} />
                   {t('features.applicant.search')}
                 </Button>
-                {isEqual(user.role, Role.Admin) && (
+                {roles[Operation.ManagementApplicantDownload] && (
                   <Button
                     variant="contained"
                     sx={[
                       ml(1),
                       ButtonColorInverse(common.white, setting.color),
                     ]}
-                    onClick={() => setOpen(true)}
+                    onClick={() => isOpen(true)}
                   >
                     <UploadFileIcon sx={mr(0.25)} />
                     {t('features.applicant.upload')}
@@ -930,26 +1203,26 @@ const Applicants = ({ api, isError, locale }) => {
             <CustomTable
               height={75}
               headers={tableHeader}
-              bodies={map(bodies, (l) => {
+              isNoContent={noContent}
+              bodies={_.map(bodies, (l) => {
                 return {
                   no: l.no,
                   name: l.name,
                   site: l.siteName,
-                  mail: l.mail,
-                  age: l.age,
-                  status: l.statusName,
+                  email: l.email,
+                  status: statusList[l.status].name,
                   interviewerDate:
                     l.interviewerDate.getFullYear() < 2
-                      ? '-'
+                      ? ''
                       : formatDate2(l.interviewerDate),
                   users: (
                     <Box sx={DirectionColumnForTable}>
-                      {map(l.userNames, (user, index) => {
+                      {_.map(l.userNames, (user, index) => {
                         return <Box key={index}>{user}</Box>
                       })}
                     </Box>
                   ),
-                  resume: isEmpty(l.resume) ? (
+                  resume: _.isEmpty(l.resume) ? (
                     <>{t('features.applicant.documents.f')}</>
                   ) : (
                     <Button
@@ -963,7 +1236,7 @@ const Applicants = ({ api, isError, locale }) => {
                       {t('features.applicant.documents.t')}
                     </Button>
                   ),
-                  curriculumVitae: isEmpty(l.curriculumVitae) ? (
+                  curriculumVitae: _.isEmpty(l.curriculumVitae) ? (
                     <>{t('features.applicant.documents.f')}</>
                   ) : (
                     <Button
@@ -990,12 +1263,12 @@ const Applicants = ({ api, isError, locale }) => {
                 {
                   checkedList: checkedList,
                   onClick: (i: number, checked: boolean) => {
-                    const list = cloneDeep(checkedList)
+                    const list = _.cloneDeep(checkedList)
                     list[i].checked = !checked
                     setCheckedList(list)
                   },
                   onClickAll: (b: boolean) => {
-                    const list = cloneDeep(checkedList)
+                    const list = _.cloneDeep(checkedList)
                     for (const item of list) {
                       item.checked = b
                     }
@@ -1010,12 +1283,12 @@ const Applicants = ({ api, isError, locale }) => {
           </Box>
           <UploadModal
             open={open}
-            closeModal={() => setOpen(false)}
+            closeModal={() => isOpen(false)}
             afterFuncAsync={readFile}
           ></UploadModal>
           <SearchModal
             open={searchOpen}
-            closeModal={() => setSearchOpen(false)}
+            closeModal={() => isSearchOpen(false)}
             searchObj={searchObj}
             changeSearchObjBySelect={changeSearchObjBySelect}
             selectInit={selectInit}
@@ -1027,20 +1300,20 @@ const Applicants = ({ api, isError, locale }) => {
           ></SearchModal>
           <ItemsSelectModal
             open={userSelectOpen}
-            items={map(api.users, (u) => {
+            items={_.map(usersBelongTeam, (u) => {
               return {
                 key: u.hashKey,
                 title: u.name,
-                subTitle: u.mail,
+                subTitle: u.email,
               } as SelectTitlesModel
             })}
             selectedItems={
-              isEmpty(filter(checkedList, (c) => c.checked))
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
                 ? []
-                : filter(bodies, (b) =>
-                    isEqual(
+                : _.filter(bodies, (b) =>
+                    _.isEqual(
                       b.hashKey,
-                      filter(checkedList, (c) => c.checked)[0].key,
+                      _.filter(checkedList, (c) => c.checked)[0].key,
                     ),
                   )[0].users
             }
@@ -1048,7 +1321,7 @@ const Applicants = ({ api, isError, locale }) => {
             subTitle={t('features.applicant.assign.subTitle')}
             buttonTitle={t('features.applicant.menu.user')}
             submit={submitUsers}
-            close={() => setUserSelectOpen(false)}
+            close={() => isUserSelectOpen(false)}
           ></ItemsSelectModal>
         </>
       )}
@@ -1059,40 +1332,24 @@ const Applicants = ({ api, isError, locale }) => {
 export const getStaticProps = async ({ locale }) => {
   let isError: boolean = false
 
-  const applicantStatusList = []
-  await ApplicantStatusListSSG()
-    .then((res) => {
-      for (const item of res.data.list) {
-        applicantStatusList.push(item)
-      }
-    })
-    .catch(() => {
-      isError = true
-    })
-
-  const applicantSites = []
+  // API サイト一覧
+  const sites: ApplicantStatusListDTO[] = []
   await ApplicantSitesSSG()
     .then((res) => {
-      for (const item of res.data.list) {
-        applicantSites.push(item)
-      }
-    })
-    .catch(() => {
-      isError = true
-    })
-
-  const users: UsersTableBody[] = []
-  await UserListSSG()
-    .then((res) => {
-      _.forEach(res.data.users, (u, index) => {
-        users.push({
-          no: Number(index) + 1,
-          hashKey: u.hash_key,
-          name: u.name,
-          mail: u.email,
-          role: Number(u.role_id),
-          roleName: u[`role_name_${locale}`],
-        } as UsersTableBody)
+      _.forEach(res.data.list, (item, index) => {
+        sites.push({
+          id: Number(index) + 1,
+          hashKey: item.hash_key,
+          name: item.site_name,
+          fileName: item.file_name,
+          outerIndex: Number(item.outer_id_index),
+          nameIndex: Number(item.name_index),
+          emailIndex: Number(item.email_index),
+          telIndex: Number(item.tel_index),
+          ageIndex: Number(item.age_index),
+          nameCheckType: Number(item.name_check_type),
+          columns: Number(item.num_of_column),
+        } as ApplicantStatusListDTO)
       })
     })
     .catch(() => {
@@ -1101,13 +1358,9 @@ export const getStaticProps = async ({ locale }) => {
 
   return {
     props: {
-      api: {
-        applicantStatusList: applicantStatusList,
-        applicantSites: applicantSites,
-        users: users as UsersTableBody[],
-      },
       isError,
       locale,
+      sites: sites,
       messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },

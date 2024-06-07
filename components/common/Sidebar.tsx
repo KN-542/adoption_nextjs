@@ -9,9 +9,8 @@ import {
   Box,
 } from '@mui/material'
 import PersonIcon from '@mui/icons-material/Person'
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import CoPresentIcon from '@mui/icons-material/CoPresent'
-import MailIcon from '@mui/icons-material/Mail'
+import MailIcon from '@mui/icons-material/Email'
 import EqualizerIcon from '@mui/icons-material/Equalizer'
 import HistoryIcon from '@mui/icons-material/History'
 import IconButton from '@mui/material/IconButton'
@@ -20,14 +19,13 @@ import ApartmentIcon from '@mui/icons-material/Apartment'
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
-import { SidebarModel } from 'types/management'
+import { SidebarModel } from 'types/common/index'
 import { useTranslations } from 'next-intl'
-import store, { RootState } from '@/hooks/store/store'
-import _, { cloneDeep, every, indexOf, isEqual, map } from 'lodash'
+import { RootState } from '@/hooks/store/store'
+import _ from 'lodash'
 import { RouterPath } from '@/enum/router'
 import { Color, mb, mt, SidebarBody, SidebarName, wBlock } from '@/styles/index'
 import { HashKeyRequest, SidebarRequest } from '@/api/model/request'
-import { Role } from '@/enum/user'
 import { useEffect, useState } from 'react'
 import { SidebarCSR } from '@/api/repository'
 import { APICommonCode } from '@/enum/apiError'
@@ -48,7 +46,7 @@ const Sidebar = (props: Props) => {
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [loading, IsLoading] = useState(true)
+  const [loading, isLoading] = useState(true)
   const [sidebars, setSidebars] = useState<SidebarModel[]>([])
 
   // サイドバーアイコン決定
@@ -76,7 +74,7 @@ const Sidebar = (props: Props) => {
       case RouterPath.Management + RouterPath.Applicant:
         return <PersonIcon sx={Color(setting.color)} />
       // メールテンプレート
-      case RouterPath.Management + RouterPath.Mail:
+      case RouterPath.Management + RouterPath.Email:
         return <MailIcon sx={Color(setting.color)} />
       // データ集計
       case RouterPath.Management + RouterPath.Analysis:
@@ -100,11 +98,11 @@ const Sidebar = (props: Props) => {
     } as SidebarRequest)
       .then((res) => {
         const list: SidebarModel[] = []
-        for (const item of cloneDeep(res.data.sidebars)) {
+        for (const item of _.cloneDeep(res.data.sidebars)) {
           if (
-            isEqual(
-              indexOf(
-                map(list, (o) => {
+            _.isEqual(
+              _.indexOf(
+                _.map(list, (o) => {
                   return o.name
                 }),
                 item[`name_${setting.lang}`],
@@ -119,18 +117,18 @@ const Sidebar = (props: Props) => {
         }
 
         setSidebars(list)
-        IsLoading(false)
+        isLoading(false)
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -220,7 +218,7 @@ const Sidebar = (props: Props) => {
             </Box>
 
             <List>
-              {sidebars.map((row, index) => {
+              {_.map(sidebars, (row, index) => {
                 return <Box key={index}>{renderRow(row)}</Box>
               })}
             </List>
@@ -228,7 +226,7 @@ const Sidebar = (props: Props) => {
             <Divider />
 
             <List>
-              {subData.map((row, index) => {
+              {_.map(subData, (row, index) => {
                 return <Box key={index}>{renderRow(row)}</Box>
               })}
             </List>

@@ -15,7 +15,7 @@ import {
   createFilterOptions,
 } from '@mui/material'
 import { useTranslations } from 'next-intl'
-import _, { filter, includes, isEmpty, map } from 'lodash'
+import _ from 'lodash'
 import {
   Bold,
   ButtonColor,
@@ -36,7 +36,7 @@ import { useSelector } from 'react-redux'
 import { common, grey } from '@mui/material/colors'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import { RootState } from '@/hooks/store/store'
-import { SelectTitlesModel } from '@/types/management'
+import { SelectTitlesModel } from '@/types/common/index'
 
 type Props = {
   open: boolean
@@ -54,7 +54,7 @@ const ItemsSelectModal = (props: Props) => {
 
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [loading, IsLoading] = useState(true)
+  const [loading, isLoading] = useState(true)
 
   const [options, setOptions] = useState<SelectTitlesModel[]>([])
   const [selectedOptions, setSelectedOptions] = useState<SelectTitlesModel[]>(
@@ -63,7 +63,7 @@ const ItemsSelectModal = (props: Props) => {
 
   const submit = async () => {
     await props.submit(
-      map(selectedOptions, (s) => {
+      _.map(selectedOptions, (s) => {
         return s.key
       }),
     )
@@ -74,14 +74,14 @@ const ItemsSelectModal = (props: Props) => {
   }
 
   useEffect(() => {
-    IsLoading(true)
+    isLoading(true)
     setOptions(props.items)
     setSelectedOptions(
-      filter(props.items, (option) =>
-        includes(props.selectedItems, option.key),
+      _.filter(props.items, (option) =>
+        _.includes(props.selectedItems, option.key),
       ),
     )
-    IsLoading(false)
+    isLoading(false)
   }, [props.selectedItems, props.items])
 
   return (
@@ -109,11 +109,11 @@ const ItemsSelectModal = (props: Props) => {
                     <Autocomplete
                       multiple
                       sx={[ml(4), mr(4), w(100)]}
-                      options={filter(
+                      options={_.filter(
                         options,
                         (option) =>
-                          !includes(
-                            map(selectedOptions, (item) => {
+                          !_.includes(
+                            _.map(selectedOptions, (item) => {
                               return item.key
                             }),
                             option.key,
@@ -125,7 +125,7 @@ const ItemsSelectModal = (props: Props) => {
                           <AccountCircleIcon fontSize="large" sx={mr(2)} />
                           <Box sx={[Column, w(100)]}>
                             <Box sx={w(100)}>{option.title}</Box>
-                            {!isEmpty(option.subTitle) && (
+                            {!_.isEmpty(option.subTitle) && (
                               <Box
                                 sx={[
                                   w(100),
@@ -148,7 +148,7 @@ const ItemsSelectModal = (props: Props) => {
                       value={selectedOptions}
                       onChange={(_e, value) => setSelectedOptions(value)}
                       renderTags={(value, getTagProps) =>
-                        value.map((option, index) => (
+                        _.map(value, (option, index) => (
                           <Chip
                             variant="outlined"
                             label={option.title}

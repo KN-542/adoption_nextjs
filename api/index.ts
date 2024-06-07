@@ -14,7 +14,7 @@ const APICommonHeader = {
 //   (error) => {
 //     console.log(error)
 //     return error
-//     // if (_.isEqual(error.response.status, StatusCodes.UNAUTHORIZED)) {
+//     // if (_.isEqual(error.response?.status, StatusCodes.UNAUTHORIZED)) {
 //     //   return { error: error, bad_request: true }
 //     // }
 //     // return { error: error, bad_request: false }

@@ -16,13 +16,13 @@ import { useTranslations } from 'next-intl'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { Pattern, ValidationType } from '@/enum/validation'
 import ErrorHandler from '@/components/common/ErrorHandler'
-import { every, isEmpty, isEqual, trim } from 'lodash'
+import _ from 'lodash'
 import {
   LogoutCSR,
   MFACSR,
   MFACreateCSR,
   PasswordChangeCSR,
-  loginCSR,
+  LoginCSR,
 } from '@/api/repository'
 import { useRouter } from 'next/router'
 import {
@@ -36,7 +36,7 @@ import {
 } from '@/styles/index'
 import store, { RootState } from '@/hooks/store/store'
 import { mgChangeSetting, signOut, userModel } from '@/hooks/store'
-import { SettingModel, UserModel } from '@/types/management'
+import { SettingModel, UserModel } from '@/types/common/index'
 import { RouterPath } from '@/enum/router'
 import NextHead from '@/components/common/Header'
 import {
@@ -63,7 +63,7 @@ import { Inputs as InputsPassword } from '@/components/common/modal/PasswordChan
 import MFA from '@/components/common/modal/MFA'
 
 type Inputs = {
-  mail: string
+  email: string
   password: string
 }
 
@@ -77,15 +77,15 @@ const Login = () => {
   const [hash, setHash] = useState<string>('')
   const [open, isOpen] = useState<boolean>(false)
   const [openPasswordChange, isOpenPasswordChange] = useState<boolean>(false)
-  const [loading, IsLoading] = useState<boolean>(true)
+  const [loading, isLoading] = useState<boolean>(true)
   const [showPassword, setShowPassword] = useState<boolean>(false)
   const [path, setPath] = useState<string>('')
   const submitButtonRef = useRef(null)
 
   const formValidationValue: FormValidationValue = {
-    mail: {
+    email: {
       max: 50,
-      pattern: new RegExp(Pattern.Mail),
+      pattern: new RegExp(Pattern.Email),
     },
     password: {
       min: 8,
@@ -95,22 +95,22 @@ const Login = () => {
   }
 
   const formValidation: FormValidation = {
-    mail: [
+    email: [
       {
         type: ValidationType.Required,
-        message: t('features.login.mail') + t('common.validate.required'),
+        message: t('features.login.email') + t('common.validate.required'),
       },
       {
         type: ValidationType.MaxLength,
         message:
-          t('features.login.mail') +
+          t('features.login.email') +
           t('common.validate.is') +
-          String(formValidationValue.mail.max) +
+          String(formValidationValue.email.max) +
           t('common.validate.maxLength'),
       },
       {
         type: ValidationType.Pattern,
-        message: t('common.validate.pattern.mail'),
+        message: t('common.validate.pattern.email'),
       },
     ],
     password: [
@@ -156,8 +156,8 @@ const Login = () => {
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
     // API ログイン
-    await loginCSR({
-      email: d.mail,
+    await LoginCSR({
+      email: d.email,
       password: d.password,
     } as LoginRequest)
       .then(async (res) => {
@@ -171,29 +171,34 @@ const Login = () => {
               userModel({
                 hashKey: res.data.hash_key,
                 name: res.data.name,
-                mail: d.mail,
+                email: d.email,
               } as UserModel),
             )
             isOpen(true)
           })
           .catch((error) => {
             if (
-              every([500 <= error.response.status, error.response.status < 600])
+              _.every([
+                500 <= error.response?.status,
+                error.response?.status < 600,
+              ])
             ) {
               router.push(RouterPath.Error)
               return
             }
 
             let msg = ''
-            if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-              msg = t(`common.api.code.${error.response.data.code}`)
+            if (
+              _.isEqual(error.response?.data.code, APICommonCode.BadRequest)
+            ) {
+              msg = t(`common.api.code.${error.response?.data.code}`)
             } else if (
-              isEqual(
-                error.response.data.code,
+              _.isEqual(
+                error.response?.data.code,
                 APISessionCheckCode.LoginRequired,
               )
             ) {
-              msg = t(`common.api.code.expired${error.response.data.code}`)
+              msg = t(`common.api.code.expired${error.response?.data.code}`)
             }
 
             store.dispatch(
@@ -206,11 +211,13 @@ const Login = () => {
       .catch((error) => {
         let msg = ''
 
-        if (error.response.data.code > 0) {
-          if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-            msg = t(`common.api.code.${error.response.data.code}`)
-          } else if (isEqual(error.response.data.code, APILoginCode.LoinAuth)) {
-            msg = t(`common.api.code.login${error.response.data.code}`)
+        if (error.response?.data.code > 0) {
+          if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+            msg = t(`common.api.code.${error.response?.data.code}`)
+          } else if (
+            _.isEqual(error.response?.data.code, APILoginCode.LoinAuth)
+          ) {
+            msg = t(`common.api.code.login${error.response?.data.code}`)
           }
 
           toast(msg, {
@@ -227,7 +234,7 @@ const Login = () => {
         }
 
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
         }
@@ -242,7 +249,7 @@ const Login = () => {
   }
 
   const reset = async () => {
-    if (isEmpty(user.hashKey)) return
+    if (_.isEmpty(user.hashKey)) return
     // API ログアウト
     await LogoutCSR({
       hash_key: user.hashKey,
@@ -252,7 +259,7 @@ const Login = () => {
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
@@ -269,34 +276,35 @@ const Login = () => {
       .then((res) => {
         isOpen(false)
 
+        store.dispatch(
+          userModel({
+            path: `/${String(res.data.path)}`,
+          } as UserModel),
+        )
+
         if (Boolean(res.data.is_password_change)) {
           setPath(String(res.data.path))
           isOpenPasswordChange(true)
           return
         }
 
-        store.dispatch(
-          userModel({
-            path: `/${String(res.data.path)}`,
-          } as UserModel),
-        )
-        isEqual(`/${String(res.data.path)}`, RouterPath.Admin)
-          ? router.push(RouterPath.Admin + RouterPath.Company)
-          : router.push(RouterPath.Management + RouterPath.Applicant)
+        _.isEqual(`/${String(res.data.path)}`, RouterPath.Admin)
+          ? router.push(RouterPath.Admin + RouterPath.Home)
+          : router.push(RouterPath.Management + RouterPath.Home)
       })
       .catch(async (error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
         let msg = ''
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.code.${error.response.data.code}`)
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          msg = t(`common.api.code.${error.response?.data.code}`)
         } else {
-          msg = t(`common.api.code.mfa${error.response.data.code}`)
+          msg = t(`common.api.code.mfa${error.response?.data.code}`)
         }
 
         toast(msg, {
@@ -310,7 +318,7 @@ const Login = () => {
           closeButton: () => <ClearIcon />,
         })
 
-        if (isEqual(error.response.data.code, APIMFACode.Expired)) {
+        if (_.isEqual(error.response?.data.code, APIMFACode.Expired)) {
           setTimeout(async () => {
             await submitButtonRef.current.click()
           }, 0.25 * 1000)
@@ -326,23 +334,23 @@ const Login = () => {
       init_password: obj.password,
     } as PasswordChangeRequest)
       .then(() => {
-        isEqual(`/${path}`, RouterPath.Admin)
-          ? router.push(RouterPath.Admin + RouterPath.Company)
-          : router.push(RouterPath.Management + RouterPath.Applicant)
+        _.isEqual(`/${path}`, RouterPath.Admin)
+          ? router.push(RouterPath.Admin + RouterPath.Home)
+          : router.push(RouterPath.Management + RouterPath.Home)
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
         let msg = ''
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.code.${error.response.data.code}`)
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          msg = t(`common.api.code.${error.response?.data.code}`)
         } else {
-          msg = t(`common.api.code.passwordChange${error.response.data.code}`)
+          msg = t(`common.api.code.passwordChange${error.response?.data.code}`)
         }
 
         toast(msg, {
@@ -361,7 +369,7 @@ const Login = () => {
   useEffect(() => {
     if (loading) {
       // トースト
-      if (!isEmpty(setting.errorMsg)) {
+      if (!_.isEmpty(setting.errorMsg)) {
         setTimeout(() => {
           toast(setting.errorMsg, {
             style: {
@@ -386,7 +394,7 @@ const Login = () => {
       // ログアウト
       reset()
     }
-    IsLoading(false)
+    isLoading(false)
   })
 
   return (
@@ -413,20 +421,20 @@ const Login = () => {
                   margin="normal"
                   required
                   fullWidth
-                  label={t('features.login.mail')}
+                  label={t('features.login.email')}
                   autoFocus
                   sx={minW(396)}
-                  {...register('mail', {
+                  {...register('email', {
                     required: true,
-                    maxLength: formValidationValue.mail.max,
-                    pattern: formValidationValue.mail.pattern,
-                    setValueAs: (value) => trim(value),
+                    maxLength: formValidationValue.email.max,
+                    pattern: formValidationValue.email.pattern,
+                    setValueAs: (value) => _.trim(value),
                   })}
-                  aria-invalid={errors.mail ? 'true' : 'false'}
+                  aria-invalid={errors.email ? 'true' : 'false'}
                 />
                 <ErrorHandler
-                  validations={formValidation.mail}
-                  type={errors.mail?.type}
+                  validations={formValidation.email}
+                  type={errors.email?.type}
                 ></ErrorHandler>
                 <TextField
                   margin="normal"
@@ -441,7 +449,7 @@ const Login = () => {
                     minLength: formValidationValue.password.min,
                     maxLength: formValidationValue.password.max,
                     pattern: formValidationValue.password.pattern,
-                    setValueAs: (value) => trim(value),
+                    setValueAs: (value) => _.trim(value),
                   })}
                   aria-invalid={errors.password ? 'true' : 'false'}
                   InputProps={{

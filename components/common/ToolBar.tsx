@@ -20,7 +20,7 @@ import {
   ToolBarMlMedia,
 } from '@/styles/index'
 import { LogoutRequest } from '@/api/model/request'
-import { SettingModel, UserModel } from '@/types/management'
+import { SettingModel, UserModel } from '@/types/common/index'
 
 type Props = {
   onToggleDrawer: () => void

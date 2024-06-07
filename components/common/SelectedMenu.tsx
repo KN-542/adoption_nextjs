@@ -14,8 +14,8 @@ import {
   TextBottom,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
-import { SelectedMenuModel } from '@/types/management'
-import { filter, map, size } from 'lodash'
+import { SelectedMenuModel } from '@/types/common/index'
+import _ from 'lodash'
 import { useTranslations } from 'next-intl'
 
 type Props = {
@@ -39,8 +39,8 @@ const SelectedMenu = (props: Props) => {
       ]}
     >
       <Box>
-        {map(
-          filter(props.menu, (m) => m.condition),
+        {_.map(
+          _.filter(props.menu, (m) => m.condition),
           (menu, index) => {
             return (
               <Button
