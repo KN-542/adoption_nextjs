@@ -15,7 +15,7 @@ import {
   createFilterOptions,
 } from '@mui/material'
 import { useTranslations } from 'next-intl'
-import _, { filter, includes, isEmpty, map, size } from 'lodash'
+import _ from 'lodash'
 import {
   Bold,
   ButtonColor,
@@ -36,7 +36,7 @@ import {
 } from '@/styles/index'
 import { RootState } from '@/hooks/store/store'
 import { useSelector } from 'react-redux'
-import { SearchForm, SelectTitlesModel } from '@/types/management'
+import { SearchForm, SelectTitlesModel } from '@/types/common/index'
 import { common, grey } from '@mui/material/colors'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
@@ -59,10 +59,10 @@ const SearchModal = (props: Props) => {
 
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [loading, IsLoading] = useState(true)
+  const [loading, isLoading] = useState(true)
 
   useEffect(() => {
-    IsLoading(false)
+    isLoading(false)
   }, [props.searchObj])
 
   return (
@@ -80,7 +80,7 @@ const SearchModal = (props: Props) => {
           <DialogContent>
             <Box>
               <Box sx={FormModalMenu}>
-                {map(props.searchObj.selectList, (item, index) => {
+                {_.map(props.searchObj.selectList, (item, index) => {
                   return (
                     <Box key={index}>
                       <Box sx={SpaceBetween}>
@@ -105,7 +105,7 @@ const SearchModal = (props: Props) => {
                         </Button>
                       </Box>
                       <Box sx={SearchModalSelect}>
-                        {map(item.list, (option, index2) => (
+                        {_.map(item.list, (option, index2) => (
                           <Box key={index2}>
                             <Button
                               fullWidth
@@ -135,10 +135,10 @@ const SearchModal = (props: Props) => {
               <Box
                 sx={[
                   FormModalMenu,
-                  mt(size(props.searchObj.selectList) > 0 ? 4 : 0),
+                  mt(_.size(props.searchObj.selectList) > 0 ? 4 : 0),
                 ]}
               >
-                {map(props.searchObj.textForm, (item, index) => {
+                {_.map(props.searchObj.textForm, (item, index) => {
                   return (
                     <Box key={index} sx={w(40)}>
                       <Box sx={[SpaceBetween, w(100)]}>
@@ -164,10 +164,10 @@ const SearchModal = (props: Props) => {
               <Box
                 sx={[
                   FormModalMenu,
-                  mt(size(props.searchObj.selectList) > 0 ? 4 : 0),
+                  mt(_.size(props.searchObj.selectList) > 0 ? 4 : 0),
                 ]}
               >
-                {map(props.searchObj.autoCompForm, (item, index) => {
+                {_.map(props.searchObj.autoCompForm, (item, index) => {
                   return (
                     <Box key={index} sx={w(40)}>
                       <Box sx={[SpaceBetween, w(100)]}>
@@ -181,11 +181,11 @@ const SearchModal = (props: Props) => {
                       <Autocomplete
                         multiple
                         sx={[ml(4), mr(4), w(100)]}
-                        options={filter(
+                        options={_.filter(
                           item.items,
                           (option) =>
-                            !includes(
-                              map(item.selectedItems, (s) => {
+                            !_.includes(
+                              _.map(item.selectedItems, (s) => {
                                 return s.key
                               }),
                               option.key,
@@ -197,7 +197,7 @@ const SearchModal = (props: Props) => {
                             <AccountCircleIcon fontSize="large" sx={mr(2)} />
                             <Box sx={[Column, w(100)]}>
                               <Box sx={w(100)}>{option.title}</Box>
-                              {!isEmpty(option.subTitle) && (
+                              {!_.isEmpty(option.subTitle) && (
                                 <Box
                                   sx={[
                                     w(100),
@@ -222,7 +222,7 @@ const SearchModal = (props: Props) => {
                           props.changeSearchObjByAutoComp(index, value)
                         }
                         renderTags={(value, getTagProps) =>
-                          value.map((option, index) => (
+                          _.map(value, (option, index) => (
                             <Chip
                               variant="outlined"
                               label={option.title}

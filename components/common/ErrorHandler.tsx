@@ -1,6 +1,6 @@
 import { Validation } from '@/hooks/validation'
 import { Box } from '@mui/material'
-import { isEqual, map, filter } from 'lodash'
+import _ from 'lodash'
 import { ColorRed } from '@/styles/index'
 
 type Props = {
@@ -11,8 +11,8 @@ type Props = {
 const ErrorHandler = (props: Props) => {
   return (
     <>
-      {map(
-        filter(props.validations, (f) => isEqual(f.type, props.type)),
+      {_.map(
+        _.filter(props.validations, (f) => _.isEqual(f.type, props.type)),
         (item, index) => {
           return (
             <Box component="p" role="alert" sx={ColorRed} key={index}>

@@ -11,7 +11,6 @@ import {
   Box,
 } from '@mui/material'
 import { useTranslations } from 'next-intl'
-import _ from 'lodash'
 import { Bold, DragDropArea, mb, mr } from '@/styles/index'
 
 type Props = {

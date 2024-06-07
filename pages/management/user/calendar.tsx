@@ -14,8 +14,7 @@ import {
 import NextHead from '@/components/common/Header'
 import jaLocale from '@fullcalendar/core/locales/ja'
 import { WEEKENDS, formatDateToHHMM, getDayOfYear } from '@/hooks/common'
-import CalendarModal from '@/components/modal/CalendarModal'
-import { every, find, isEmpty, isEqual, map, some } from 'lodash'
+import _ from 'lodash'
 import {
   CalendarModel,
   SelectTitlesModel,
@@ -23,13 +22,13 @@ import {
   ScheduleType,
   UsersTableBody,
   Schedule,
-} from '@/types/management'
+} from '@/types/common/index'
 import {
   CreateSchedulesCSR,
   DeleteSchedulesCSR,
   SchedulesCSR,
   SearchUserGroupCSR,
-  UserListCSR,
+  UserSearchCSR,
   UserListScheduleTypeSSG,
 } from '@/api/repository'
 import { useRouter } from 'next/router'
@@ -43,6 +42,7 @@ import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
 import { InterviewerStatus, ScheduleTypes } from '@/enum/user'
 import { SchedulesRequest, HashKeyRequest } from '@/api/model/request'
+import CalendarModal from '@/components/management/modal/CalendarModal'
 
 const UserCalendar = ({ isError, api }) => {
   const router = useRouter()
@@ -52,28 +52,28 @@ const UserCalendar = ({ isError, api }) => {
 
   const [events, setEvents] = useState([])
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [open, setOpen] = useState(false)
+  const [open, isOpen] = useState(false)
   const [model, setModel] = useState<CalendarModel>({} as CalendarModel)
   const [users, setUsers] = useState<(UsersTableBody | UserGroupTableBody)[]>(
     [],
   )
   const [calendars, setCalendars] = useState<Schedule[]>([])
-  const [loading, IsLoading] = useState(true)
+  const [loading, isLoading] = useState(true)
 
   const search = async () => {
-    IsLoading(true)
+    isLoading(true)
     const list: (UsersTableBody | UserGroupTableBody)[] = []
     const list2: Schedule[] = []
     const tempList = []
 
     try {
       // API ユーザー一覧
-      const res = await UserListCSR()
+      const res = await UserSearchCSR()
       res.data.users.forEach((u) => {
         list.push({
           hashKey: u.hash_key,
           name: u.name,
-          mail: u.email,
+          email: u.email,
         } as UsersTableBody)
       })
 
@@ -83,7 +83,7 @@ const UserCalendar = ({ isError, api }) => {
         list.push({
           hashKey: u.hash_key,
           name: u.name,
-          mail: '',
+          email: '',
         } as UserGroupTableBody)
       })
 
@@ -104,7 +104,7 @@ const UserCalendar = ({ isError, api }) => {
         const start = formatDateToHHMM(new Date(item.start))
         const end = formatDateToHHMM(new Date(item.end))
 
-        if (isEmpty(item.freq)) {
+        if (_.isEmpty(item.freq)) {
           tempList.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
@@ -112,7 +112,7 @@ const UserCalendar = ({ isError, api }) => {
             allDay: true,
             color: setting.color,
           })
-        } else if (isEqual(item.freq, ScheduleTypes.Daily)) {
+        } else if (_.isEqual(item.freq, ScheduleTypes.Daily)) {
           tempList.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
@@ -125,7 +125,7 @@ const UserCalendar = ({ isError, api }) => {
               dtstart: new Date(item.start),
             },
           })
-        } else if (isEqual(item.freq, ScheduleTypes.Weekly)) {
+        } else if (_.isEqual(item.freq, ScheduleTypes.Weekly)) {
           tempList.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
@@ -139,7 +139,7 @@ const UserCalendar = ({ isError, api }) => {
               dtstart: new Date(item.start),
             },
           })
-        } else if (isEqual(item.freq, ScheduleTypes.Monthly)) {
+        } else if (_.isEqual(item.freq, ScheduleTypes.Monthly)) {
           tempList.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
@@ -153,7 +153,7 @@ const UserCalendar = ({ isError, api }) => {
               dtstart: new Date(item.start),
             },
           })
-        } else if (isEqual(item.freq, ScheduleTypes.Yearly)) {
+        } else if (_.isEqual(item.freq, ScheduleTypes.Yearly)) {
           tempList.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
@@ -174,13 +174,13 @@ const UserCalendar = ({ isError, api }) => {
       setEvents(tempList)
     } catch (error) {
       if (error.response) {
-        if (500 <= error.response.status && error.response.status < 600) {
+        if (500 <= error.response?.status && error.response?.status < 600) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -193,7 +193,7 @@ const UserCalendar = ({ isError, api }) => {
         }
       }
     } finally {
-      IsLoading(false)
+      isLoading(false)
     }
   }
 
@@ -215,7 +215,7 @@ const UserCalendar = ({ isError, api }) => {
 
     // API スケジュール登録
     await CreateSchedulesCSR({
-      user_hash_keys: map(m.users, (item) => {
+      user_hash_keys: _.map(m.users, (item) => {
         return item.key
       }).join(','),
       freq_id: Number(m.type.value),
@@ -240,14 +240,14 @@ const UserCalendar = ({ isError, api }) => {
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -280,14 +280,14 @@ const UserCalendar = ({ isError, api }) => {
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -309,7 +309,7 @@ const UserCalendar = ({ isError, api }) => {
   return (
     <>
       <NextHead></NextHead>
-      {every([!isError, !loading]) && (
+      {_.every([!isError, !loading]) && (
         <>
           <Box sx={[w(90), M0Auto, CustomTableContainer(80), mt(12)]}>
             <FullCalendar
@@ -325,15 +325,21 @@ const UserCalendar = ({ isError, api }) => {
                     onClick={() => {
                       const today = new Date()
                       if (
-                        some([
+                        _.some([
                           e.date.getFullYear() < today.getFullYear(),
-                          every([
-                            isEqual(e.date.getFullYear(), today.getFullYear()),
+                          _.every([
+                            _.isEqual(
+                              e.date.getFullYear(),
+                              today.getFullYear(),
+                            ),
                             e.date.getMonth() < today.getMonth(),
                           ]),
-                          every([
-                            isEqual(e.date.getFullYear(), today.getFullYear()),
-                            isEqual(e.date.getMonth(), today.getMonth()),
+                          _.every([
+                            _.isEqual(
+                              e.date.getFullYear(),
+                              today.getFullYear(),
+                            ),
+                            _.isEqual(e.date.getMonth(), today.getMonth()),
                             e.date.getDate() < today.getDate(),
                           ]),
                         ])
@@ -349,7 +355,7 @@ const UserCalendar = ({ isError, api }) => {
                         users: [],
                         type: null,
                       } as CalendarModel)
-                      setOpen(true)
+                      isOpen(true)
                     }}
                     sx={[h(100), CursorPointer]}
                   >
@@ -360,15 +366,15 @@ const UserCalendar = ({ isError, api }) => {
               contentHeight={667}
               key={events.length}
               eventClick={(info) => {
-                const obj = find(calendars, (c) =>
-                  isEqual(c.hashKey, info.event.id),
+                const obj = _.find(calendars, (c) =>
+                  _.isEqual(c.hashKey, info.event.id),
                 )
-                if (isEmpty(obj)) {
+                if (_.isEmpty(obj)) {
                   router.push(RouterPath.Error)
                   return
                 }
 
-                if (isEqual(obj.interviewFlg, InterviewerStatus.Interview))
+                if (_.isEqual(obj.interviewFlg, InterviewerStatus.Interview))
                   return
 
                 setModel({
@@ -377,14 +383,14 @@ const UserCalendar = ({ isError, api }) => {
                   start: formatDateToHHMM(new Date(obj.start)),
                   end: formatDateToHHMM(new Date(obj.end)),
                   title: obj.title,
-                  users: map(obj.userHashKeys, (hash) => {
+                  users: _.map(obj.userHashKeys, (hash) => {
                     return {
                       key: hash,
                     } as SelectTitlesModel
                   }),
                   type: { value: String(obj.freqId) } as ScheduleType,
                 } as CalendarModel)
-                setOpen(true)
+                isOpen(true)
               }}
             />
           </Box>
@@ -402,16 +408,16 @@ const UserCalendar = ({ isError, api }) => {
                   type: model.type,
                 } as CalendarModel
               }
-              users={map(users, (user) => {
+              users={_.map(users, (user) => {
                 return {
                   key: user.hashKey,
                   title: user.name,
-                  subTitle: user.mail,
+                  subTitle: user.email,
                 } as SelectTitlesModel
               })}
               radios={api.scheduleList}
-              isEdit={!isEmpty(model.start)}
-              close={() => setOpen(false)}
+              isEdit={!_.isEmpty(model.start)}
+              close={() => isOpen(false)}
               delete={async (id: string, date: Date) => {
                 await deleteSchedule(id, date)
                 await search()
@@ -419,7 +425,7 @@ const UserCalendar = ({ isError, api }) => {
               submit={async (m: CalendarModel) => {
                 // TODO 絶対に編集用APIを作ること！(面倒なので一旦こうしてる)
                 // 削除 → 登録にするとしても、1つのAPIで同一トランザクションにて処理したい
-                if (!isEmpty(m.id)) await deleteSchedule(m.id, m.date)
+                if (!_.isEmpty(m.id)) await deleteSchedule(m.id, m.date)
                 await calendarSetting(m)
                 await search()
               }}

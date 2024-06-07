@@ -36,6 +36,7 @@
     "next": "latest",
     "next-i18next": "^14.0.3",
     "next-intl": "^2.20.2",
+    "papaparse": "^5.4.1",
     "react": "latest",
     "react-dom": "latest",
     "react-dropzone": "^14.2.3",

@@ -8,13 +8,12 @@ import {
   TableHeader,
   SelectedCheckbox,
   TopMenu,
-} from '@/types/management'
+} from '@/types/common/index'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
 import { common } from '@mui/material/colors'
-import { every, isEqual, map, min, size } from 'lodash'
-import { UserListCSR } from '@/api/repository'
 import _ from 'lodash'
+import { UserSearchCSR } from '@/api/repository'
 import { useRouter } from 'next/router'
 import { RouterPath } from '@/enum/router'
 import NextHead from '@/components/common/Header'
@@ -46,22 +45,22 @@ const User = ({ isError, locale }) => {
   const [bodies, setBodies] = useState<UsersTableBody[]>([])
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
   const [page, setPage] = useState(1)
-  const [loading, IsLoading] = useState(true)
+  const [loading, isLoading] = useState(true)
 
   const search = async (currentPage?: number) => {
-    IsLoading(true)
+    isLoading(true)
 
     // API ユーザー一覧
     const list: UsersTableBody[] = []
     const list2: SelectedCheckbox[] = []
-    await UserListCSR()
+    await UserSearchCSR()
       .then((res) => {
         _.forEach(res.data.users, (u, index) => {
           list.push({
             no: Number(index) + 1,
             hashKey: u.hash_key,
             name: u.name,
-            mail: u.email,
+            email: u.email,
             role: Number(u.role_id),
             roleName: u[`role_name_${locale}`],
           } as UsersTableBody)
@@ -72,7 +71,7 @@ const User = ({ isError, locale }) => {
           _.forEach(
             res.data.users.slice(
               USER_PAGE_SIZE * (currentPage - 1),
-              min([USER_PAGE_SIZE * currentPage, size(list)]),
+              _.min([USER_PAGE_SIZE * currentPage, _.size(list)]),
             ),
             (r) => {
               list2.push({
@@ -83,18 +82,18 @@ const User = ({ isError, locale }) => {
           )
           setCheckedList(list2)
         }
-        IsLoading(false)
+        isLoading(false)
       })
       .catch((error) => {
         if (
-          every([500 <= error.response.status, error.response.status < 600])
+          _.every([500 <= error.response?.status, error.response?.status < 600])
         ) {
           router.push(RouterPath.Error)
           return
         }
 
-        if (isEqual(error.response.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response.data.code}`), {
+        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
+          toast(t(`common.api.code.${error.response?.data.code}`), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -124,7 +123,7 @@ const User = ({ isError, locale }) => {
     },
     {
       id: 3,
-      name: t('features.user.header.mail'),
+      name: t('features.user.header.email'),
     },
     {
       id: 4,
@@ -150,17 +149,17 @@ const User = ({ isError, locale }) => {
   return (
     <>
       <NextHead></NextHead>
-      {every([!isError, !loading]) && (
+      {_.every([!isError, !loading]) && (
         <>
           <Box sx={mt(12)}>
             <Box sx={[w(90), M0Auto]}>
               <SelectedTopMenu items={topMenu}></SelectedTopMenu>
             </Box>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              {size(bodies) > USER_PAGE_SIZE && (
+              {_.size(bodies) > USER_PAGE_SIZE && (
                 <Pagination
                   currentPage={page}
-                  listSize={size(bodies)}
+                  listSize={_.size(bodies)}
                   pageSize={USER_PAGE_SIZE}
                   search={search}
                   changePage={changePage}
@@ -180,11 +179,11 @@ const User = ({ isError, locale }) => {
             <CustomTable
               height={67}
               headers={tableHeader}
-              bodies={map(bodies, (u) => {
+              bodies={_.map(bodies, (u) => {
                 return {
                   no: u.no,
                   name: u.name,
-                  mail: u.mail,
+                  email: u.email,
                   role: u.roleName,
                 }
               }).slice(USER_PAGE_SIZE * (page - 1), USER_PAGE_SIZE * page)}

@@ -20,12 +20,12 @@ import {
 import { common } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'
 import { useSelector } from 'react-redux'
-import { trim } from 'lodash'
+import _ from 'lodash'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import ErrorHandler from '@/components/common/ErrorHandler'
 import { Pattern, ValidationType } from '@/enum/validation'
 import { FormValidation, FormValidationValue } from '@/hooks/validation'
-import { SettingModel } from '@/types/management'
+import { SettingModel } from '@/types/common/index'
 
 type Props = {
   open: boolean
@@ -115,7 +115,7 @@ const MFA = (props: Props) => {
               minLength: formValidationValue.mfa.min,
               maxLength: formValidationValue.mfa.max,
               pattern: formValidationValue.mfa.pattern,
-              setValueAs: (value) => trim(value),
+              setValueAs: (value) => _.trim(value),
             })}
             aria-invalid={errors.mfa ? 'true' : 'false'}
           />

@@ -9,7 +9,7 @@ enum ValidationType {
 
 enum Pattern {
   // メールアドレス
-  Mail = '^[a-zA-Z0-9_+-]+(.[a-zA-Z0-9_+-]+)*@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*.)+[a-zA-Z]{2,}$',
+  Email = '^[a-zA-Z0-9_+-]+(.[a-zA-Z0-9_+-]+)*@([a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]*.)+[a-zA-Z]{2,}$',
   // 半角英数字
   HalfAlphaNum = '^[0-9a-zA-Z]*$',
   // 半角数字

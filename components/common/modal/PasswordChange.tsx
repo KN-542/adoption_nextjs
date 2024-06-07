@@ -22,7 +22,7 @@ import { common } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'
 import { useSelector } from 'react-redux'
 import { useState } from 'react'
-import { isEqual, trim } from 'lodash'
+import _ from 'lodash'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import ErrorHandler from '@/components/common/ErrorHandler'
 import { Pattern, ValidationType } from '@/enum/validation'
@@ -31,7 +31,7 @@ import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { SettingModel } from '@/types/management'
+import { SettingModel } from '@/types/common/index'
 
 type Props = {
   open: boolean
@@ -107,7 +107,7 @@ const PasswordChange = (props: Props) => {
   } = useForm<Inputs>()
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
-    if (!isEqual(d.newPassword, d.newPasswordConfirm)) {
+    if (!_.isEqual(d.newPassword, d.newPasswordConfirm)) {
       toast(t('features.login.newPasswordMsg'), {
         style: {
           backgroundColor: setting.toastErrorColor,
@@ -121,7 +121,7 @@ const PasswordChange = (props: Props) => {
       return
     }
 
-    if (isEqual(d.newPassword, d.password)) {
+    if (_.isEqual(d.newPassword, d.password)) {
       toast(t('features.login.newPasswordMsg2'), {
         style: {
           backgroundColor: setting.toastErrorColor,
@@ -170,7 +170,7 @@ const PasswordChange = (props: Props) => {
               minLength: formValidationValue.password.min,
               maxLength: formValidationValue.password.max,
               pattern: formValidationValue.password.pattern,
-              setValueAs: (value) => trim(value),
+              setValueAs: (value) => _.trim(value),
             })}
             aria-invalid={errors.password ? 'true' : 'false'}
             InputProps={{
@@ -200,7 +200,7 @@ const PasswordChange = (props: Props) => {
               minLength: formValidationValue.newPassword.min,
               maxLength: formValidationValue.newPassword.max,
               pattern: formValidationValue.newPassword.pattern,
-              setValueAs: (value) => trim(value),
+              setValueAs: (value) => _.trim(value),
             })}
             aria-invalid={errors.newPassword ? 'true' : 'false'}
             InputProps={{
@@ -230,7 +230,7 @@ const PasswordChange = (props: Props) => {
               minLength: formValidationValue.newPasswordConfirm.min,
               maxLength: formValidationValue.newPasswordConfirm.max,
               pattern: formValidationValue.newPasswordConfirm.pattern,
-              setValueAs: (value) => trim(value),
+              setValueAs: (value) => _.trim(value),
             })}
             aria-invalid={errors.newPasswordConfirm ? 'true' : 'false'}
             InputProps={{

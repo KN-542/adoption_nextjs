@@ -15,10 +15,13 @@ import {
   LogoutRequest,
   JWTDecodeRequest,
   SidebarRequest,
+  RolesRequest,
+  ApplicantStatusListRequest,
+  UserSearchRequest,
 } from './model/request'
 
 // Login CSR
-export const loginCSR = async (req: LoginRequest) => {
+export const LoginCSR = async (req: LoginRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/login`,
     req,
@@ -87,6 +90,48 @@ export const SidebarCSR = async (req: SidebarRequest) => {
   return res
 }
 
+// 使用可能ロール一覧 CSR
+export const RolesCSR = async (req: RolesRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/roles`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 応募者検索 CSR
+export const ApplicantsSearchCSR = async (req: ApplicantSearchRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/search`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 応募者ステータス一覧 CSR
+export const ApplicantStatusListCSR = async (
+  req: ApplicantStatusListRequest,
+) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/status`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// ユーザー検索 CSR
+export const UserSearchCSR = async (req: UserSearchRequest) => {
+  const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
 // Session Confirm CSR
 export const SessionConfirmCSR = async (req: HashKeyRequest) => {
   const res = await axios.post(
@@ -98,7 +143,7 @@ export const SessionConfirmCSR = async (req: HashKeyRequest) => {
 }
 
 // 応募者ダウンロード CSR
-export const applicantsDownloadCSR = async (req: ApplicantsDownloadRequest) => {
+export const ApplicantsDownloadCSR = async (req: ApplicantsDownloadRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/download`,
     req,
@@ -121,46 +166,6 @@ export const applicantDocumentDownloadCSR = async (
       responseType: 'blob', // レスポンスタイプをblobに設定
       withCredentials: true,
     },
-  )
-  return res
-}
-
-// 応募者検索 CSR
-export const applicantsSearchCSR = async (req: ApplicantSearchRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/search`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
-// 応募者検索 SSG
-export const applicantsSearchSSG = async () => {
-  const res = await axios.post(
-    `${process.env.NEXT_SSG_URL}/applicant/search`,
-    {},
-    APICommonHeader,
-  )
-  return res
-}
-
-// ユーザー一覧 CSR
-export const UserListCSR = async () => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/list`,
-    {},
-    APICommonHeader,
-  )
-  return res
-}
-
-// ユーザー一覧 SSG
-export const UserListSSG = async () => {
-  const res = await axios.post(
-    `${process.env.NEXT_SSG_URL}/user/list`,
-    {},
-    APICommonHeader,
   )
   return res
 }
@@ -268,16 +273,6 @@ export const UserRoleListSSG = async () => {
 export const UserListScheduleTypeSSG = async () => {
   const res = await axios.post(
     `${process.env.NEXT_SSG_URL}/user/schedule_type`,
-    {},
-    APICommonHeader,
-  )
-  return res
-}
-
-// 応募者ステータス一覧 SSG
-export const ApplicantStatusListSSG = async () => {
-  const res = await axios.post(
-    `${process.env.NEXT_SSG_URL}/applicant/status`,
     {},
     APICommonHeader,
   )

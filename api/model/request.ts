@@ -1,6 +1,9 @@
 export abstract class AbstractRequest {
   abstract hash_key: string
 }
+export abstract class AbstractRequest2 {
+  abstract user_hash_key: string
+}
 
 // ログイン
 export class LoginRequest extends AbstractRequest {
@@ -42,37 +45,72 @@ export class SidebarRequest extends AbstractRequest {
   hash_key: string
 }
 
-// hashKey only
-export type HashKeyRequest = {
+// 使用可能ロール一覧
+export class RolesRequest extends AbstractRequest {
   hash_key: string
 }
 
+// 応募者ステータス一覧取得
+export class ApplicantStatusListRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
+
 // 応募者検索
-export type ApplicantSearchRequest = {
-  // サイトID
-  site_id_list: number[]
+export class ApplicantSearchRequest extends AbstractRequest2 {
+  // ユーザーハッシュキー
+  user_hash_key: string
+  // サイト一覧
+  sites: string[]
   // 応募者ステータス
-  applicant_status_list: number[]
+  applicant_status_list: string[]
   // 履歴書
-  resume: number
+  resume_flg: number
   // 職務経歴書
-  curriculum_vitae: number
+  curriculum_vitae_flg: number
   // 氏名
   name: string
   // メールアドレス
   email: string
   // 面接官
-  users: string
+  users: string[]
   // ソート(key)
   sort_key: string
   // ソート(向き)
   sort_asc: boolean
 }
 
-// 応募者ダウンロード request
-export type ApplicantsDownloadRequest = {
-  values: string[][]
-  site: number
+// 応募者ステータス一覧取得
+export class UserSearchRequest extends AbstractRequest {
+  hash_key: string
+}
+
+// 応募者ダウンロード
+export class ApplicantsDownloadRequest extends AbstractRequest2 {
+  // ユーザーハッシュキー
+  user_hash_key: string
+  // サイトハッシュキー
+  site_hash_key: string
+  // 応募者
+  applicants: ApplicantDownloadSubRequest[]
+}
+
+// 応募者
+export type ApplicantDownloadSubRequest = {
+  // 媒体側ID
+  outer_id: string
+  // 氏名
+  name: string
+  // メールアドレス
+  email: string
+  // TEL
+  tel: string
+  // 年齢
+  age: number
+}
+
+// hashKey only
+export type HashKeyRequest = {
+  hash_key: string
 }
 
 // 書類ダウンロード request

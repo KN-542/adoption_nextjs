@@ -63,7 +63,7 @@ import {
   CalendarModel,
   SelectTitlesModel,
   ScheduleType,
-} from '@/types/management'
+} from '@/types/common/index'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 
 type Props = {
@@ -123,7 +123,7 @@ const CalendarModal = (props: Props) => {
       ),
     ),
   )
-  const [loading, IsLoading] = useState(true)
+  const [loading, isLoading] = useState(true)
 
   const formValidation: FormValidation = {
     date: [
@@ -228,13 +228,13 @@ const CalendarModal = (props: Props) => {
   }
 
   useEffect(() => {
-    IsLoading(true)
+    isLoading(true)
     setValue('date', dayjs(props.model.date))
     setValue('title', props.model.title ?? '')
     setValue('start', props.model.start ?? time15Start[0])
     setValue('end', props.model.end ?? time15[0])
     setValue('type', props.model.type?.value ?? props.radios[0].value)
-    IsLoading(false)
+    isLoading(false)
   }, [props.model])
 
   return (

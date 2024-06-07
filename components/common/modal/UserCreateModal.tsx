@@ -11,8 +11,8 @@ import {
 import { useTranslations } from 'next-intl'
 import _ from 'lodash'
 import { Bold, ColorRed, mb, mr, mt } from '@/styles/index'
-import Content from '../common/Content'
-import { Contents } from '@/types/management'
+import { Contents } from '@/types/common/index'
+import Content from '../Content'
 
 type Props = {
   open: boolean

@@ -1,7 +1,7 @@
 import { RootState } from '@/hooks/store/store'
-import { TopMenu } from '@/types/management'
+import { TopMenu } from '@/types/common/index'
 import { Button } from '@mui/material'
-import { map } from 'lodash'
+import _ from 'lodash'
 import { useRouter } from 'next/router'
 import { useSelector } from 'react-redux'
 import { BorderRadius, ButtonColor, Padding, mb, mr } from '@/styles/index'
@@ -17,7 +17,7 @@ const SelectedTopMenu = (props: Props) => {
 
   return (
     <>
-      {map(props.items, (item, index) => (
+      {_.map(props.items, (item, index) => (
         <Button
           size="small"
           key={index}

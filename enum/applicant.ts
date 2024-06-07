@@ -1,5 +1,3 @@
-import { StatusCodes } from 'http-status-codes'
-
 // 媒体
 export enum Site {
   Recruit = 1,
@@ -102,7 +100,7 @@ export enum SearchTextIndex {
   // 氏名
   Name = 0,
   // メールアドレス
-  Mail,
+  Email,
 }
 
 // 検索項目 AutoComplete
@@ -118,7 +116,7 @@ export enum SearchSortKey {
   // 氏名
   Name = 'name',
   // メールアドレス
-  Mail = 'email',
+  Email = 'email',
   // 媒体
   Site = 'site_id',
   // 選考状況

@@ -11,8 +11,12 @@ import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Checkbox from '@mui/material/Checkbox'
 import { useTranslations } from 'next-intl'
-import { CheckboxPropsField, TableHeader, TableSort } from '@/types/management'
-import { filter, isEmpty, isEqual, keys, map, size } from 'lodash'
+import {
+  CheckboxPropsField,
+  TableHeader,
+  TableSort,
+} from '@/types/common/index'
+import _ from 'lodash'
 import {
   Cell,
   M0Auto,
@@ -44,6 +48,7 @@ type Props = {
   search?: (i?: number) => void
   changePage?: (i: number) => void
   height: number
+  isNoContent: boolean
 }
 
 const CustomTable = (props: Props) => {
@@ -52,21 +57,21 @@ const CustomTable = (props: Props) => {
 
   return (
     <>
-      {size(props.bodies) > 0 && (
+      {_.size(props.bodies) > 0 && (
         <Box sx={[w(90), M0Auto]}>
           <Paper sx={[mb(2)]}>
             <TableContainer sx={CustomTableContainer(props.height)}>
               <Table sx={minW(750)} aria-labelledby="tableTitle" size="medium">
                 <TableHead sx={TableHeaderSX}>
                   <TableRow>
-                    {!isEmpty(props.checkbox?.checkedList) && (
+                    {!_.isEmpty(props.checkbox?.checkedList) && (
                       <TableCell sx={[Cell, BackGroundColor(setting.color)]}>
                         <Checkbox
                           style={Color(common.white)}
-                          checked={isEqual(
-                            size(props.bodies),
-                            size(
-                              filter(
+                          checked={_.isEqual(
+                            _.size(props.bodies),
+                            _.size(
+                              _.filter(
                                 props.checkbox?.checkedList,
                                 (item) => item.checked,
                               ),
@@ -74,10 +79,10 @@ const CustomTable = (props: Props) => {
                           )}
                           onClick={() => {
                             props.checkbox?.onClickAll(
-                              !isEqual(
-                                size(props.bodies),
-                                size(
-                                  filter(
+                              !_.isEqual(
+                                _.size(props.bodies),
+                                _.size(
+                                  _.filter(
                                     props.checkbox?.checkedList,
                                     (item) => item.checked,
                                   ),
@@ -91,7 +96,7 @@ const CustomTable = (props: Props) => {
                     <TableCell
                       sx={[Cell, BackGroundColor(setting.color)]}
                     ></TableCell>
-                    {map(props.headers, (header) => (
+                    {_.map(props.headers, (header) => (
                       <TableCell
                         key={header.id}
                         align="left"
@@ -101,7 +106,7 @@ const CustomTable = (props: Props) => {
                           BackGroundColor(setting.color),
                         ]}
                       >
-                        {!isEmpty(header.sort) && (
+                        {!_.isEmpty(header.sort) && (
                           <>
                             {!header.sort.target && (
                               <Button
@@ -155,17 +160,17 @@ const CustomTable = (props: Props) => {
                             )}
                           </>
                         )}
-                        {isEmpty(header.sort) && <>{header.name}</>}
+                        {_.isEmpty(header.sort) && <>{header.name}</>}
                       </TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-                  {map(props.bodies, (row, index) => {
+                  {_.map(props.bodies, (row, index) => {
                     return (
                       <TableRow hover role="checkbox" tabIndex={-1} key={index}>
-                        {!isEmpty(props.checkbox?.checkedList) && (
+                        {!_.isEmpty(props.checkbox?.checkedList) && (
                           <TableCell
                             padding="checkbox"
                             sx={[
@@ -189,7 +194,7 @@ const CustomTable = (props: Props) => {
                           </TableCell>
                         )}
                         <TableCell padding="none"></TableCell>
-                        {map(keys(row), (item, index2) => {
+                        {_.map(_.keys(row), (item, index2) => {
                           return (
                             <TableCell
                               component="th"
@@ -198,7 +203,7 @@ const CustomTable = (props: Props) => {
                               key={index2}
                               sx={hBlock(75)}
                             >
-                              {isEmpty(row.item) && row[item]}
+                              {_.isEmpty(row.item) && row[item]}
                             </TableCell>
                           )
                         })}
@@ -211,9 +216,11 @@ const CustomTable = (props: Props) => {
           </Paper>
         </Box>
       )}
-      {isEqual(size(props.bodies), 0) && (
+      {_.isEqual(_.size(props.bodies), 0) && (
         <Box fontSize={60} sx={[TextCenter, mt(30)]}>
-          {t('common.table.none')}
+          {props.isNoContent
+            ? t('common.table.noContent')
+            : t('common.table.none')}
         </Box>
       )}
     </>

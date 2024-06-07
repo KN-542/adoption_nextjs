@@ -22,7 +22,7 @@ export type Color = {
 export type UserModel = {
   hashKey: string
   name: string
-  mail: string
+  email: string
   path: string
 }
 
@@ -35,42 +35,6 @@ export type SettingModel = {
   errorMsg?: string
 }
 
-// 応募者一覧 table body
-export type ApplicantsTableBody = {
-  // No
-  no: number
-  // hash_key
-  hashKey: string
-  // 氏名
-  name: string
-  // メールアドレス
-  mail: string
-  // 媒体
-  site: number
-  // 媒体(媒体名)
-  siteName: string
-  // 年齢
-  age: number
-  // 選考状況
-  status: number
-  // 選考状況(ステータス名)
-  statusName: string
-  // 面接予定日
-  interviewerDate: Date
-  // Google Meet URL
-  google: string
-  // 履歴書
-  resume: string
-  // 職務経歴書
-  curriculumVitae: string
-  // 担当面接官
-  users: string[]
-  // 担当面接官氏名
-  userNames: string[]
-  // カレンダーハッシュキー
-  calendarHashKey: string
-}
-
 // ユーザー一覧 table body
 export type UsersTableBody = {
   // No
@@ -80,7 +44,7 @@ export type UsersTableBody = {
   // 氏名
   name: string
   // メールアドレス
-  mail: string
+  email: string
   // ロールID
   role: number
   // ロール名
@@ -96,7 +60,7 @@ export type UserGroupTableBody = {
   // グループ名
   name: string
   // メールアドレス
-  mail: string
+  email: string
   // 所属ユーザー
   users: string[]
 }
@@ -172,6 +136,8 @@ export type SearchSelected = {
   index: number
   // listの各要素のID
   id: number
+  // listの各要素のハッシュキー
+  hashKey: string
 }
 
 // 検索 選択項目

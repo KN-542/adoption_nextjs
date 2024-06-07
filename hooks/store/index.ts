@@ -2,7 +2,7 @@ import { SearchAutoCompIndex, SearchTextIndex } from '@/enum/applicant'
 import { Lang } from '@/enum/user'
 import { green, indigo, red } from '@mui/material/colors'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
-import { cloneDeep } from 'lodash'
+import _ from 'lodash'
 import {
   ApplicantModel,
   SearchAutoComplete,
@@ -13,7 +13,7 @@ import {
   SelectTitlesModel,
   SettingModel,
   UserModel,
-} from 'types/management'
+} from 'types/common/index'
 
 const state = {
   applicant: {
@@ -26,8 +26,8 @@ const state = {
           value: '',
         },
         {
-          id: SearchTextIndex.Mail,
-          name: 'features.applicant.header.mail',
+          id: SearchTextIndex.Email,
+          name: 'features.applicant.header.email',
           value: '',
         },
       ] as SearchText[],
@@ -47,7 +47,7 @@ const state = {
   user: {
     hashKey: '',
     name: '',
-    mail: '',
+    email: '',
     path: '',
   } as UserModel,
   setting: {
@@ -79,16 +79,16 @@ export const slice = createSlice({
       state,
       action: PayloadAction<SearchSelected[]>,
     ) => {
-      state.applicant.search.selectedList = cloneDeep(action.payload)
+      state.applicant.search.selectedList = _.cloneDeep(action.payload)
     },
     mgApplicantSearchText: (state, action: PayloadAction<SearchText[]>) => {
-      state.applicant.search.textForm = cloneDeep(action.payload)
+      state.applicant.search.textForm = _.cloneDeep(action.payload)
     },
     mgApplicantSearchAutoComp: (
       state,
       action: PayloadAction<SearchAutoComplete[]>,
     ) => {
-      state.applicant.search.autoCompForm = cloneDeep(action.payload)
+      state.applicant.search.autoCompForm = _.cloneDeep(action.payload)
     },
     mgApplicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
       Object.assign(state.applicant.search.sort, action.payload)
