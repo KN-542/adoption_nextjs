@@ -222,7 +222,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
   }
 
   const search = async (currentPage?: number) => {
-    isLoading(true)
+    if (init) isLoading(true)
 
     // API 応募者検索
     const list: ApplicantSearchDTO[] = []
@@ -872,6 +872,13 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
         const subRequest: ApplicantDownloadSubRequest[] = []
         for (const item of csv) {
           const outerId = item[site.outerIndex]
+          if (
+            !_.isEmpty(
+              _.filter(subRequest, (s) => _.isEqual(s.outer_id, outerId)),
+            )
+          )
+            continue
+
           const name =
             site.nameCheckType > 0
               ? item[site.nameIndex]
@@ -924,7 +931,23 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
         }
 
         // API 応募者ダウンロード
-        await ApplicantsDownloadCSR(request)
+        const res = await ApplicantsDownloadCSR(request)
+        toast(
+          t('features.applicant.uploadMsgSuccess') +
+            String(res.data.update_num) +
+            t('features.applicant.uploadMsgSuccess2') +
+            t('common.toast.create'),
+          {
+            style: {
+              backgroundColor: setting.toastSuccessColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
       } catch (error) {
         if (error.response) {
           if (500 <= error.response?.status && error.response?.status < 600) {
@@ -951,9 +974,6 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
 
       isOpen(false)
       isSpinner(false)
-
-      //     router.reload()
-      //     // router.push(RouterPath.Applicant) // これだと画面が固まる…
     } else {
       toast(t('common.file.typeError'), {
         style: {
