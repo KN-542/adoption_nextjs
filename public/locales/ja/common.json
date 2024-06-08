@@ -124,6 +124,8 @@
       "uploadMsg": "応募者情報のファイルアップロードを行ってください",
       "uploadMsg2": "ここにファイルをドラッグ＆ドロップ、またはここをクリックしてファイル選択",
       "uploadMsg3": "用のファイルが不正に編集されたか、または媒体の仕様が変更された可能性があります",
+      "uploadMsgSuccess": "重複しない",
+      "uploadMsgSuccess2": "件",
       "site": {
         "recruit": "リクナビ/Next",
         "mynavi": "マイナビ",
