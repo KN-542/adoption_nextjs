@@ -21,6 +21,7 @@ import { common } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'
 
 type Props = {
+  show: boolean
   currentPage: number
   listSize: number
   pageSize: number
@@ -47,7 +48,7 @@ const Pagination = (props: Props) => {
 
   const displayPagination = () => {
     if (
-      _.some([props.currentPage <= 0, props.listSize <= 0, props.pageSize <= 0])
+      _.some([props.currentPage <= 0, props.listSize < 0, props.pageSize <= 0])
     ) {
       router.push(RouterPath.Error)
       return
@@ -161,58 +162,71 @@ const Pagination = (props: Props) => {
   }, [])
 
   return (
-    <Box
-      sx={[
-        w(100),
-        maxW(MIN_EL_SIZE + 24 * _.size(displayList)),
-        mb(1.5),
-        PaginationMenu,
-      ]}
-    >
-      {_.map(displayList, (item, index) => {
-        if (item.isButton) {
-          const flg = _.isEqual(props.currentPage, item.value)
-          return (
-            <Button
-              key={index}
-              disabled={flg}
-              sx={[
-                ButtonColor(
-                  flg ? setting.color : common.white,
-                  flg ? common.white : setting.color,
-                ),
-                minW(24),
-                maxW(24),
-                maxH(24),
-                ml(1),
-                BorderRadius(20),
-              ]}
-              onClick={async () => {
-                props.changePage(item.value)
-                await props.search(item.value)
-              }}
-            >
-              {item.disp}
-            </Button>
-          )
-        } else {
-          return (
-            <Box
-              key={index}
-              sx={[minW(24), maxW(24), maxH(24), ml(1), TextCenter]}
-            >
-              {item.disp}
-            </Box>
-          )
-        }
-      })}
-      <Box component="span" sx={ml(4)}>
-        {`${props.pageSize * (props.currentPage - 1) + 1} ~ ${_.min([
-          props.pageSize * props.currentPage,
-          props.listSize,
-        ])} / ${props.listSize}${t('common.pagination.size')}`}
-      </Box>
-    </Box>
+    <>
+      {props.show ? (
+        <Box
+          sx={[
+            w(100),
+            maxW(MIN_EL_SIZE + 24 * _.size(displayList)),
+            mb(1.5),
+            PaginationMenu,
+          ]}
+        >
+          {_.map(displayList, (item, index) => {
+            if (item.isButton) {
+              const flg = _.isEqual(props.currentPage, item.value)
+              return (
+                <Button
+                  key={index}
+                  disabled={flg}
+                  sx={[
+                    ButtonColor(
+                      flg ? setting.color : common.white,
+                      flg ? common.white : setting.color,
+                    ),
+                    minW(24),
+                    maxW(24),
+                    maxH(24),
+                    ml(1),
+                    BorderRadius(20),
+                  ]}
+                  onClick={async () => {
+                    props.changePage(item.value)
+                    await props.search(item.value)
+                  }}
+                >
+                  {item.disp}
+                </Button>
+              )
+            } else {
+              return (
+                <Box
+                  key={index}
+                  sx={[minW(24), maxW(24), maxH(24), ml(1), TextCenter]}
+                >
+                  {item.disp}
+                </Box>
+              )
+            }
+          })}
+          <Box component="span" sx={ml(4)}>
+            {`${props.pageSize * (props.currentPage - 1) + 1} ~ ${_.min([
+              props.pageSize * props.currentPage,
+              props.listSize,
+            ])} / ${props.listSize}${t('common.pagination.size')}`}
+          </Box>
+        </Box>
+      ) : (
+        <Box
+          sx={[
+            w(100),
+            maxW(MIN_EL_SIZE + 24 * _.size(displayList)),
+            mb(1.5),
+            PaginationMenu,
+          ]}
+        >{`${props.listSize} ${t('common.pagination.size')}`}</Box>
+      )}
+    </>
   )
 }
 

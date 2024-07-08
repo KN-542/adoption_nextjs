@@ -29,7 +29,6 @@ const GoogleMeet = () => {
       })
       .catch(() => {
         router.push(RouterPath.Error)
-        return
       })
   }
 

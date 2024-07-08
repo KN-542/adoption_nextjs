@@ -13,9 +13,10 @@ import Checkbox from '@mui/material/Checkbox'
 import { useTranslations } from 'next-intl'
 import {
   CheckboxPropsField,
+  Icons,
   TableHeader,
   TableSort,
-} from '@/types/common/index'
+} from '@/types/index'
 import _ from 'lodash'
 import {
   Cell,
@@ -34,6 +35,7 @@ import {
   Color,
   Padding,
   CustomTableIcon,
+  ButtonColor,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp'
@@ -41,14 +43,15 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import { Button } from '@mui/material'
 
 type Props = {
+  height: number
+  isNoContent: boolean
   headers: TableHeader[]
   bodies: Record<string, any>[]
+  icons?: Icons[]
   checkbox?: CheckboxPropsField
   changeTarget?: (s: TableSort) => void
   search?: (i?: number) => void
   changePage?: (i: number) => void
-  height: number
-  isNoContent: boolean
 }
 
 const CustomTable = (props: Props) => {
@@ -163,6 +166,17 @@ const CustomTable = (props: Props) => {
                         {_.isEmpty(header.sort) && <>{header.name}</>}
                       </TableCell>
                     ))}
+                    {!_.isEmpty(props.icons) && (
+                      <TableCell
+                        key={''}
+                        align="right"
+                        padding="none"
+                        sx={[
+                          Color(common.white),
+                          BackGroundColor(setting.color),
+                        ]}
+                      ></TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
 
@@ -173,6 +187,7 @@ const CustomTable = (props: Props) => {
                         {!_.isEmpty(props.checkbox?.checkedList) && (
                           <TableCell
                             padding="checkbox"
+                            align="left"
                             sx={[
                               hBlock(75),
                               Color(common.white),
@@ -207,6 +222,32 @@ const CustomTable = (props: Props) => {
                             </TableCell>
                           )
                         })}
+                        {!_.isEmpty(props.icons) && (
+                          <>
+                            <TableCell
+                              component="th"
+                              align="right"
+                              scope="row"
+                              padding="none"
+                              sx={hBlock(75)}
+                            >
+                              {_.map(props.icons, (icon, index2) => {
+                                return (
+                                  <Button
+                                    key={index2}
+                                    sx={[ButtonColor(icon.color, '')]}
+                                    disabled={!icon.role}
+                                    onClick={() => {
+                                      icon.onClick(index)
+                                    }}
+                                  >
+                                    {icon.element}
+                                  </Button>
+                                )
+                              })}
+                            </TableCell>
+                          </>
+                        )}
                       </TableRow>
                     )
                   })}

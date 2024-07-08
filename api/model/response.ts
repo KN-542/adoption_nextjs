@@ -1,5 +1,5 @@
 // API サイト一覧
-export type ApplicantStatusListDTO = {
+export type ApplicantStatusListResponse = {
   // id
   id: number
   // ハッシュキー
@@ -25,7 +25,7 @@ export type ApplicantStatusListDTO = {
 }
 
 // API 応募者検索
-export type ApplicantSearchDTO = {
+export type SearchApplicantResponse = {
   // No
   no: number
   // ハッシュキー
@@ -59,7 +59,7 @@ export type ApplicantSearchDTO = {
 }
 
 // API ユーザー検索
-export type UserSearchDTO = {
+export type SearchUserResponse = {
   // No
   no: number
   // ハッシュキー
@@ -69,4 +69,52 @@ export type UserSearchDTO = {
   // メールアドレス
   email: string
   // 追加分、、
+}
+
+// API ユーザー検索_同一企業
+export type SearchUserByCompanyResponse = {
+  // ハッシュキー
+  hashKey: string
+  // 氏名
+  name: string
+  // メールアドレス
+  email: string
+}
+
+// API チーム検索_同一企業
+export type SearchTeamByCompanyResponse = {
+  // ハッシュキー
+  hashKey: string
+  // チーム名
+  name: string
+  // サブ
+  sub: string
+}
+
+// API 企業検索
+export type SearchCompanyResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 企業名
+  name: string
+}
+
+// API チーム取得
+export type GetTeamResponse = {
+  // ハッシュキー
+  hashKey: string
+  // チーム名
+  name: string
+  // 所属ユーザー
+  users: SearchUserByCompanyResponse[]
+}
+
+// API ロール検索_同一企業
+export type SearchRoleByCompanyResponse = {
+  // ハッシュキー
+  hashKey: string
+  // ロール名
+  name: string
 }

@@ -1,28 +1,43 @@
 import axios from 'axios'
-import { APICommonHeader } from '.'
+import { APICommonHeader, axios1 } from '.'
 import {
   ApplicantDocumentDownloadRequest,
-  ApplicantSearchRequest,
-  ApplicantsDownloadRequest,
+  SearchApplicantRequest,
+  DownloadApplicantRequest,
   SchedulesRequest,
   GoogleMeetURLRequest,
   HashKeyRequest,
   LoginRequest,
   MFARequest,
-  PasswordChangeRequest,
-  UserCreateRequest,
-  MFACreateRequest,
+  ChangePasswordRequest,
+  CreateUserRequest,
+  CreateMFARequest,
   LogoutRequest,
-  JWTDecodeRequest,
+  DecodeJWTRequest,
   SidebarRequest,
   RolesRequest,
   ApplicantStatusListRequest,
-  UserSearchRequest,
+  SearchUserRequest,
+  SearchCompanyRequest,
+  CreateCompanyRequest,
+  SearchTeamRequest,
+  SearchUserByCompanyRequest,
+  CreateTeamRequest,
+  GetTeamRequest,
+  UpdateTeamRequest,
+  DeleteTeamRequest,
+  DeleteUserRequest,
+  SearchRoleByCompanyRequest,
+  SearchTeamByCompanyRequest,
 } from './model/request'
+
+/* 
+  共通
+*/
 
 // Login CSR
 export const LoginCSR = async (req: LoginRequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/login`,
     req,
     APICommonHeader,
@@ -32,7 +47,7 @@ export const LoginCSR = async (req: LoginRequest) => {
 
 // Logout CSR
 export const LogoutCSR = async (req: LogoutRequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/logout`,
     req,
     APICommonHeader,
@@ -51,8 +66,8 @@ export const MFACSR = async (req: MFARequest) => {
 }
 
 // MFA create CSR
-export const MFACreateCSR = async (req: MFACreateRequest) => {
-  const res = await axios.post(
+export const CreateMFACSR = async (req: CreateMFARequest) => {
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/code_gen`,
     req,
     APICommonHeader,
@@ -61,8 +76,8 @@ export const MFACreateCSR = async (req: MFACreateRequest) => {
 }
 
 // JWT Decode CSR
-export const JWTDecodeCSR = async (req: JWTDecodeRequest) => {
-  const res = await axios.post(
+export const DecodeJWTCSR = async (req: DecodeJWTRequest) => {
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/decode`,
     req,
     APICommonHeader,
@@ -71,7 +86,7 @@ export const JWTDecodeCSR = async (req: JWTDecodeRequest) => {
 }
 
 // パスワード変更 CSR
-export const PasswordChangeCSR = async (req: PasswordChangeRequest) => {
+export const ChangePasswordCSR = async (req: ChangePasswordRequest) => {
   const res = await axios.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/password_change`,
     req,
@@ -82,7 +97,7 @@ export const PasswordChangeCSR = async (req: PasswordChangeRequest) => {
 
 // サイドバー CSR
 export const SidebarCSR = async (req: SidebarRequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/sidebar`,
     req,
     APICommonHeader,
@@ -92,7 +107,7 @@ export const SidebarCSR = async (req: SidebarRequest) => {
 
 // 使用可能ロール一覧 CSR
 export const RolesCSR = async (req: RolesRequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/roles`,
     req,
     APICommonHeader,
@@ -100,9 +115,13 @@ export const RolesCSR = async (req: RolesRequest) => {
   return res
 }
 
+/* 
+  応募者
+*/
+
 // 応募者検索 CSR
-export const ApplicantsSearchCSR = async (req: ApplicantSearchRequest) => {
-  const res = await axios.post(
+export const SearchApplicantCSR = async (req: SearchApplicantRequest) => {
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/search`,
     req,
     APICommonHeader,
@@ -114,7 +133,7 @@ export const ApplicantsSearchCSR = async (req: ApplicantSearchRequest) => {
 export const ApplicantStatusListCSR = async (
   req: ApplicantStatusListRequest,
 ) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/status`,
     req,
     APICommonHeader,
@@ -122,29 +141,9 @@ export const ApplicantStatusListCSR = async (
   return res
 }
 
-// ユーザー検索 CSR
-export const UserSearchCSR = async (req: UserSearchRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
-// Session Confirm CSR
-export const SessionConfirmCSR = async (req: HashKeyRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/session_confirm`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
 // 応募者ダウンロード CSR
-export const ApplicantsDownloadCSR = async (req: ApplicantsDownloadRequest) => {
-  const res = await axios.post(
+export const DownloadApplicantCSR = async (req: DownloadApplicantRequest) => {
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/download`,
     req,
     APICommonHeader,
@@ -152,11 +151,21 @@ export const ApplicantsDownloadCSR = async (req: ApplicantsDownloadRequest) => {
   return res
 }
 
-// 応募者ダウンロード CSR
-export const applicantDocumentDownloadCSR = async (
+// 応募者取得(1件) CSR
+export const GetApplicantCSR = async (req: HashKeyRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 書類ダウンロード CSR
+export const DownloadApplicantDocumentCSR = async (
   req: ApplicantDocumentDownloadRequest,
 ) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/documents_download`,
     req,
     {
@@ -170,60 +179,10 @@ export const applicantDocumentDownloadCSR = async (
   return res
 }
 
-// ユーザーグループ一覧 CSR
-export const SearchUserGroupCSR = async () => {
+// サイト一覧 SSG
+export const ApplicantSitesSSG = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_group`,
-    {},
-    APICommonHeader,
-  )
-  return res
-}
-
-// ユーザー登録 CSR
-export const UserCreateCSR = async (req: UserCreateRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
-// スケジュール登録 CSR
-export const CreateSchedulesCSR = async (req: SchedulesRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_schedule`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
-// スケジュール更新 CSR
-export const UpdateSchedulesCSR = async (req: SchedulesRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/update_schedule`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
-// スケジュール削除 CSR
-export const DeleteSchedulesCSR = async (req: HashKeyRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete_schedule`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
-// スケジュール一覧 CSR
-export const SchedulesCSR = async () => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/schedules`,
+    `${process.env.NEXT_SSG_URL}/applicant/sites`,
     {},
     APICommonHeader,
   )
@@ -232,7 +191,7 @@ export const SchedulesCSR = async () => {
 
 // Google認証URL作成 CSR
 export const GoogleAuth = async (req: GoogleMeetURLRequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get_url`,
     req,
     APICommonHeader,
@@ -242,7 +201,7 @@ export const GoogleAuth = async (req: GoogleMeetURLRequest) => {
 
 // Google認証URL作成 CSR
 export const GoogleMeetURL = async (req: GoogleMeetURLRequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get_google_meet_url`,
     req,
     APICommonHeader,
@@ -250,28 +209,165 @@ export const GoogleMeetURL = async (req: GoogleMeetURLRequest) => {
   return res
 }
 
-// 応募者取得(1件) CSR
-export const GetApplicantCSR = async (req: HashKeyRequest) => {
-  const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get`,
+/* 
+  ユーザー
+*/
+
+// ユーザー検索 CSR
+export const SearchUserCSR = async (req: SearchUserRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search`,
     req,
     APICommonHeader,
   )
   return res
 }
 
-// ユーザーロール一覧 SSG
-export const UserRoleListSSG = async () => {
-  const res = await axios.post(
-    `${process.env.NEXT_SSG_URL}/user/role_list`,
+// ユーザー検索_同一企業 CSR
+export const SearchUserByCompanyCSR = async (
+  req: SearchUserByCompanyRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_company`,
+    req,
     APICommonHeader,
   )
   return res
 }
 
-// スケジュール登録種別一覧 SSG
+// ユーザー登録 CSR
+export const CreateUserCSR = async (req: CreateUserRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// ユーザー削除 CSR
+export const DeleteUserCSR = async (req: DeleteUserRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+/* 
+  チーム
+*/
+
+// チーム一覧 CSR
+export const SearchTeamCSR = async (req: SearchTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム登録 CSR
+export const CreateTeamCSR = async (req: CreateTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム更新 CSR
+export const UpdateTeamCSR = async (req: UpdateTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/update_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム削除 CSR
+export const DeleteTeamCSR = async (req: DeleteTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム取得 CSR
+export const GetTeamCSR = async (req: GetTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/get_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム検索_同一企業 CSR
+export const SearchTeamByCompanyCSR = async (
+  req: SearchTeamByCompanyRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_team_company`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+/* 
+  予定
+*/
+
+// 予定登録 CSR
+export const CreateSchedulesCSR = async (req: SchedulesRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_schedule`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 予定更新 CSR
+export const UpdateSchedulesCSR = async (req: SchedulesRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/update_schedule`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 予定削除 CSR
+export const DeleteSchedulesCSR = async (req: HashKeyRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete_schedule`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 予定一覧 CSR
+export const SchedulesCSR = async () => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/schedules`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}
+
+// 予定登録種別一覧 SSG
 export const UserListScheduleTypeSSG = async () => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_SSG_URL}/user/schedule_type`,
     {},
     APICommonHeader,
@@ -279,11 +375,41 @@ export const UserListScheduleTypeSSG = async () => {
   return res
 }
 
-// サイト一覧 SSG
-export const ApplicantSitesSSG = async () => {
-  const res = await axios.post(
-    `${process.env.NEXT_SSG_URL}/applicant/sites`,
-    {},
+/* 
+  企業
+*/
+
+// 企業検索 CSR
+export const SearchCompanyCSR = async (req: SearchCompanyRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/company/search`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 企業登録 CSR
+export const CreateCompanyCSR = async (req: CreateCompanyRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/company/create`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+/* 
+  ロール
+*/
+
+// ロール検索_同一企業 CSR
+export const SearchRoleByCompanyCSR = async (
+  req: SearchRoleByCompanyRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/role/search_company`,
+    req,
     APICommonHeader,
   )
   return res

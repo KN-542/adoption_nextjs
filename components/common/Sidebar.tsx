@@ -19,9 +19,9 @@ import ApartmentIcon from '@mui/icons-material/Apartment'
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd'
 import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
-import { SidebarModel } from 'types/common/index'
+import { SettingModel, SidebarModel } from 'types/index'
 import { useTranslations } from 'next-intl'
-import { RootState } from '@/hooks/store/store'
+import store, { RootState } from '@/hooks/store/store'
 import _ from 'lodash'
 import { RouterPath } from '@/enum/router'
 import { Color, mb, mt, SidebarBody, SidebarName, wBlock } from '@/styles/index'
@@ -32,6 +32,11 @@ import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
+import Diversity2Icon from '@mui/icons-material/Diversity2'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import SubscriptIcon from '@mui/icons-material/Subscript'
+import MenuBookIcon from '@mui/icons-material/MenuBook'
+import { changeSetting } from '@/hooks/store'
 
 type Props = {
   drawerOpen: boolean
@@ -65,6 +70,12 @@ const Sidebar = (props: Props) => {
         return <CoPresentIcon sx={Color(setting.color)} />
       case RouterPath.Management + RouterPath.User:
         return <CoPresentIcon sx={Color(setting.color)} />
+      // チーム
+      case RouterPath.Management + RouterPath.Team:
+        return <Diversity2Icon sx={Color(setting.color)} />
+      // 予定
+      case RouterPath.Management + RouterPath.Schedule:
+        return <CalendarMonthIcon sx={Color(setting.color)} />
       // 操作ログ
       case RouterPath.Admin + RouterPath.History:
         return <HistoryIcon sx={Color(setting.color)} />
@@ -76,10 +87,16 @@ const Sidebar = (props: Props) => {
       // メールテンプレート
       case RouterPath.Management + RouterPath.Email:
         return <MailIcon sx={Color(setting.color)} />
+      // 変数
+      case RouterPath.Management + RouterPath.Variable:
+        return <SubscriptIcon sx={Color(setting.color)} />
       // データ集計
       case RouterPath.Management + RouterPath.Analysis:
         return <EqualizerIcon sx={Color(setting.color)} />
-      // 個人設定
+      // 操作ログ
+      case RouterPath.Management + RouterPath.History:
+        return <MenuBookIcon sx={Color(setting.color)} />
+      // 設定
       case RouterPath.Admin + RouterPath.Setting:
         return <SettingsIcon sx={Color(setting.color)} />
       case RouterPath.Management + RouterPath.Setting:
@@ -119,16 +136,14 @@ const Sidebar = (props: Props) => {
         setSidebars(list)
         isLoading(false)
       })
-      .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response?.data.code}`), {
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -138,6 +153,17 @@ const Sidebar = (props: Props) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(_.isEmpty(routerPath) ? RouterPath.Login : routerPath)
         }
       })
   }

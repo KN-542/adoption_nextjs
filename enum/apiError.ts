@@ -1,6 +1,6 @@
 // common
 export enum APICommonCode {
-  BadRequest = 101,
+  BadRequest = 400,
 }
 
 // login

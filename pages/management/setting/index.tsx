@@ -1,7 +1,7 @@
 import Content from '@/components/common/Content'
-import { mgChangeSetting } from '@/hooks/store'
+import { changeSetting } from '@/hooks/store'
 import store, { RootState } from '@/hooks/store/store'
-import { Color, Contents } from '@/types/common/index'
+import { Color, Contents } from '@/types/index'
 import { deepPurple, indigo, red } from '@material-ui/core/colors'
 import { Box, Button, Typography } from '@mui/material'
 import { useTranslations } from 'next-intl'
@@ -30,6 +30,7 @@ import {
   ColorBoxChildNowrap,
   ColorButton,
 } from '@/styles/index'
+import { GetStaticProps } from 'next'
 
 const Setting = () => {
   const router = useRouter()
@@ -286,7 +287,7 @@ const Setting = () => {
                   onClick={(e) => {
                     e.preventDefault()
 
-                    store.dispatch(mgChangeSetting(obj))
+                    store.dispatch(changeSetting(obj))
 
                     router.push(RouterPath.Setting)
                   }}
@@ -309,7 +310,7 @@ const Setting = () => {
   )
 }
 
-export const getStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   return {
     props: {
       messages: (await import(`../../../public/locales/${locale}/common.json`))

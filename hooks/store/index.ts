@@ -1,4 +1,5 @@
 import { SearchAutoCompIndex, SearchTextIndex } from '@/enum/applicant'
+import { SearchCompanyTextIndex } from '@/enum/company'
 import { Lang } from '@/enum/user'
 import { green, indigo, red } from '@mui/material/colors'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
@@ -13,9 +14,20 @@ import {
   SelectTitlesModel,
   SettingModel,
   UserModel,
-} from 'types/common/index'
+} from 'types/index'
 
 const state = {
+  company: {
+    search: {
+      textForm: [
+        {
+          id: SearchCompanyTextIndex.Name,
+          name: '',
+          value: '',
+        },
+      ],
+    } as SearchModel,
+  },
   applicant: {
     search: {
       selectedList: [] as SearchSelected[],
@@ -55,7 +67,8 @@ const state = {
     color: indigo[500],
     toastSuccessColor: green[500],
     toastErrorColor: red[500],
-    errorMsg: '',
+    successMsg: [],
+    errorMsg: [],
   } as SettingModel,
 }
 
@@ -69,39 +82,40 @@ export const slice = createSlice({
     userModel: (state, action: PayloadAction<UserModel>) => {
       Object.assign(state.user, action.payload)
     },
-    mgChangeSetting: (state, action: PayloadAction<SettingModel>) => {
+    changeSetting: (state, action: PayloadAction<SettingModel>) => {
       Object.assign(state.setting, action.payload)
     },
     signOut: (state) => {
       Object.assign(state.user, initState.user)
     },
-    mgApplicantSearchTermList: (
-      state,
-      action: PayloadAction<SearchSelected[]>,
-    ) => {
+    applicantSearchTerm: (state, action: PayloadAction<SearchSelected[]>) => {
       state.applicant.search.selectedList = _.cloneDeep(action.payload)
     },
-    mgApplicantSearchText: (state, action: PayloadAction<SearchText[]>) => {
+    applicantSearchText: (state, action: PayloadAction<SearchText[]>) => {
       state.applicant.search.textForm = _.cloneDeep(action.payload)
     },
-    mgApplicantSearchAutoComp: (
+    applicantSearchAutoComp: (
       state,
       action: PayloadAction<SearchAutoComplete[]>,
     ) => {
       state.applicant.search.autoCompForm = _.cloneDeep(action.payload)
     },
-    mgApplicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
+    applicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
       Object.assign(state.applicant.search.sort, action.payload)
+    },
+    companySearchText: (state, action: PayloadAction<SearchText[]>) => {
+      state.company.search.textForm = _.cloneDeep(action.payload)
     },
   },
 })
 
 export const {
   userModel,
-  mgChangeSetting,
+  changeSetting,
   signOut,
-  mgApplicantSearchTermList,
-  mgApplicantSearchText,
-  mgApplicantSearchAutoComp,
-  mgApplicantSearchSort,
+  applicantSearchTerm,
+  applicantSearchText,
+  applicantSearchAutoComp,
+  applicantSearchSort,
+  companySearchText,
 } = slice.actions

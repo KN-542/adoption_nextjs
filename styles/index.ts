@@ -256,7 +256,6 @@ export const DialogKey = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  mb: 5,
 }
 export const DialogKeyChild = {
   width: '20%',

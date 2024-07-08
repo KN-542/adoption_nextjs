@@ -14,7 +14,7 @@ import {
   TextBottom,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
-import { SelectedMenuModel } from '@/types/common/index'
+import { SelectedMenuModel } from '@/types/index'
 import _ from 'lodash'
 import { useTranslations } from 'next-intl'
 

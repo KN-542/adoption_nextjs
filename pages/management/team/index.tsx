@@ -1,80 +1,72 @@
-import { FC, useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
-import store, { RootState } from '@/hooks/store/store'
-import CustomTable from '@/components/common/Table'
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
-import {
-  UsersTableBody,
-  TableHeader,
-  SelectedCheckbox,
-  TopMenu,
-  SettingModel,
-  TeamTableBody,
-  Icons,
-} from '@/types/index'
-import { useTranslations } from 'next-intl'
-import { Box, Button } from '@mui/material'
-import { common } from '@mui/material/colors'
-import _ from 'lodash'
-import { DeleteUserCSR, RolesCSR, SearchUserCSR } from '@/api/repository'
-import { useRouter } from 'next/router'
-import { RouterPath } from '@/enum/router'
+import { DeleteTeamCSR, RolesCSR, SearchTeamCSR } from '@/api/repository'
 import NextHead from '@/components/common/Header'
+import Pagination from '@/components/common/Pagination'
+import { RouterPath } from '@/enum/router'
+import store, { RootState } from '@/hooks/store/store'
 import {
   ButtonColorInverse,
+  DirectionColumnForTable,
   M0Auto,
+  SpaceBetween,
+  TableMenuButtons,
   mb,
   ml,
   mr,
   mt,
-  SpaceBetween,
-  TableMenuButtons,
   w,
 } from '@/styles/index'
-import Pagination from '@/components/common/Pagination'
+import { TableHeader, TeamTableBody, SettingModel, Icons } from '@/types/index'
+import { Box, Button } from '@mui/material'
+import { common } from '@mui/material/colors'
+import _ from 'lodash'
+import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/router'
+import { FC, useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
+import CustomTable from '@/components/common/Table'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
-import { changeSetting } from '@/hooks/store'
-import { GetStaticProps } from 'next'
 import {
-  DeleteUserRequest,
   RolesRequest,
-  SearchUserRequest,
+  DeleteTeamRequest,
+  SearchTeamRequest,
 } from '@/api/model/request'
 import { Operation } from '@/enum/common'
-import EditNoteIcon from '@mui/icons-material/EditNote'
-import DeleteIcon from '@mui/icons-material/Delete'
+import { changeSetting } from '@/hooks/store'
 import { HttpStatusCode } from 'axios'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
+import { GetStaticProps } from 'next'
+import EditNoteIcon from '@mui/icons-material/EditNote'
+import DeleteIcon from '@mui/icons-material/Delete'
+import DeleteModal from '@/components/common/modal/Delete'
 
 type Props = {
   isError: boolean
   locale: string
 }
 
-const USER_PAGE_SIZE = 20
+const TEAM_PAGE_SIZE = 30
 
-const User: FC<Props> = ({ isError, locale: _locale }) => {
+const Team: FC<Props> = ({ isError, locale: _locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [bodies, setBodies] = useState<UsersTableBody[]>([])
-  const users: UsersTableBody[] = []
+  const [bodies, setBodies] = useState<TeamTableBody[]>([])
+  const teams: TeamTableBody[] = []
+  const [deleteList, setDeleteList] = useState<TeamTableBody[]>([])
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [icons, setIcons] = useState<Icons[]>([])
-  const [deleteList, setDeleteList] = useState<UsersTableBody[]>([])
-  const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
+  const [page, setPage] = useState<number>(1)
 
-  const [page, setPage] = useState(1)
-
-  const [loading, isLoading] = useState(true)
+  const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
-  const [deleteOpen, isDeleteOpen] = useState<boolean>(false)
-  const [searchOpen, isSearchOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
+  const [searchOpen, isSearchOpen] = useState<boolean>(false)
+  const [deleteOpen, isDeleteOpen] = useState<boolean>(false)
 
   const inits = async () => {
     // API 使用可能ロール一覧
@@ -97,11 +89,11 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
           {
             color: setting.toastSuccessColor,
             element: <EditNoteIcon />,
-            role: res.data.map[Operation.ManagementUserEdit],
+            role: res.data.map[Operation.ManagementTeamEdit],
             onClick: (i: number) => {
-              const body: UsersTableBody = users[i]
+              const body: TeamTableBody = teams[i]
               router.push(
-                `${RouterPath.Management}${RouterPath.UserEdit.replace(
+                `${RouterPath.Management}${RouterPath.TeamEdit.replace(
                   '[id]',
                   '',
                 )}${encodeURIComponent(body.hashKey)}`,
@@ -111,9 +103,9 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
           {
             color: setting.toastErrorColor,
             element: <DeleteIcon />,
-            role: res.data.map[Operation.ManagementUserDelete],
+            role: res.data.map[Operation.ManagementTeamDelete],
             onClick: (i: number) => {
-              const body: UsersTableBody = users[i]
+              const body: TeamTableBody = teams[i]
               setDeleteList([body])
               isDeleteOpen(true)
             },
@@ -160,10 +152,10 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
   const search = async () => {
     isLoading(true)
 
-    // API: ユーザー検索
-    await SearchUserCSR({
-      hash_key: user.hashKey,
-    } as SearchUserRequest)
+    // API チーム一覧
+    await SearchTeamCSR({
+      user_hash_key: user.hashKey,
+    } as SearchTeamRequest)
       .then((res) => {
         if (_.isEqual(res.data.code, HttpStatusCode.NoContent)) {
           isNoContent(true)
@@ -171,15 +163,18 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         }
 
         _.forEach(res.data.list, (u, index) => {
-          users.push({
+          teams.push({
             no: Number(index) + 1,
             hashKey: u.hash_key,
             name: u.name,
-            email: u.email,
-            roleName: u.role_name,
-          } as UsersTableBody)
+            users: _.isEmpty(u.users)
+              ? []
+              : _.map(u.users, (item) => {
+                  return item.name
+                }),
+          } as TeamTableBody)
         })
-        setBodies(users)
+        setBodies(teams)
         isLoading(false)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
@@ -223,15 +218,11 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
     },
     {
       id: 2,
-      name: t('features.user.header.name'),
+      name: t('features.team.header.name'),
     },
     {
       id: 3,
-      name: t('features.user.header.email'),
-    },
-    {
-      id: 4,
-      name: t('features.user.header.role'),
+      name: t('features.team.header.users'),
     },
   ]
 
@@ -254,13 +245,13 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
       return
     }
 
-    // API: ユーザー削除
-    await DeleteUserCSR({
+    // API: チーム削除
+    await DeleteTeamCSR({
       user_hash_key: user.hashKey,
       hash_key: deleteList[0].hashKey,
-    } as DeleteUserRequest)
+    } as DeleteTeamRequest)
       .then(async () => {
-        toast(t(`features.user.index`) + t(`common.toast.delete`), {
+        toast(t(`features.team.index`) + t(`common.toast.delete`), {
           style: {
             backgroundColor: setting.toastSuccessColor,
             color: common.white,
@@ -283,7 +274,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         }
 
         if (code) {
-          toast(t('common.api.code.userDelete'), {
+          toast(t('common.api.code.teamDelete'), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -395,19 +386,19 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
   return (
     <>
       <NextHead></NextHead>
-      {_.every([!isError, !loading, roles[Operation.ManagementUserRead]]) && (
+      {_.every([!isError, !loading, roles[Operation.ManagementTeamRead]]) && (
         <>
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
               <Pagination
-                show={_.size(bodies) > USER_PAGE_SIZE}
+                show={_.size(bodies) > TEAM_PAGE_SIZE}
                 currentPage={page}
                 listSize={_.size(bodies)}
-                pageSize={USER_PAGE_SIZE}
+                pageSize={TEAM_PAGE_SIZE}
                 search={search}
                 changePage={changePage}
               ></Pagination>
-              <Box sx={[TableMenuButtons, , mb(3)]}>
+              <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
@@ -424,17 +415,17 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
                       ButtonColorInverse(common.white, setting.color),
                     ]}
                     onClick={() =>
-                      router.push(RouterPath.Management + RouterPath.UserCreate)
+                      router.push(RouterPath.Management + RouterPath.TeamCreate)
                     }
                   >
                     <AddCircleOutlineIcon sx={mr(0.25)} />
-                    {t('features.user.create')}
+                    {t('features.team.create')}
                   </Button>
                 )}
               </Box>
             </Box>
             <CustomTable
-              height={67}
+              height={75}
               headers={tableHeader}
               isNoContent={noContent}
               icons={icons}
@@ -442,12 +433,44 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
                 return {
                   no: u.no,
                   name: u.name,
-                  email: u.email,
-                  role: u.roleName,
+                  users: (
+                    <Box sx={DirectionColumnForTable}>
+                      {_.map(u.users, (user, index) => {
+                        return <Box key={index}>{user}</Box>
+                      })}
+                    </Box>
+                  ),
                 }
-              }).slice(USER_PAGE_SIZE * (page - 1), USER_PAGE_SIZE * page)}
+              }).slice(TEAM_PAGE_SIZE * (page - 1), TEAM_PAGE_SIZE * page)}
             />
           </Box>
+
+          {deleteOpen && (
+            <DeleteModal
+              open={deleteOpen}
+              headers={_.map(tableHeader, (table) => {
+                return {
+                  id: table.id,
+                  name: table.name,
+                } as TableHeader
+              })}
+              bodies={_.map(deleteList, (u) => {
+                return {
+                  no: u.no,
+                  name: u.name,
+                  users: (
+                    <Box sx={DirectionColumnForTable}>
+                      {_.map(u.users, (user, index) => {
+                        return <Box key={index}>{user}</Box>
+                      })}
+                    </Box>
+                  ),
+                }
+              })}
+              close={() => isDeleteOpen(false)}
+              delete={deleteTeam}
+            ></DeleteModal>
+          )}
         </>
       )}
     </>
@@ -468,4 +491,4 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
   }
 }
 
-export default User
+export default Team

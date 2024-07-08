@@ -36,7 +36,7 @@ import {
 } from '@/styles/index'
 import { RootState } from '@/hooks/store/store'
 import { useSelector } from 'react-redux'
-import { SearchForm, SelectTitlesModel } from '@/types/common/index'
+import { SearchForm, SelectTitlesModel } from '@/types/index'
 import { common, grey } from '@mui/material/colors'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
@@ -45,7 +45,13 @@ type Props = {
   open: boolean
   closeModal: () => void
   searchObj: SearchForm
-  changeSearchObjBySelect(i: number, i2: number, i3: number, b: boolean): void
+  changeSearchObjBySelect(
+    i: number,
+    i2: number,
+    i3: number,
+    b: boolean,
+    k: string,
+  ): void
   selectInit: (i: number) => void
   initInputs: () => void
   changeSearchObjByText(i: number, value: string): void
@@ -101,7 +107,7 @@ const SearchModal = (props: Props) => {
                             props.selectInit(index)
                           }}
                         >
-                          {t('features.applicant.searchModal.initSelected')}
+                          {t('common.search.initSelected')}
                         </Button>
                       </Box>
                       <Box sx={SearchModalSelect}>
@@ -120,6 +126,7 @@ const SearchModal = (props: Props) => {
                                   index2,
                                   option.id,
                                   item.isRadio,
+                                  option.key,
                                 )
                               }}
                             >
@@ -272,7 +279,7 @@ const SearchModal = (props: Props) => {
                 ]}
                 onClick={props.initInputs}
               >
-                {t('features.applicant.searchModal.initButton')}
+                {t('common.button.init')}
               </Button>
               <Button
                 size="large"
