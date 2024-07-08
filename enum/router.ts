@@ -13,22 +13,30 @@ export enum RouterPath {
   // ユーザー
   User = '/user',
   UserCreate = '/user/create',
-  UserGroup = '/user/group',
-  UserCalendar = '/user/calendar',
+  UserEdit = '/user/edit/[id]',
+  // チーム
+  Team = '/team',
+  TeamCreate = '/team/create',
+  TeamEdit = '/team/edit/[id]',
+  // 予定
+  Schedule = '/schedule',
   // ロール
   Role = '/role',
   // メールテンプレート
-  Email = '/email',
+  Email = '/mail',
+  // 変数
+  Variable = '/variable',
   // データ集計
   Analysis = '/analysis',
   // 操作ログ
-  History = '/history',
-  // 個人設定
+  History = '/log',
+  // 設定
   Setting = '/setting',
   // 認証
   AuthGoogleMeet = '/auth/google',
   // 企業
   Company = '/company',
+  CompanyCreate = '/company/create',
 }
 
 // ブラウザタイトル決定
@@ -53,11 +61,19 @@ export const decideTitle = (path: string) => {
       return 'common.title.user.list'
     case RouterPath.Management + RouterPath.UserCreate:
       return 'common.title.user.create'
-    case RouterPath.Management + RouterPath.UserGroup:
-      return 'common.title.user.group.list'
-    case RouterPath.Management + RouterPath.UserCalendar:
-      return 'common.title.user.calendar'
-    // 個人設定
+    case RouterPath.Management + RouterPath.UserEdit:
+      return 'common.title.user.edit'
+    // チーム
+    case RouterPath.Management + RouterPath.Team:
+      return 'common.title.team.list'
+    case RouterPath.Management + RouterPath.TeamCreate:
+      return 'common.title.team.create'
+    case RouterPath.Management + RouterPath.TeamEdit:
+      return 'common.title.team.edit'
+    // 予定
+    case RouterPath.Management + RouterPath.Schedule:
+      return 'common.title.schedule.list'
+    // 設定
     case RouterPath.Admin + RouterPath.Setting:
       return 'common.title.setting.index'
     case RouterPath.Management + RouterPath.Setting:
@@ -65,9 +81,14 @@ export const decideTitle = (path: string) => {
     // 認証
     case RouterPath.Management + RouterPath.AuthGoogleMeet:
       return 'common.title.auth'
+    // メールテンプレート
+    case RouterPath.Management + RouterPath.Email:
+      return 'common.title.mail.list'
     // 企業
     case RouterPath.Admin + RouterPath.Company:
       return 'common.title.company.list'
+    case RouterPath.Admin + RouterPath.CompanyCreate:
+      return 'common.title.company.create'
     default:
       return '404' // TODO
   }

@@ -16,10 +16,10 @@ import {
   SelectTitlesModel,
   SelectedCheckbox,
   SelectedMenuModel,
+  SettingModel,
   TableHeader,
   TableSort,
-  UsersTableBody,
-} from '@/types/common/index'
+} from '@/types/index'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
 import { blue, common } from '@mui/material/colors'
@@ -29,29 +29,28 @@ import {
   SearchIndex,
   SearchSortKey,
   SearchTextIndex,
-  Site,
 } from '@/enum/applicant'
 import {
   ApplicantDocumentDownloadRequest,
-  ApplicantDownloadSubRequest,
-  ApplicantSearchRequest,
+  DownloadApplicantSubRequest,
+  SearchApplicantRequest,
   ApplicantStatusListRequest,
-  ApplicantsDownloadRequest,
+  DownloadApplicantRequest,
   GoogleMeetURLRequest,
   HashKeyRequest,
   RolesRequest,
   SchedulesRequest,
-  UserSearchRequest,
+  SearchUserRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
   GetApplicantCSR,
   GoogleAuth,
   UpdateSchedulesCSR,
-  UserSearchCSR,
-  applicantDocumentDownloadCSR,
-  ApplicantsDownloadCSR,
-  ApplicantsSearchCSR,
+  SearchUserCSR,
+  DownloadApplicantDocumentCSR,
+  DownloadApplicantCSR,
+  SearchApplicantCSR,
   RolesCSR,
   ApplicantStatusListCSR,
 } from '@/api/repository'
@@ -79,10 +78,11 @@ import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
 import {
-  mgApplicantSearchAutoComp,
-  mgApplicantSearchSort,
-  mgApplicantSearchTermList,
-  mgApplicantSearchText,
+  applicantSearchAutoComp,
+  applicantSearchSort,
+  applicantSearchTerm,
+  applicantSearchText,
+  changeSetting,
 } from '@/hooks/store'
 import Pagination from '@/components/common/Pagination'
 import { formatDate2 } from '@/hooks/common'
@@ -93,23 +93,24 @@ import SearchModal from '@/components/common/modal/SearchModal'
 import { HttpStatusCode } from 'axios'
 import { Operation } from '@/enum/common'
 import {
-  ApplicantSearchDTO,
-  ApplicantStatusListDTO,
-  UserSearchDTO,
-} from '@/api/model/dto'
+  SearchApplicantResponse,
+  ApplicantStatusListResponse,
+  SearchUserResponse,
+} from '@/api/model/response'
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
 import Spinner from '@/components/common/modal/Spinner'
+import { GetStaticProps } from 'next'
 
 type Props = {
   isError: boolean
   locale: string
-  sites: ApplicantStatusListDTO[]
+  sites: ApplicantStatusListResponse[]
 }
 
 const APPLICANT_PAGE_SIZE = 30
 
-const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
+const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -117,18 +118,24 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
   const applicantSearchTermList: SearchSelected[] = _.cloneDeep(
     applicant.search.selectedList,
   )
-  const applicantSearchText = _.cloneDeep(applicant.search.textForm)
+  const applicantSearchTextList = _.cloneDeep(applicant.search.textForm)
   const applicantSearchAutoCompForm = _.cloneDeep(applicant.search.autoCompForm)
-  const applicantSearchSort = Object.assign({}, applicant.search.sort)
+  const applicantSearchSortList = Object.assign({}, applicant.search.sort)
+
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [bodies, setBodies] = useState<ApplicantSearchDTO[]>([])
-  const [statusList, setStatusList] = useState<ApplicantStatusListDTO[]>([])
-  const [usersBelongTeam, setUsersBelongTeam] = useState<UserSearchDTO[]>([])
+  const [bodies, setBodies] = useState<SearchApplicantResponse[]>([])
+  const [statusList, setStatusList] = useState<ApplicantStatusListResponse[]>(
+    [],
+  )
+  const [usersBelongTeam, setUsersBelongTeam] = useState<SearchUserResponse[]>(
+    [],
+  )
   const [page, setPage] = useState<number>(1)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
+  const [searchObj, setSearchObj] = useState<SearchForm>({})
 
   const [loading, isLoading] = useState<boolean>(true)
   const [open, isOpen] = useState<boolean>(false)
@@ -148,7 +155,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       setRoles(res.data.map as { [key: string]: boolean })
 
       // API 応募者ステータス一覧取得
-      const res2: ApplicantStatusListDTO[] = []
+      const res2: ApplicantStatusListResponse[] = []
 
       if (res.data.map[Operation.ManagementApplicantRead]) {
         const tempList = await ApplicantStatusListCSR({
@@ -165,44 +172,177 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             id: Number(index) + 1,
             hashKey: item.hash_key,
             name: item.status_name,
-          } as ApplicantStatusListDTO)
+          } as ApplicantStatusListResponse)
         })
         setStatusList(res2)
-      }
 
-      // API ユーザー検索
-      const res3: UserSearchDTO[] = []
+        // API ユーザー検索
+        const res3: SearchUserResponse[] = []
 
-      if (res.data.map[Operation.ManagementUserRead]) {
-        const tempList = await UserSearchCSR({
-          hash_key: user.hashKey,
-        } as UserSearchRequest)
+        if (res.data.map[Operation.ManagementUserRead]) {
+          const tempList = await SearchUserCSR({
+            hash_key: user.hashKey,
+          } as SearchUserRequest)
 
-        if (_.isEqual(tempList.data.code, HttpStatusCode.NoContent)) {
-          isNoContent(true)
-          return
+          if (_.isEqual(tempList.data.code, HttpStatusCode.NoContent)) {
+            isNoContent(true)
+            return
+          }
+
+          _.forEach(tempList.data.list, (item, index) => {
+            res3.push({
+              no: Number(index) + 1,
+              hashKey: item.hash_key,
+              name: item.name,
+              email: item.email,
+            } as SearchUserResponse)
+          })
+          setUsersBelongTeam(res3)
+
+          setSearchObj({
+            selectList: [
+              {
+                name: t('features.applicant.header.status'),
+                isRadio: false,
+                list: _.map(res2, (item) => {
+                  return {
+                    id: Number(item.id),
+                    key: item.hashKey,
+                    value: item.name,
+                    isSelected: !_.isEmpty(
+                      _.find(applicantSearchTermList, (option) => {
+                        return _.every([
+                          _.isEqual(option.id, Number(item.id)),
+                          _.isEqual(option.index, SearchIndex.Status),
+                        ])
+                      }),
+                    ),
+                  }
+                }) as SearchSelectTerm[],
+              },
+              {
+                name: t('features.applicant.header.site'),
+                isRadio: false,
+                list: _.map(sites, (item) => {
+                  return {
+                    id: Number(item.id),
+                    key: item.hashKey,
+                    value: item.name,
+                    isSelected: !_.isEmpty(
+                      _.find(applicantSearchTermList, (option) => {
+                        return _.every([
+                          _.isEqual(option.id, Number(item.id)),
+                          _.isEqual(option.index, SearchIndex.Site),
+                        ])
+                      }),
+                    ),
+                  }
+                }) as SearchSelectTerm[],
+              },
+              {
+                name: t('features.applicant.header.resume'),
+                isRadio: true,
+                list: [
+                  {
+                    id: DocumentUploaded.Exist,
+                    value: t('features.applicant.documents.t'),
+                    isSelected: !_.isEmpty(
+                      _.find(applicantSearchTermList, (option) => {
+                        return _.every([
+                          _.isEqual(option.id, DocumentUploaded.Exist),
+                          _.isEqual(option.index, SearchIndex.Resume),
+                        ])
+                      }),
+                    ),
+                  },
+                  {
+                    id: DocumentUploaded.NotExist,
+                    value: t('features.applicant.documents.f'),
+                    isSelected: !_.isEmpty(
+                      _.find(applicantSearchTermList, (option) => {
+                        return _.every([
+                          _.isEqual(option.id, DocumentUploaded.NotExist),
+                          _.isEqual(option.index, SearchIndex.Resume),
+                        ])
+                      }),
+                    ),
+                  },
+                ] as SearchSelectTerm[],
+              },
+              {
+                name: t('features.applicant.header.curriculumVitae'),
+                isRadio: true,
+                list: [
+                  {
+                    id: DocumentUploaded.Exist,
+                    value: t('features.applicant.documents.t'),
+                    isSelected: !_.isEmpty(
+                      _.find(applicantSearchTermList, (option) => {
+                        return _.every([
+                          _.isEqual(option.id, DocumentUploaded.Exist),
+                          _.isEqual(option.index, SearchIndex.CurriculumVitae),
+                        ])
+                      }),
+                    ),
+                  },
+                  {
+                    id: DocumentUploaded.NotExist,
+                    value: t('features.applicant.documents.f'),
+                    isSelected: !_.isEmpty(
+                      _.find(applicantSearchTermList, (option) => {
+                        return _.every([
+                          _.isEqual(option.id, DocumentUploaded.NotExist),
+                          _.isEqual(option.index, SearchIndex.CurriculumVitae),
+                        ])
+                      }),
+                    ),
+                  },
+                ] as SearchSelectTerm[],
+              },
+            ] as SearchSelect[],
+            textForm: [
+              {
+                id: applicantSearchTextList[SearchTextIndex.Name].id,
+                name: t(applicantSearchTextList[SearchTextIndex.Name].name),
+                value: applicantSearchTextList[SearchTextIndex.Name].value,
+              },
+              {
+                id: applicantSearchTextList[SearchTextIndex.Email].id,
+                name: t(applicantSearchTextList[SearchTextIndex.Email].name),
+                value: applicantSearchTextList[SearchTextIndex.Email].value,
+              },
+            ] as SearchText[],
+            autoCompForm: [
+              {
+                id: applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
+                  .id,
+                name: t(
+                  applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
+                    .name,
+                ),
+                items: _.map(res3, (u) => {
+                  return {
+                    key: u.hashKey,
+                    title: u.name,
+                    subTitle: u.email,
+                  } as SelectTitlesModel
+                }) as SelectTitlesModel[],
+                selectedItems:
+                  applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
+                    .selectedItems,
+              },
+            ] as SearchAutoComplete[],
+          })
         }
-
-        _.forEach(tempList.data.list, (item, index) => {
-          res3.push({
-            no: Number(index) + 1,
-            hashKey: item.hash_key,
-            name: item.name,
-            email: item.email,
-          } as UserSearchDTO)
-        })
-        setUsersBelongTeam(res3)
       }
-    } catch (error) {
-      if (
-        _.every([500 <= error.response?.status, error.response?.status < 600])
-      ) {
-        router.push(RouterPath.Error)
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+      if (isServerError) {
+        router.push(routerPath)
         return
       }
 
-      if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-        toast(t(`common.api.code.${error.response?.data.code}`), {
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
           style: {
             backgroundColor: setting.toastErrorColor,
             color: common.white,
@@ -212,9 +352,17 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
-      } else {
-        router.push(RouterPath.Error)
         return
+      }
+
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(_.isEmpty(routerPath) ? RouterPath.Management : routerPath)
       }
     } finally {
       isInit(false)
@@ -225,7 +373,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
     if (init) isLoading(true)
 
     // API 応募者検索
-    const list: ApplicantSearchDTO[] = []
+    const list: SearchApplicantResponse[] = []
     const list2: SelectedCheckbox[] = []
 
     const resume = _.filter(applicantSearchTermList, (item) =>
@@ -235,7 +383,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       _.isEqual(item.index, SearchIndex.CurriculumVitae),
     )
 
-    await ApplicantsSearchCSR({
+    await SearchApplicantCSR({
       // ユーザーハッシュキー
       user_hash_key: user.hashKey,
       // サイト一覧
@@ -269,9 +417,9 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             return item.id
           })[0],
       // 氏名
-      name: applicantSearchText[SearchTextIndex.Name].value.trim(),
+      name: applicantSearchTextList[SearchTextIndex.Name].value.trim(),
       // メールアドレス
-      email: applicantSearchText[SearchTextIndex.Email].value.trim(),
+      email: applicantSearchTextList[SearchTextIndex.Email].value.trim(),
       // 面接官
       users: _.map(
         applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
@@ -281,17 +429,17 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
         },
       ),
       // ソート(key)
-      sort_key: applicantSearchSort.key,
+      sort_key: applicantSearchSortList.key,
       // ソート(向き)
-      sort_asc: applicantSearchSort.isAsc,
-    } as ApplicantSearchRequest)
+      sort_asc: applicantSearchSortList.isAsc,
+    } as SearchApplicantRequest)
       .then((res) => {
         if (_.isEqual(res.data.code, HttpStatusCode.NoContent)) {
           isNoContent(true)
           return
         }
 
-        _.forEach(res.data.list, (r, index) => {
+        _.forEach(_.isEmpty(res.data.list) ? [] : res.data.list, (r, index) => {
           list.push({
             no: Number(index) + 1,
             hashKey: r.hash_key,
@@ -304,10 +452,14 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             google: r.google_meet_url,
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
-            users: String(r.users).split(','),
-            userNames: String(r.user_names).split(','),
+            users: _.map(r.users, (u) => {
+              return u.hash_key
+            }),
+            userNames: _.map(r.users, (u) => {
+              return u.name
+            }),
             calendarHashKey: r.calendar_hash_key,
-          } as ApplicantSearchDTO)
+          } as SearchApplicantResponse)
         })
         setBodies(list)
 
@@ -328,16 +480,14 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
         }
         isLoading(false)
       })
-      .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response?.data.code}`), {
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -347,146 +497,29 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
         }
       })
   }
-
-  const [searchObj, setSearchObj] = useState<SearchForm>({
-    selectList: [
-      {
-        name: t('features.applicant.header.status'),
-        isRadio: false,
-        list: _.map(statusList, (item) => {
-          return {
-            id: Number(item.id),
-            value: item.name,
-            isSelected: !_.isEmpty(
-              _.find(applicantSearchTermList, (option) => {
-                return _.every([
-                  _.isEqual(option.id, Number(item.id)),
-                  _.isEqual(option.index, SearchIndex.Status),
-                ])
-              }),
-            ),
-          }
-        }) as SearchSelectTerm[],
-      },
-      {
-        name: t('features.applicant.header.site'),
-        isRadio: false,
-        list: _.map(sites, (item) => {
-          return {
-            id: Number(item.id),
-            value: item.name,
-            isSelected: !_.isEmpty(
-              _.find(applicantSearchTermList, (option) => {
-                return _.every([
-                  _.isEqual(option.id, Number(item.id)),
-                  _.isEqual(option.index, SearchIndex.Site),
-                ])
-              }),
-            ),
-          }
-        }) as SearchSelectTerm[],
-      },
-      {
-        name: t('features.applicant.header.resume'),
-        isRadio: true,
-        list: [
-          {
-            id: DocumentUploaded.Exist,
-            value: t('features.applicant.documents.t'),
-            isSelected: !_.isEmpty(
-              _.find(applicantSearchTermList, (option) => {
-                return _.every([
-                  _.isEqual(option.id, DocumentUploaded.Exist),
-                  _.isEqual(option.index, SearchIndex.Resume),
-                ])
-              }),
-            ),
-          },
-          {
-            id: DocumentUploaded.NotExist,
-            value: t('features.applicant.documents.f'),
-            isSelected: !_.isEmpty(
-              _.find(applicantSearchTermList, (option) => {
-                return _.every([
-                  _.isEqual(option.id, DocumentUploaded.NotExist),
-                  _.isEqual(option.index, SearchIndex.Resume),
-                ])
-              }),
-            ),
-          },
-        ] as SearchSelectTerm[],
-      },
-      {
-        name: t('features.applicant.header.curriculumVitae'),
-        isRadio: true,
-        list: [
-          {
-            id: DocumentUploaded.Exist,
-            value: t('features.applicant.documents.t'),
-            isSelected: !_.isEmpty(
-              _.find(applicantSearchTermList, (option) => {
-                return _.every([
-                  _.isEqual(option.id, DocumentUploaded.Exist),
-                  _.isEqual(option.index, SearchIndex.CurriculumVitae),
-                ])
-              }),
-            ),
-          },
-          {
-            id: DocumentUploaded.NotExist,
-            value: t('features.applicant.documents.f'),
-            isSelected: !_.isEmpty(
-              _.find(applicantSearchTermList, (option) => {
-                return _.every([
-                  _.isEqual(option.id, DocumentUploaded.NotExist),
-                  _.isEqual(option.index, SearchIndex.CurriculumVitae),
-                ])
-              }),
-            ),
-          },
-        ] as SearchSelectTerm[],
-      },
-    ] as SearchSelect[],
-    textForm: [
-      {
-        id: applicantSearchText[SearchTextIndex.Name].id,
-        name: t(applicantSearchText[SearchTextIndex.Name].name),
-        value: applicantSearchText[SearchTextIndex.Name].value,
-      },
-      {
-        id: applicantSearchText[SearchTextIndex.Email].id,
-        name: t(applicantSearchText[SearchTextIndex.Email].name),
-        value: applicantSearchText[SearchTextIndex.Email].value,
-      },
-    ] as SearchText[],
-    autoCompForm: [
-      {
-        id: applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer].id,
-        name: t(
-          applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer].name,
-        ),
-        items: _.map(usersBelongTeam, (u) => {
-          return {
-            key: u.hashKey,
-            title: u.name,
-            subTitle: u.email,
-          } as SelectTitlesModel
-        }) as SelectTitlesModel[],
-        selectedItems:
-          applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
-            .selectedItems,
-      },
-    ] as SearchAutoComplete[],
-  })
 
   const changeSearchObjBySelect = (
     index: number,
     index2: number,
     optionId: number,
     isRadio: boolean,
+    key: string,
   ) => {
     const newObj = Object.assign({}, searchObj)
     if (isRadio) {
@@ -513,15 +546,16 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       applicantSearchTermList.push({
         index: index,
         id: optionId,
+        hashKey: key,
       } as SearchSelected)
-      store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+      store.dispatch(applicantSearchTerm(applicantSearchTermList))
     } else {
       const i = _.findIndex(applicantSearchTermList, (item) =>
         _.every([_.isEqual(item.index, index), _.isEqual(item.id, optionId)]),
       )
       applicantSearchTermList.splice(i, 1)
 
-      store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+      store.dispatch(applicantSearchTerm(applicantSearchTermList))
     }
   }
 
@@ -542,15 +576,15 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       applicantSearchTermList.splice(i, 1)
     }
 
-    store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
+    store.dispatch(applicantSearchTerm(applicantSearchTermList))
     setSearchObj(newObj)
   }
 
   const changeSearchObjByText = (index: number, value: string) => {
     const newObj = Object.assign({}, searchObj)
     newObj.textForm[index].value = value
-    applicantSearchText[index].value = value
-    store.dispatch(mgApplicantSearchText(applicantSearchText))
+    applicantSearchTextList[index].value = value
+    store.dispatch(applicantSearchText(applicantSearchTextList))
     setSearchObj(newObj)
   }
 
@@ -563,7 +597,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
     applicantSearchAutoCompForm[index].selectedItems.length = 0
 
     if (_.isEmpty(selectedItems)) {
-      store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
+      store.dispatch(applicantSearchAutoComp(applicantSearchAutoCompForm))
       setSearchObj(newObj)
       return
     }
@@ -575,7 +609,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       selectedItems[_.size(selectedItems) - 1],
     )
 
-    store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
+    store.dispatch(applicantSearchAutoComp(applicantSearchAutoCompForm))
     setSearchObj(newObj)
   }
 
@@ -592,7 +626,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
     for (const item of newObj.textForm) {
       item.value = ''
     }
-    for (const item of applicantSearchText) {
+    for (const item of applicantSearchTextList) {
       item.value = ''
     }
     for (const item of newObj.autoCompForm) {
@@ -602,9 +636,9 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       item.selectedItems.length = 0
     }
 
-    store.dispatch(mgApplicantSearchTermList(applicantSearchTermList))
-    store.dispatch(mgApplicantSearchText(applicantSearchText))
-    store.dispatch(mgApplicantSearchAutoComp(applicantSearchAutoCompForm))
+    store.dispatch(applicantSearchTerm(applicantSearchTermList))
+    store.dispatch(applicantSearchText(applicantSearchTextList))
+    store.dispatch(applicantSearchAutoComp(applicantSearchAutoCompForm))
     setSearchObj(newObj)
   }
 
@@ -632,16 +666,14 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
 
         await search(1)
       })
-      .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response?.data.code}`), {
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -651,6 +683,19 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
         }
       })
   }
@@ -708,27 +753,36 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
           } as GoogleMeetURLRequest)
 
           window.open(res2.data?.url, '_blank', 'noopener,noreferrer')
-        } catch (error) {
-          if (error.response) {
-            if (500 <= error.response?.status && error.response?.status < 600) {
-              router.push(RouterPath.Error)
-              return
-            }
+        } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+          if (isServerError) {
+            router.push(routerPath)
+            return
+          }
 
-            if (
-              _.isEqual(error.response?.data.code, APICommonCode.BadRequest)
-            ) {
-              toast(t(`common.api.code.${error.response?.data.code}`), {
-                style: {
-                  backgroundColor: setting.toastErrorColor,
-                  color: common.white,
-                  width: 500,
-                },
-                position: 'bottom-left',
-                hideProgressBar: true,
-                closeButton: () => <ClearIcon />,
-              })
-            }
+          if (!_.isEmpty(toastMsg)) {
+            toast(t(toastMsg), {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 500,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+            return
+          }
+
+          if (!_.isEmpty(storeMsg)) {
+            const msg = t(storeMsg)
+            store.dispatch(
+              changeSetting({
+                errorMsg: _.isEmpty(msg) ? [] : [msg],
+              } as SettingModel),
+            )
+            router.push(
+              _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+            )
           }
         }
       },
@@ -807,7 +861,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       ])
     ) {
       // ファイル名チェック
-      const site: ApplicantStatusListDTO = _.find(sites, (s) =>
+      const site: ApplicantStatusListResponse = _.find(sites, (s) =>
         file.name.includes(s.fileName),
       )
       if (_.isEmpty(site)) {
@@ -869,7 +923,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
 
       try {
         // API 応募者ダウンロード リクエスト生成
-        const subRequest: ApplicantDownloadSubRequest[] = []
+        const subRequest: DownloadApplicantSubRequest[] = []
         for (const item of csv) {
           const outerId = item[site.outerIndex]
           if (
@@ -921,17 +975,17 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             email: email,
             tel: tel,
             age: Number(age[0]),
-          } as ApplicantDownloadSubRequest)
+          } as DownloadApplicantSubRequest)
         }
 
-        const request: ApplicantsDownloadRequest = {
+        const request: DownloadApplicantRequest = {
           user_hash_key: user.hashKey,
           site_hash_key: site.hashKey,
           applicants: subRequest,
         }
 
         // API 応募者ダウンロード
-        const res = await ApplicantsDownloadCSR(request)
+        const res = await DownloadApplicantCSR(request)
         toast(
           t('features.applicant.uploadMsgSuccess') +
             String(res.data.update_num) +
@@ -948,25 +1002,36 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             closeButton: () => <ClearIcon />,
           },
         )
-      } catch (error) {
-        if (error.response) {
-          if (500 <= error.response?.status && error.response?.status < 600) {
-            router.push(RouterPath.Error)
-            return
-          }
+      } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
 
-          if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-            toast(t(`common.api.code.${error.response?.data.code}`), {
-              style: {
-                backgroundColor: setting.toastErrorColor,
-                color: common.white,
-                width: 500,
-              },
-              position: 'bottom-left',
-              hideProgressBar: true,
-              closeButton: () => <ClearIcon />,
-            })
-          }
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
         }
       }
 
@@ -994,7 +1059,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
     namePre: string,
     fileName: string,
   ) => {
-    await applicantDocumentDownloadCSR({
+    await DownloadApplicantDocumentCSR({
       hash_key: hashKey,
       name_pre: namePre,
     } as ApplicantDocumentDownloadRequest)
@@ -1009,16 +1074,14 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
         link.click()
         document.body.removeChild(link)
       })
-      .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response?.data.code}`), {
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -1028,6 +1091,19 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
         }
       })
   }
@@ -1043,9 +1119,9 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       name: t('features.applicant.header.name'),
       sort: {
         key: SearchSortKey.Name,
-        target: _.isEqual(SearchSortKey.Name, applicantSearchSort.key),
-        isAsc: _.isEqual(SearchSortKey.Name, applicantSearchSort.key)
-          ? applicantSearchSort.isAsc
+        target: _.isEqual(SearchSortKey.Name, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Name, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
           : false,
       },
     },
@@ -1054,9 +1130,9 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       name: t('features.applicant.header.site'),
       sort: {
         key: SearchSortKey.Site,
-        target: _.isEqual(SearchSortKey.Site, applicantSearchSort.key),
-        isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSort.key)
-          ? applicantSearchSort.isAsc
+        target: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
           : false,
       },
     },
@@ -1065,9 +1141,9 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       name: t('features.applicant.header.email'),
       sort: {
         key: SearchSortKey.Email,
-        target: _.isEqual(SearchSortKey.Email, applicantSearchSort.key),
-        isAsc: _.isEqual(SearchSortKey.Email, applicantSearchSort.key)
-          ? applicantSearchSort.isAsc
+        target: _.isEqual(SearchSortKey.Email, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Email, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
           : false,
       },
     },
@@ -1076,9 +1152,9 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       name: t('features.applicant.header.status'),
       sort: {
         key: SearchSortKey.Status,
-        target: _.isEqual(SearchSortKey.Status, applicantSearchSort.key),
-        isAsc: _.isEqual(SearchSortKey.Status, applicantSearchSort.key)
-          ? applicantSearchSort.isAsc
+        target: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
           : true,
       },
     },
@@ -1087,9 +1163,9 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       name: t('features.applicant.header.interviewerDate'),
       sort: {
         key: SearchSortKey.IntervierDate,
-        target: _.isEqual(SearchSortKey.Status, applicantSearchSort.key),
-        isAsc: _.isEqual(SearchSortKey.Status, applicantSearchSort.key)
-          ? applicantSearchSort.isAsc
+        target: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
           : true,
       },
     },
@@ -1131,11 +1207,11 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
       isAsc: !sort.isAsc,
     } as SearchSortModel
 
-    Object.assign(applicantSearchSort, newSort)
+    Object.assign(applicantSearchSortList, newSort)
     setTableHeader(list)
     setSearchObj(newObj)
 
-    store.dispatch(mgApplicantSearchSort(newSort))
+    store.dispatch(applicantSearchSort(newSort))
   }
 
   const changePage = (i: number) => {
@@ -1173,15 +1249,14 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
           {spinner && <Spinner></Spinner>}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              {_.size(bodies) > APPLICANT_PAGE_SIZE && (
-                <Pagination
-                  currentPage={page}
-                  listSize={_.size(bodies)}
-                  pageSize={APPLICANT_PAGE_SIZE}
-                  search={search}
-                  changePage={changePage}
-                ></Pagination>
-              )}
+              <Pagination
+                show={_.size(bodies) > APPLICANT_PAGE_SIZE}
+                currentPage={page}
+                listSize={_.size(bodies)}
+                pageSize={APPLICANT_PAGE_SIZE}
+                search={search}
+                changePage={changePage}
+              ></Pagination>
               {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
                 <SelectedMenu
                   menu={dispMenu}
@@ -1203,7 +1278,7 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
                   onClick={() => isSearchOpen(true)}
                 >
                   <ManageSearchIcon sx={mr(0.25)} />
-                  {t('features.applicant.search')}
+                  {t('common.button.condSearch')}
                 </Button>
                 {roles[Operation.ManagementApplicantDownload] && (
                   <Button
@@ -1349,11 +1424,11 @@ const Applicants: React.FC<Props> = ({ isError, locale, sites }) => {
   )
 }
 
-export const getStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError: boolean = false
 
   // API サイト一覧
-  const sites: ApplicantStatusListDTO[] = []
+  const sites: ApplicantStatusListResponse[] = []
   await ApplicantSitesSSG()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
@@ -1369,7 +1444,7 @@ export const getStaticProps = async ({ locale }) => {
           ageIndex: Number(item.age_index),
           nameCheckType: Number(item.name_check_type),
           columns: Number(item.num_of_column),
-        } as ApplicantStatusListDTO)
+        } as ApplicantStatusListResponse)
       })
     })
     .catch(() => {

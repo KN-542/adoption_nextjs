@@ -25,7 +25,7 @@ import { SubmitHandler, useForm } from 'react-hook-form'
 import ErrorHandler from '@/components/common/ErrorHandler'
 import { Pattern, ValidationType } from '@/enum/validation'
 import { FormValidation, FormValidationValue } from '@/hooks/validation'
-import { SettingModel } from '@/types/common/index'
+import { SettingModel } from '@/types/index'
 
 type Props = {
   open: boolean

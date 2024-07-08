@@ -1,8 +1,15 @@
+import NextHead from '@/components/common/Header'
+import { GetStaticProps } from 'next'
+
 const Home = () => {
-  return <></>
+  return (
+    <>
+      <NextHead></NextHead>
+    </>
+  )
 }
 
-export const getStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

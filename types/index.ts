@@ -1,3 +1,7 @@
+/* 
+  共通
+*/
+
 // レフトメニュー model
 export type SidebarModel = {
   name: string
@@ -8,7 +12,11 @@ export type SidebarModel = {
 // コンテンツ
 export type Contents = {
   key: string
-  element: JSX.Element
+  element: string
+  mask?: {
+    disp: boolean
+    show: boolean
+  }
 }
 
 // カラー
@@ -32,47 +40,8 @@ export type SettingModel = {
   color: string
   toastSuccessColor: string
   toastErrorColor: string
-  errorMsg?: string
-}
-
-// ユーザー一覧 table body
-export type UsersTableBody = {
-  // No
-  no: number
-  // ハッシュキー
-  hashKey: string
-  // 氏名
-  name: string
-  // メールアドレス
-  email: string
-  // ロールID
-  role: number
-  // ロール名
-  roleName: string
-}
-
-// ユーザーグループ一覧 table body
-export type UserGroupTableBody = {
-  // No
-  no: number
-  // ハッシュキー
-  hashKey: string
-  // グループ名
-  name: string
-  // メールアドレス
-  email: string
-  // 所属ユーザー
-  users: string[]
-}
-
-// スケジュール 登録種別
-export type ScheduleType = {
-  // value
-  value: string
-  // 名前
-  name: string
-  // 頻度
-  freq: string
+  successMsg?: string[]
+  errorMsg?: string[]
 }
 
 // table head sort
@@ -101,11 +70,6 @@ export type SearchModel = {
   textForm: SearchText[]
   autoCompForm: SearchAutoComplete[]
   sort: SearchSortModel
-}
-
-// 応募者 model
-export type ApplicantModel = {
-  search: SearchModel
 }
 
 // 検索 選択
@@ -143,6 +107,7 @@ export type SearchSelected = {
 // 検索 選択項目
 export type SearchSelectTerm = {
   id: number
+  key?: string
   value: string
   isSelected: boolean
 }
@@ -166,10 +131,80 @@ export type CheckboxPropsField = {
   onClickAll: (b: boolean) => void
 }
 
+// アイコン
+export type Icons = {
+  color: string
+  element: JSX.Element
+  role: boolean
+  onClick: (i: number) => void
+}
+
 // Topメニュー リスト
 export type TopMenu = {
   name: string
   router: string
+}
+
+// 選択済みメニュー
+export type SelectedMenuModel = {
+  name: string
+  icon: JSX.Element
+  color: string
+  condition: boolean
+  onClick?
+}
+
+/* 
+  応募者
+*/
+
+// 応募者 model
+export type ApplicantModel = {
+  search: SearchModel
+}
+
+/* 
+  ユーザー
+*/
+
+// ユーザー一覧 table body
+export type UsersTableBody = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 氏名
+  name: string
+  // メールアドレス
+  email: string
+  // ロールID
+  role: number
+  // ロール名
+  roleName: string
+}
+
+// チーム一覧 table body
+export type TeamTableBody = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // チーム名
+  name: string
+  // メールアドレス
+  email: string
+  // 所属ユーザー
+  users: string[]
+}
+
+// スケジュール 登録種別
+export type ScheduleType = {
+  // value
+  value: string
+  // 名前
+  name: string
+  // 頻度
+  freq: string
 }
 
 // カレンダー model
@@ -200,13 +235,4 @@ export type SelectTitlesModel = {
   key: string
   title: string
   subTitle: string
-}
-
-// 選択済みメニュー
-export type SelectedMenuModel = {
-  name: string
-  icon: JSX.Element
-  color: string
-  condition: boolean
-  onClick?
 }

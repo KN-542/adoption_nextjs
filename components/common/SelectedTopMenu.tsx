@@ -1,5 +1,5 @@
 import { RootState } from '@/hooks/store/store'
-import { TopMenu } from '@/types/common/index'
+import { TopMenu } from '@/types/index'
 import { Button } from '@mui/material'
 import _ from 'lodash'
 import { useRouter } from 'next/router'

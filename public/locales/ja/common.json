@@ -7,7 +7,8 @@
       },
       "home": "ホーム",
       "company": {
-        "list": "企業一覧"
+        "list": "企業一覧",
+        "create": "企業登録"
       },
       "applicant": {
         "list": "応募者一覧"
@@ -15,20 +16,26 @@
       "user": {
         "list": "ユーザー一覧",
         "create": "ユーザー作成",
-        "group": {
-          "list": "ユーザーグループ一覧"
-        },
-        "calendar": "ユーザーカレンダー"
+        "edit": "ユーザー編集"
+      },
+      "team": {
+        "list": "チーム一覧",
+        "create": "チーム作成",
+        "edit": "チーム編集"
+      },
+      "schedule": {
+        "list": "予定一覧"
       },
       "setting": {
-        "index": "個人設定"
+        "index": "設定"
       },
       "auth": "認証",
       "modal": {
         "upload": "ファイルアップロード",
         "createUser": "ログイン情報",
         "search": "検索条件指定",
-        "calendar": {
+        "delete": "データの削除",
+        "schedule": {
           "create": "カレンダーの登録",
           "edit": "カレンダーの編集",
           "delete": "カレンダーの削除"
@@ -38,7 +45,8 @@
     "toast": {
       "create": "が正常に登録されました",
       "edit": "が正常に編集されました",
-      "delete": "が正常に削除されました"
+      "delete": "が正常に削除されました",
+      "email": "にメールが送信されました"
     },
     "file": {
       "typeError": "権限がないか、または不正なファイルの種類です",
@@ -56,7 +64,10 @@
       "change": "変更",
       "auth": "認証する",
       "reSend": "再送する",
-      "search": "検索"
+      "search": "検索",
+      "delete": "削除",
+      "condSearch": "条件検索",
+      "init": "入力状態を初期化"
     },
     "pagination": {
       "size": "件"
@@ -64,10 +75,16 @@
     "menu": {
       "size": "件選択中"
     },
+    "search": {
+      "initSelected": "選択解除"
+    },
+    "delete": {
+      "msg": "下記の項目を削除します。よろしいですか？"
+    },
     "validate": {
       "required": "は必須入力項目です",
       "required2": "必須入力項目です",
-      "requiredRadio": "を選択してください",
+      "requiredList": "を選択してください",
       "length": "文字で入力してください",
       "minLength": "文字以上",
       "maxLength": "文字以内で入力してください",
@@ -80,14 +97,19 @@
     },
     "api": {
       "code": {
-        "101": "不正なリクエストです",
         "login1": "ユーザーIDまたはパスワードが違います",
         "expired1": "ログインされていないか、またはログイントークンの有効期限が切れました",
         "mfa1": "認証コードが違います",
         "mfa2": "認証コードの有効期限が切れたため、再度メールを送信しました",
-        "passwordChange1": "現在のパスワードが違います"
+        "passwordChange1": "現在のパスワードが違います",
+        "userDelete": "応募者と紐づけられてるユーザーは削除できません",
+        "createUserDupl": "メールアドレスが重複しています",
+        "teamDelete": "応募者と紐づけられてるチームは削除できません"
       },
       "header": {
+        "400": "不正なリクエストです",
+        "401": "ログインされていないか、またはログイントークンの有効期限が切れました",
+        "403": "不正なアクセスです",
         "500": "サーバーエラーです。管理者にお問い合わせください"
       }
     }
@@ -114,13 +136,19 @@
       "errorMsg2": "しばらく時間を置いてからやり直してください。",
       "errorMsg3": "または、管理者にお問い合わせください。"
     },
+    "company": {
+      "index": "企業",
+      "representative": "企業責任者",
+      "create": "企業登録",
+      "header": {
+        "name": "企業名"
+      },
+      "form": {
+        "email": "メールアドレス"
+      }
+    },
     "applicant": {
       "upload": "アップロード",
-      "search": "条件検索",
-      "searchModal": {
-        "initSelected": "選択解除",
-        "initButton": "入力状態を初期化"
-      },
       "uploadMsg": "応募者情報のファイルアップロードを行ってください",
       "uploadMsg2": "ここにファイルをドラッグ＆ドロップ、またはここをクリックしてファイル選択",
       "uploadMsg3": "用のファイルが不正に編集されたか、または媒体の仕様が変更された可能性があります",
@@ -169,19 +197,15 @@
       }
     },
     "user": {
-      "user": "ユーザー",
+      "index": "ユーザー",
       "create": "ユーザーを作成",
-      "createGroup": "ユーザーグループ作成",
+      "createTeam": "チーム作成",
       "backList": "ユーザー一覧へ戻る",
       "createMsg": "ユーザーを作成しました。",
       "createMsg2": "以下のログイン情報をご確認ください。",
       "createMsg3": "※「ユーザーー一覧へ戻る」をクリックすると、これ以降初期パスワードの確認はできなくなります。",
-      "role": {
-        "admin": "最高責任者",
-        "interviewer": "面接官"
-      },
-      "calendar": {
-        "calendar": "カレンダー",
+      "schedule": {
+        "schedule": "カレンダー",
         "modal": {
           "date": "年月日",
           "title": "タイトル",
@@ -189,17 +213,26 @@
           "end": "終了時刻",
           "type": "登録種別",
           "msgStartEnd": "終了時刻は開始時刻より後の時刻を指定してください",
-          "msgNoExistUser": "ユーザー・ユーザーグループが選択されていません",
-          "user": "ユーザー・ユーザーグループ"
+          "msgNoExistUser": "ユーザー・チームが選択されていません",
+          "user": "ユーザー・チーム"
         }
       },
       "header": {
         "name": "氏名",
         "email": "メールアドレス",
         "password": "パスワード",
-        "role": "ロール",
-        "groupName": "グループ名",
-        "users": "所属ユーザー"
+        "team": "チーム",
+        "role": "ロール"
+      }
+    },
+    "team": {
+      "index": "チーム",
+      "create": "チーム作成",
+      "edit": "チーム編集",
+      "header": {
+        "name": "チーム名",
+        "users": "所属ユーザー",
+        "selectedUsers": "所属済みユーザー"
       }
     },
     "setting": {
@@ -210,17 +243,11 @@
     }
   },
   "sidebar": {
-    "applicant": "応募者",
-    "reserver": "予約者",
-    "user": "ユーザー",
-    "email": "メールテンプレート",
-    "analysis": "データ集計",
-    "history": "操作ログ",
-    "setting": "個人設定",
+    "setting": "設定",
     "logout": "サインアウト"
   },
   "toolbar": {
-    "setting": "個人設定",
+    "setting": "設定",
     "logout": "サインアウト"
   }
 }

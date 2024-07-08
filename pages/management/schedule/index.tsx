@@ -18,22 +18,23 @@ import _ from 'lodash'
 import {
   CalendarModel,
   SelectTitlesModel,
-  UserGroupTableBody,
+  TeamTableBody,
   ScheduleType,
   UsersTableBody,
   Schedule,
-} from '@/types/common/index'
+  SettingModel,
+} from '@/types/index'
 import {
   CreateSchedulesCSR,
   DeleteSchedulesCSR,
   SchedulesCSR,
-  SearchUserGroupCSR,
-  UserSearchCSR,
+  SearchTeamCSR,
+  SearchUserCSR,
   UserListScheduleTypeSSG,
 } from '@/api/repository'
 import { useRouter } from 'next/router'
 import { useTranslations } from 'next-intl'
-import { RootState } from '@/hooks/store/store'
+import store, { RootState } from '@/hooks/store/store'
 import { useSelector } from 'react-redux'
 import { RouterPath } from '@/enum/router'
 import { APICommonCode } from '@/enum/apiError'
@@ -41,34 +42,39 @@ import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
 import { InterviewerStatus, ScheduleTypes } from '@/enum/user'
-import { SchedulesRequest, HashKeyRequest } from '@/api/model/request'
+import {
+  SchedulesRequest,
+  HashKeyRequest,
+  SearchUserRequest,
+} from '@/api/model/request'
 import CalendarModal from '@/components/management/modal/CalendarModal'
+import { changeSetting } from '@/hooks/store'
+import { GetStaticProps } from 'next'
 
-const UserCalendar = ({ isError, api }) => {
+const Schedules = ({ isError, api }) => {
   const router = useRouter()
   const t = useTranslations()
 
+  const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
   const [events, setEvents] = useState([])
   const [currentDate, setCurrentDate] = useState(new Date())
   const [open, isOpen] = useState(false)
   const [model, setModel] = useState<CalendarModel>({} as CalendarModel)
-  const [users, setUsers] = useState<(UsersTableBody | UserGroupTableBody)[]>(
-    [],
-  )
+  const [users, setUsers] = useState<(UsersTableBody | TeamTableBody)[]>([])
   const [calendars, setCalendars] = useState<Schedule[]>([])
   const [loading, isLoading] = useState(true)
 
   const search = async () => {
     isLoading(true)
-    const list: (UsersTableBody | UserGroupTableBody)[] = []
+    const list: (UsersTableBody | TeamTableBody)[] = []
     const list2: Schedule[] = []
     const tempList = []
 
     try {
       // API ユーザー一覧
-      const res = await UserSearchCSR()
+      const res = await SearchUserCSR({} as SearchUserRequest)
       res.data.users.forEach((u) => {
         list.push({
           hashKey: u.hash_key,
@@ -77,14 +83,16 @@ const UserCalendar = ({ isError, api }) => {
         } as UsersTableBody)
       })
 
-      // API ユーザーグループ一覧
-      const res2 = await SearchUserGroupCSR()
+      // API チーム一覧
+      const res2 = await SearchTeamCSR({
+        user_hash_key: user.hashKey,
+      })
       res2.data.user_groups.forEach((u) => {
         list.push({
           hashKey: u.hash_key,
           name: u.name,
           email: '',
-        } as UserGroupTableBody)
+        } as TeamTableBody)
       })
 
       // API スケジュール一覧
@@ -172,25 +180,34 @@ const UserCalendar = ({ isError, api }) => {
       setUsers(list)
       setCalendars(list2)
       setEvents(tempList)
-    } catch (error) {
-      if (error.response) {
-        if (500 <= error.response?.status && error.response?.status < 600) {
-          router.push(RouterPath.Error)
-          return
-        }
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+      if (isServerError) {
+        router.push(routerPath)
+        return
+      }
 
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response?.data.code}`), {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
-            },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
-        }
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+        return
+      }
+
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(_.isEmpty(routerPath) ? RouterPath.Management : routerPath)
       }
     } finally {
       isLoading(false)
@@ -225,7 +242,7 @@ const UserCalendar = ({ isError, api }) => {
       title: m.title,
     } as SchedulesRequest)
       .then(() => {
-        toast(t('features.user.calendar.calendar') + t('common.toast.create'), {
+        toast(t('features.user.schedule.schedule') + t('common.toast.create'), {
           style: {
             backgroundColor: setting.toastSuccessColor,
             color: common.white,
@@ -238,16 +255,14 @@ const UserCalendar = ({ isError, api }) => {
 
         setCurrentDate(m.date)
       })
-      .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response?.data.code}`), {
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -257,6 +272,19 @@ const UserCalendar = ({ isError, api }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
         }
       })
   }
@@ -265,7 +293,7 @@ const UserCalendar = ({ isError, api }) => {
     // API カレンダー削除
     await DeleteSchedulesCSR({ hash_key: id } as HashKeyRequest)
       .then(() => {
-        toast(t('features.user.calendar.calendar') + t('common.toast.delete'), {
+        toast(t('features.user.schedule.schedule') + t('common.toast.delete'), {
           style: {
             backgroundColor: setting.toastSuccessColor,
             color: common.white,
@@ -278,16 +306,14 @@ const UserCalendar = ({ isError, api }) => {
 
         setCurrentDate(date)
       })
-      .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          toast(t(`common.api.code.${error.response?.data.code}`), {
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -297,6 +323,19 @@ const UserCalendar = ({ isError, api }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
         }
       })
   }
@@ -437,7 +476,7 @@ const UserCalendar = ({ isError, api }) => {
   )
 }
 
-export const getStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError = false
 
   // API スケジュール登録種別一覧
@@ -465,4 +504,4 @@ export const getStaticProps = async ({ locale }) => {
   }
 }
 
-export default UserCalendar
+export default Schedules

@@ -1,24 +1,65 @@
-import axios from 'axios'
-import { StatusCodes } from 'http-status-codes'
+import { RouterPath } from '@/enum/router'
+import axios, { HttpStatusCode } from 'axios'
 import _ from 'lodash'
 
-const APICommonHeader = {
+export const APICommonHeader = {
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // これによりCookieを含める
+  withCredentials: true,
 }
 
-// axios.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     console.log(error)
-//     return error
-//     // if (_.isEqual(error.response?.status, StatusCodes.UNAUTHORIZED)) {
-//     //   return { error: error, bad_request: true }
-//     // }
-//     // return { error: error, bad_request: false }
-//   },
-// )
+export const axios1 = axios.create()
+axios1.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // 500台
+    if (error.response?.status >= 500) {
+      return Promise.reject({
+        isServerError: true,
+        routerPath: RouterPath.Error,
+        toastMsg: '',
+        storeMsg: '',
+      })
+    }
 
-export { APICommonHeader }
+    // 400
+    if (_.isEqual(error.response?.status, HttpStatusCode.BadRequest)) {
+      return Promise.reject({
+        isServerError: false,
+        routerPath: '',
+        toastMsg: 'common.api.header.400',
+        storeMsg: '',
+      })
+    }
+
+    // 401
+    if (_.isEqual(error.response?.status, HttpStatusCode.Unauthorized)) {
+      return Promise.reject({
+        isServerError: false,
+        routerPath: RouterPath.Login,
+        toastMsg: '',
+        storeMsg: 'common.api.header.401',
+      })
+    }
+
+    // 403
+    if (_.isEqual(error.response?.status, HttpStatusCode.Forbidden)) {
+      return Promise.reject({
+        isServerError: false,
+        routerPath: '',
+        toastMsg: '',
+        storeMsg: 'common.api.header.403',
+      })
+    }
+
+    // その他
+    return Promise.reject({
+      isServerError: false,
+      routerPath: '',
+      toastMsg: '',
+      storeMsg: '',
+      code: error.response?.data.code,
+    })
+  },
+)

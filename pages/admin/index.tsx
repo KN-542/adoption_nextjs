@@ -1,8 +1,22 @@
+import { Box } from '@mui/material'
+import { GetStaticProps } from 'next'
+
 const HomeAdmin = () => {
-  return <></>
+  return (
+    <Box
+      sx={{
+        marginTop: '500px',
+        marginLeft: '500px',
+        fontSize: '50px',
+        fontWeight: 'bold',
+      }}
+    >
+      ホーム画面らしきもの後で作るよ~~~~~~ん
+    </Box>
+  )
 }
 
-export const getStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

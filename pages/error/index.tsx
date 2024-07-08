@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl'
 import Copyright from '@/components/common/Copyright'
 import { RouterPath } from '@/enum/router'
 import NextHead from '@/components/common/Header'
+import { GetStaticProps } from 'next'
 
 const Error = () => {
   const router = useRouter()
@@ -57,7 +58,7 @@ const Error = () => {
   )
 }
 
-export const getStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   return {
     props: {
       messages: (await import(`../../public/locales/${locale}/common.json`))

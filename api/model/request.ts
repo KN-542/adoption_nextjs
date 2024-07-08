@@ -4,59 +4,75 @@ export abstract class AbstractRequest {
 export abstract class AbstractRequest2 {
   abstract user_hash_key: string
 }
+export abstract class AbstractRequest3 {
+  abstract user_hash_key: string
+  abstract hash_key: string
+}
 
+/* 
+  共通
+*/
 // ログイン
-export class LoginRequest extends AbstractRequest {
-  hash_key: string
+export class LoginRequest {
   email: string
   password: string
 }
-
 // MFAコード生成
-export class MFACreateRequest extends AbstractRequest {
+export class CreateMFARequest extends AbstractRequest {
   hash_key: string
 }
-
 // ログアウト
 export class LogoutRequest extends AbstractRequest {
   hash_key: string
 }
-
 // MFA
 export class MFARequest extends AbstractRequest {
   hash_key: string
   code: string
 }
-
 // パスワード変更
-export class PasswordChangeRequest extends AbstractRequest {
+export class ChangePasswordRequest extends AbstractRequest {
   hash_key: string
   password: string
   init_password: string
 }
-
 // JWT検証
-export class JWTDecodeRequest extends AbstractRequest {
+export class DecodeJWTRequest extends AbstractRequest {
   hash_key: string
 }
-
 // サイドバー
 export class SidebarRequest extends AbstractRequest {
   hash_key: string
 }
-
 // 使用可能ロール一覧
 export class RolesRequest extends AbstractRequest {
   hash_key: string
 }
 
+/* 
+  企業
+*/
+// 企業検索
+export class SearchCompanyRequest extends AbstractRequest2 {
+  user_hash_key: string
+  name: string
+}
+// 企業登録
+export class CreateCompanyRequest extends AbstractRequest2 {
+  user_hash_key: string
+  name: string
+  email: string
+}
+
+/* 
+  応募者
+*/
 // 応募者ステータス一覧取得
 export class ApplicantStatusListRequest extends AbstractRequest2 {
   user_hash_key: string
 }
-
 // 応募者検索
-export class ApplicantSearchRequest extends AbstractRequest2 {
+export class SearchApplicantRequest extends AbstractRequest2 {
   // ユーザーハッシュキー
   user_hash_key: string
   // サイト一覧
@@ -78,24 +94,17 @@ export class ApplicantSearchRequest extends AbstractRequest2 {
   // ソート(向き)
   sort_asc: boolean
 }
-
-// 応募者ステータス一覧取得
-export class UserSearchRequest extends AbstractRequest {
-  hash_key: string
-}
-
 // 応募者ダウンロード
-export class ApplicantsDownloadRequest extends AbstractRequest2 {
+export class DownloadApplicantRequest extends AbstractRequest2 {
   // ユーザーハッシュキー
   user_hash_key: string
   // サイトハッシュキー
   site_hash_key: string
   // 応募者
-  applicants: ApplicantDownloadSubRequest[]
+  applicants: DownloadApplicantSubRequest[]
 }
-
 // 応募者
-export type ApplicantDownloadSubRequest = {
+export type DownloadApplicantSubRequest = {
   // 媒体側ID
   outer_id: string
   // 氏名
@@ -108,6 +117,78 @@ export type ApplicantDownloadSubRequest = {
   age: number
 }
 
+/* 
+  ユーザー
+*/
+// ユーザー検索
+export class SearchUserRequest extends AbstractRequest {
+  hash_key: string
+}
+// ユーザー検索_同一企業
+export class SearchUserByCompanyRequest extends AbstractRequest {
+  hash_key: string
+}
+// ユーザー登録
+export class CreateUserRequest extends AbstractRequest {
+  hash_key: string
+  name: string
+  email: string
+  teams: string[]
+  role_hash_key: string
+}
+// ユーザー削除
+export class DeleteUserRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+}
+
+/* 
+  チーム
+*/
+// チーム検索
+export class SearchTeamRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
+// チーム登録
+export class CreateTeamRequest extends AbstractRequest2 {
+  user_hash_key: string
+  name: string
+  users: string[]
+}
+// チーム更新
+export class UpdateTeamRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+  name: string
+  users: string[]
+}
+// チーム削除
+export class DeleteTeamRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+}
+// チーム取得
+export class GetTeamRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+}
+// チーム検索_同一企業
+export class SearchTeamByCompanyRequest extends AbstractRequest {
+  hash_key: string
+}
+
+/* 
+  ロール
+*/
+// ロール検索_同一企業
+export class SearchRoleByCompanyRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
+
+/* 
+  精査中
+*/
+
 // hashKey only
 export type HashKeyRequest = {
   hash_key: string
@@ -117,13 +198,6 @@ export type HashKeyRequest = {
 export type ApplicantDocumentDownloadRequest = {
   hash_key: string
   name_pre: string
-}
-
-// ユーザー登録 request
-export type UserCreateRequest = {
-  name: string
-  email: string
-  role_id: number
 }
 
 // スケジュール関連 request

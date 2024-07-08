@@ -31,7 +31,7 @@ import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
-import { SettingModel } from '@/types/common/index'
+import { SettingModel } from '@/types/index'
 
 type Props = {
   open: boolean

@@ -36,7 +36,7 @@ import { useSelector } from 'react-redux'
 import { common, grey } from '@mui/material/colors'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import { RootState } from '@/hooks/store/store'
-import { SelectTitlesModel } from '@/types/common/index'
+import { SelectTitlesModel } from '@/types/index'
 
 type Props = {
   open: boolean

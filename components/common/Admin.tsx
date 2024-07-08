@@ -5,21 +5,23 @@ import { useRouter } from 'next/router'
 import ToolBar from '@/components/common/ToolBar'
 import Sidebar from '@/components/common/Sidebar'
 import store, { RootState } from '@/hooks/store/store'
-import { JWTDecodeCSR, LogoutCSR } from '@/api/repository'
+import { DecodeJWTCSR, LogoutCSR } from '@/api/repository'
 import { RouterPath } from '@/enum/router'
-import { APICommonCode, APISessionCheckCode } from '@/enum/apiError'
-import { ToastContainer } from 'react-toastify'
-import { mgChangeSetting, signOut } from '@/hooks/store'
+import { ToastContainer, toast } from 'react-toastify'
+import { changeSetting, signOut } from '@/hooks/store'
 import _ from 'lodash'
-import { SettingModel, UserModel } from '@/types/common/index'
+import { SettingModel, UserModel } from '@/types/index'
 import { useTranslations } from 'next-intl'
-import { JWTDecodeRequest, LogoutRequest } from '@/api/model/request'
+import { DecodeJWTRequest, LogoutRequest } from '@/api/model/request'
+import { common } from '@mui/material/colors'
+import ClearIcon from '@mui/icons-material/Clear'
 
 const Admin = ({ Component, pageProps }) => {
   const router = useRouter()
   const t = useTranslations()
 
   const user: UserModel = useSelector((state: RootState) => state.user)
+  const setting: SettingModel = useSelector((state: RootState) => state.setting)
 
   const [disp, isDisp] = useState<boolean>(false)
   const [drawerOpen, isDrawerOpen] = useState<boolean>(false)
@@ -29,56 +31,54 @@ const Admin = ({ Component, pageProps }) => {
       .then(() => {
         store.dispatch(signOut())
         store.dispatch(
-          mgChangeSetting({
-            errorMsg: msg,
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
           } as SettingModel),
         )
         router.push(RouterPath.Login)
       })
-      .catch((error) => {
-        _.isEqual(error.response?.data.code, APICommonCode.BadRequest)
-          ? router.push(RouterPath.Login)
-          : router.push(RouterPath.Error)
-        return
+      .catch(() => {
+        router.push(RouterPath.Error)
       })
   }
 
   useEffect(() => {
     // JWT検証
-    JWTDecodeCSR({
+    DecodeJWTCSR({
       hash_key: user.hashKey,
-    } as JWTDecodeRequest)
+    } as DecodeJWTRequest)
       .then(() => {
         isDisp(true)
       })
-      .catch(async (error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        let msg = ''
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.code.${error.response?.data.code}`)
-        } else if (
-          _.isEqual(
-            error.response?.data.code,
-            APISessionCheckCode.LoginRequired,
-          )
-        ) {
-          msg = t(`common.api.code.expired${error.response?.data.code}`)
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          return
         }
 
-        store.dispatch(
-          mgChangeSetting({
-            errorMsg: msg,
-          } as SettingModel),
-        )
-
-        await logout({ hash_key: user.hashKey } as LogoutRequest, msg)
-        return
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(_.isEmpty(routerPath) ? RouterPath.Login : routerPath)
+        }
       })
   }, [])
 

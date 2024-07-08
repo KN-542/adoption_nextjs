@@ -20,8 +20,8 @@ import _ from 'lodash'
 import {
   LogoutCSR,
   MFACSR,
-  MFACreateCSR,
-  PasswordChangeCSR,
+  CreateMFACSR,
+  ChangePasswordCSR,
   LoginCSR,
 } from '@/api/repository'
 import { useRouter } from 'next/router'
@@ -35,16 +35,16 @@ import {
   ButtonColor,
 } from '@/styles/index'
 import store, { RootState } from '@/hooks/store/store'
-import { mgChangeSetting, signOut, userModel } from '@/hooks/store'
-import { SettingModel, UserModel } from '@/types/common/index'
+import { changeSetting, signOut, userModel } from '@/hooks/store'
+import { SettingModel, UserModel } from '@/types/index'
 import { RouterPath } from '@/enum/router'
 import NextHead from '@/components/common/Header'
 import {
   LoginRequest,
   LogoutRequest,
-  MFACreateRequest,
+  CreateMFARequest,
   MFARequest,
-  PasswordChangeRequest,
+  ChangePasswordRequest,
 } from '@/api/model/request'
 import {
   APICommonCode,
@@ -61,6 +61,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import PasswordChange from '@/components/common/modal/PasswordChange'
 import { Inputs as InputsPassword } from '@/components/common/modal/PasswordChange'
 import MFA from '@/components/common/modal/MFA'
+import { GetStaticProps } from 'next'
 
 type Inputs = {
   email: string
@@ -155,90 +156,61 @@ const Login = () => {
   } = useForm<Inputs>()
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
-    // API ログイン
-    await LoginCSR({
-      email: d.email,
-      password: d.password,
-    } as LoginRequest)
-      .then(async (res) => {
-        setHash(String(res.data.hash_key))
-        // API MFAコード生成
-        await MFACreateCSR({
-          hash_key: String(res.data.hash_key),
-        } as MFACreateRequest)
-          .then(() => {
-            store.dispatch(
-              userModel({
-                hashKey: res.data.hash_key,
-                name: res.data.name,
-                email: d.email,
-              } as UserModel),
-            )
-            isOpen(true)
-          })
-          .catch((error) => {
-            if (
-              _.every([
-                500 <= error.response?.status,
-                error.response?.status < 600,
-              ])
-            ) {
-              router.push(RouterPath.Error)
-              return
-            }
+    try {
+      // API ログイン
+      const res = await LoginCSR({
+        email: d.email,
+        password: d.password,
+      } as LoginRequest)
 
-            let msg = ''
-            if (
-              _.isEqual(error.response?.data.code, APICommonCode.BadRequest)
-            ) {
-              msg = t(`common.api.code.${error.response?.data.code}`)
-            } else if (
-              _.isEqual(
-                error.response?.data.code,
-                APISessionCheckCode.LoginRequired,
-              )
-            ) {
-              msg = t(`common.api.code.expired${error.response?.data.code}`)
-            }
+      setHash(String(res.data.hash_key))
+      // API MFAコード生成
+      await CreateMFACSR({
+        hash_key: String(res.data.hash_key),
+      } as CreateMFARequest)
 
-            store.dispatch(
-              mgChangeSetting({
-                errorMsg: msg,
-              } as SettingModel),
-            )
-          })
-      })
-      .catch((error) => {
-        let msg = ''
+      store.dispatch(
+        userModel({
+          hashKey: res.data.hash_key,
+          name: res.data.name,
+          email: d.email,
+        } as UserModel),
+      )
+      isOpen(true)
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+      if (isServerError) {
+        router.push(routerPath)
+        return
+      }
 
-        if (error.response?.data.code > 0) {
-          if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-            msg = t(`common.api.code.${error.response?.data.code}`)
-          } else if (
-            _.isEqual(error.response?.data.code, APILoginCode.LoinAuth)
-          ) {
-            msg = t(`common.api.code.login${error.response?.data.code}`)
-          }
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+        return
+      }
 
-          toast(msg, {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
-            },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
-          return
-        }
-
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
-        }
-      })
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(
+          _.isEmpty(routerPath)
+            ? RouterPath.Admin + RouterPath.Company
+            : routerPath,
+        )
+      }
+    }
   }
 
   const reSend = async () => {
@@ -257,13 +229,8 @@ const Login = () => {
       .then(() => {
         store.dispatch(signOut())
       })
-      .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
-          router.push(RouterPath.Error)
-          return
-        }
+      .catch(() => {
+        router.push(RouterPath.Error)
       })
   }
 
@@ -293,16 +260,14 @@ const Login = () => {
           : router.push(RouterPath.Management + RouterPath.Home)
       })
       .catch(async (error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
+        if (error.response?.status >= 500) {
           router.push(RouterPath.Error)
           return
         }
 
         let msg = ''
         if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.code.${error.response?.data.code}`)
+          msg = t(`common.api.header.400`)
         } else {
           msg = t(`common.api.code.mfa${error.response?.data.code}`)
         }
@@ -328,27 +293,25 @@ const Login = () => {
 
   const passwordChangeSubmit = async (obj: InputsPassword) => {
     // API パスワード変更
-    await PasswordChangeCSR({
+    await ChangePasswordCSR({
       hash_key: hash,
       password: obj.newPassword,
       init_password: obj.password,
-    } as PasswordChangeRequest)
+    } as ChangePasswordRequest)
       .then(() => {
         _.isEqual(`/${path}`, RouterPath.Admin)
           ? router.push(RouterPath.Admin + RouterPath.Home)
           : router.push(RouterPath.Management + RouterPath.Home)
       })
       .catch((error) => {
-        if (
-          _.every([500 <= error.response?.status, error.response?.status < 600])
-        ) {
+        if (error.response?.status >= 500) {
           router.push(RouterPath.Error)
           return
         }
 
         let msg = ''
         if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.code.${error.response?.data.code}`)
+          msg = t(`common.api.header.400`)
         } else {
           msg = t(`common.api.code.passwordChange${error.response?.data.code}`)
         }
@@ -371,21 +334,23 @@ const Login = () => {
       // トースト
       if (!_.isEmpty(setting.errorMsg)) {
         setTimeout(() => {
-          toast(setting.errorMsg, {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 630,
-            },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
+          for (const msg of setting.errorMsg) {
+            toast(msg, {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 630,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+          }
         }, 0.1 * 1000)
 
         store.dispatch(
-          mgChangeSetting({
-            errorMsg: '',
+          changeSetting({
+            errorMsg: [],
           } as SettingModel),
         )
         store.dispatch(signOut())
@@ -511,7 +476,7 @@ const Login = () => {
   )
 }
 
-export const getStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   return {
     props: {
       messages: (await import(`../../public/locales/${locale}/common.json`))
