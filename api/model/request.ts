@@ -48,6 +48,11 @@ export class SidebarRequest extends AbstractRequest {
 export class RolesRequest extends AbstractRequest {
   hash_key: string
 }
+// チーム変更
+export class ChangeTeamRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+}
 
 /* 
   企業

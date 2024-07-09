@@ -29,6 +29,7 @@ import {
   DeleteUserRequest,
   SearchRoleByCompanyRequest,
   SearchTeamByCompanyRequest,
+  ChangeTeamRequest,
 } from './model/request'
 
 /* 
@@ -109,6 +110,16 @@ export const SidebarCSR = async (req: SidebarRequest) => {
 export const RolesCSR = async (req: RolesRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/roles`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム変更 CSR
+export const ChangeTeamCSR = async (req: ChangeTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/change_team`,
     req,
     APICommonHeader,
   )
