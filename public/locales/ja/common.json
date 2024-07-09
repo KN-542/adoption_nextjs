@@ -30,6 +30,7 @@
         "index": "設定"
       },
       "auth": "認証",
+      "back": "BACK",
       "modal": {
         "upload": "ファイルアップロード",
         "createUser": "ログイン情報",
@@ -248,6 +249,7 @@
   },
   "toolbar": {
     "setting": "設定",
-    "logout": "サインアウト"
+    "logout": "サインアウト",
+    "teams": "チーム変更"
   }
 }

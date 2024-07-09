@@ -6,7 +6,6 @@ import { GoogleMeetURL } from '@/api/repository'
 import { RouterPath } from '@/enum/router'
 import _ from 'lodash'
 import { GoogleMeetURLRequest } from '@/api/model/request'
-import {} from '@/hooks/store'
 
 const GoogleMeet = () => {
   const router = useRouter()

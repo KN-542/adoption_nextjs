@@ -40,14 +40,14 @@ import {
   HashKeyRequest,
   RolesRequest,
   SchedulesRequest,
-  SearchUserRequest,
+  SearchUserByCompanyRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
   GetApplicantCSR,
   GoogleAuth,
   UpdateSchedulesCSR,
-  SearchUserCSR,
+  SearchUserByCompanyCSR,
   DownloadApplicantDocumentCSR,
   DownloadApplicantCSR,
   SearchApplicantCSR,
@@ -73,7 +73,6 @@ import {
   w,
 } from '@/styles/index'
 import { RouterPath } from '@/enum/router'
-import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
@@ -95,7 +94,7 @@ import { Operation } from '@/enum/common'
 import {
   SearchApplicantResponse,
   ApplicantStatusListResponse,
-  SearchUserResponse,
+  SearchUserByCompanyResponse,
 } from '@/api/model/response'
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
@@ -129,9 +128,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [statusList, setStatusList] = useState<ApplicantStatusListResponse[]>(
     [],
   )
-  const [usersBelongTeam, setUsersBelongTeam] = useState<SearchUserResponse[]>(
-    [],
-  )
+  const [usersBelongTeam, setUsersBelongTeam] = useState<
+    SearchUserByCompanyResponse[]
+  >([])
   const [page, setPage] = useState<number>(1)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
@@ -147,194 +146,186 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
   const inits = async () => {
     try {
-      // API 使用可能ロール一覧
+      // API: 使用可能ロール一覧
       const res = await RolesCSR({
         hash_key: user.hashKey,
       } as RolesRequest)
 
       setRoles(res.data.map as { [key: string]: boolean })
 
-      // API 応募者ステータス一覧取得
+      // API: 応募者ステータス一覧取得
       const res2: ApplicantStatusListResponse[] = []
+      const tempList = await ApplicantStatusListCSR({
+        user_hash_key: user.hashKey,
+      } as ApplicantStatusListRequest)
 
-      if (res.data.map[Operation.ManagementApplicantRead]) {
-        const tempList = await ApplicantStatusListCSR({
-          user_hash_key: user.hashKey,
-        } as ApplicantStatusListRequest)
-
-        if (_.isEqual(tempList.data.code, HttpStatusCode.NoContent)) {
-          isNoContent(true)
-          return
-        }
-
-        _.forEach(tempList.data.list, (item, index) => {
-          res2.push({
-            id: Number(index) + 1,
-            hashKey: item.hash_key,
-            name: item.status_name,
-          } as ApplicantStatusListResponse)
-        })
-        setStatusList(res2)
-
-        // API ユーザー検索
-        const res3: SearchUserResponse[] = []
-
-        if (res.data.map[Operation.ManagementUserRead]) {
-          const tempList = await SearchUserCSR({
-            hash_key: user.hashKey,
-          } as SearchUserRequest)
-
-          if (_.isEqual(tempList.data.code, HttpStatusCode.NoContent)) {
-            isNoContent(true)
-            return
-          }
-
-          _.forEach(tempList.data.list, (item, index) => {
-            res3.push({
-              no: Number(index) + 1,
-              hashKey: item.hash_key,
-              name: item.name,
-              email: item.email,
-            } as SearchUserResponse)
-          })
-          setUsersBelongTeam(res3)
-
-          setSearchObj({
-            selectList: [
-              {
-                name: t('features.applicant.header.status'),
-                isRadio: false,
-                list: _.map(res2, (item) => {
-                  return {
-                    id: Number(item.id),
-                    key: item.hashKey,
-                    value: item.name,
-                    isSelected: !_.isEmpty(
-                      _.find(applicantSearchTermList, (option) => {
-                        return _.every([
-                          _.isEqual(option.id, Number(item.id)),
-                          _.isEqual(option.index, SearchIndex.Status),
-                        ])
-                      }),
-                    ),
-                  }
-                }) as SearchSelectTerm[],
-              },
-              {
-                name: t('features.applicant.header.site'),
-                isRadio: false,
-                list: _.map(sites, (item) => {
-                  return {
-                    id: Number(item.id),
-                    key: item.hashKey,
-                    value: item.name,
-                    isSelected: !_.isEmpty(
-                      _.find(applicantSearchTermList, (option) => {
-                        return _.every([
-                          _.isEqual(option.id, Number(item.id)),
-                          _.isEqual(option.index, SearchIndex.Site),
-                        ])
-                      }),
-                    ),
-                  }
-                }) as SearchSelectTerm[],
-              },
-              {
-                name: t('features.applicant.header.resume'),
-                isRadio: true,
-                list: [
-                  {
-                    id: DocumentUploaded.Exist,
-                    value: t('features.applicant.documents.t'),
-                    isSelected: !_.isEmpty(
-                      _.find(applicantSearchTermList, (option) => {
-                        return _.every([
-                          _.isEqual(option.id, DocumentUploaded.Exist),
-                          _.isEqual(option.index, SearchIndex.Resume),
-                        ])
-                      }),
-                    ),
-                  },
-                  {
-                    id: DocumentUploaded.NotExist,
-                    value: t('features.applicant.documents.f'),
-                    isSelected: !_.isEmpty(
-                      _.find(applicantSearchTermList, (option) => {
-                        return _.every([
-                          _.isEqual(option.id, DocumentUploaded.NotExist),
-                          _.isEqual(option.index, SearchIndex.Resume),
-                        ])
-                      }),
-                    ),
-                  },
-                ] as SearchSelectTerm[],
-              },
-              {
-                name: t('features.applicant.header.curriculumVitae'),
-                isRadio: true,
-                list: [
-                  {
-                    id: DocumentUploaded.Exist,
-                    value: t('features.applicant.documents.t'),
-                    isSelected: !_.isEmpty(
-                      _.find(applicantSearchTermList, (option) => {
-                        return _.every([
-                          _.isEqual(option.id, DocumentUploaded.Exist),
-                          _.isEqual(option.index, SearchIndex.CurriculumVitae),
-                        ])
-                      }),
-                    ),
-                  },
-                  {
-                    id: DocumentUploaded.NotExist,
-                    value: t('features.applicant.documents.f'),
-                    isSelected: !_.isEmpty(
-                      _.find(applicantSearchTermList, (option) => {
-                        return _.every([
-                          _.isEqual(option.id, DocumentUploaded.NotExist),
-                          _.isEqual(option.index, SearchIndex.CurriculumVitae),
-                        ])
-                      }),
-                    ),
-                  },
-                ] as SearchSelectTerm[],
-              },
-            ] as SearchSelect[],
-            textForm: [
-              {
-                id: applicantSearchTextList[SearchTextIndex.Name].id,
-                name: t(applicantSearchTextList[SearchTextIndex.Name].name),
-                value: applicantSearchTextList[SearchTextIndex.Name].value,
-              },
-              {
-                id: applicantSearchTextList[SearchTextIndex.Email].id,
-                name: t(applicantSearchTextList[SearchTextIndex.Email].name),
-                value: applicantSearchTextList[SearchTextIndex.Email].value,
-              },
-            ] as SearchText[],
-            autoCompForm: [
-              {
-                id: applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
-                  .id,
-                name: t(
-                  applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
-                    .name,
-                ),
-                items: _.map(res3, (u) => {
-                  return {
-                    key: u.hashKey,
-                    title: u.name,
-                    subTitle: u.email,
-                  } as SelectTitlesModel
-                }) as SelectTitlesModel[],
-                selectedItems:
-                  applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
-                    .selectedItems,
-              },
-            ] as SearchAutoComplete[],
-          })
-        }
+      if (_.isEqual(tempList.data.code, HttpStatusCode.NoContent)) {
+        isNoContent(true)
+        return
       }
+
+      _.forEach(tempList.data.list, (item, index) => {
+        res2.push({
+          id: Number(index) + 1,
+          hashKey: item.hash_key,
+          name: item.status_name,
+        } as ApplicantStatusListResponse)
+      })
+      setStatusList(res2)
+
+      // API: ユーザー検索
+      const res3: SearchUserByCompanyResponse[] = []
+      const tempList2 = await SearchUserByCompanyCSR({
+        hash_key: user.hashKey,
+      } as SearchUserByCompanyRequest)
+
+      if (_.isEqual(tempList2.data.code, HttpStatusCode.NoContent)) {
+        isNoContent(true)
+        return
+      }
+
+      _.forEach(tempList2.data.list, (item, index) => {
+        res3.push({
+          no: Number(index) + 1,
+          hashKey: item.hash_key,
+          name: item.name,
+          email: item.email,
+        } as SearchUserByCompanyResponse)
+      })
+      setUsersBelongTeam(res3)
+
+      setSearchObj({
+        selectList: [
+          {
+            name: t('features.applicant.header.status'),
+            isRadio: false,
+            list: _.map(res2, (item) => {
+              return {
+                id: Number(item.id),
+                key: item.hashKey,
+                value: item.name,
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, Number(item.id)),
+                      _.isEqual(option.index, SearchIndex.Status),
+                    ])
+                  }),
+                ),
+              }
+            }) as SearchSelectTerm[],
+          },
+          {
+            name: t('features.applicant.header.site'),
+            isRadio: false,
+            list: _.map(sites, (item) => {
+              return {
+                id: Number(item.id),
+                key: item.hashKey,
+                value: item.name,
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, Number(item.id)),
+                      _.isEqual(option.index, SearchIndex.Site),
+                    ])
+                  }),
+                ),
+              }
+            }) as SearchSelectTerm[],
+          },
+          {
+            name: t('features.applicant.header.resume'),
+            isRadio: true,
+            list: [
+              {
+                id: DocumentUploaded.Exist,
+                value: t('features.applicant.documents.t'),
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, DocumentUploaded.Exist),
+                      _.isEqual(option.index, SearchIndex.Resume),
+                    ])
+                  }),
+                ),
+              },
+              {
+                id: DocumentUploaded.NotExist,
+                value: t('features.applicant.documents.f'),
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, DocumentUploaded.NotExist),
+                      _.isEqual(option.index, SearchIndex.Resume),
+                    ])
+                  }),
+                ),
+              },
+            ] as SearchSelectTerm[],
+          },
+          {
+            name: t('features.applicant.header.curriculumVitae'),
+            isRadio: true,
+            list: [
+              {
+                id: DocumentUploaded.Exist,
+                value: t('features.applicant.documents.t'),
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, DocumentUploaded.Exist),
+                      _.isEqual(option.index, SearchIndex.CurriculumVitae),
+                    ])
+                  }),
+                ),
+              },
+              {
+                id: DocumentUploaded.NotExist,
+                value: t('features.applicant.documents.f'),
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, DocumentUploaded.NotExist),
+                      _.isEqual(option.index, SearchIndex.CurriculumVitae),
+                    ])
+                  }),
+                ),
+              },
+            ] as SearchSelectTerm[],
+          },
+        ] as SearchSelect[],
+        textForm: [
+          {
+            id: applicantSearchTextList[SearchTextIndex.Name].id,
+            name: t(applicantSearchTextList[SearchTextIndex.Name].name),
+            value: applicantSearchTextList[SearchTextIndex.Name].value,
+          },
+          {
+            id: applicantSearchTextList[SearchTextIndex.Email].id,
+            name: t(applicantSearchTextList[SearchTextIndex.Email].name),
+            value: applicantSearchTextList[SearchTextIndex.Email].value,
+          },
+        ] as SearchText[],
+        autoCompForm: [
+          {
+            id: applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer].id,
+            name: t(
+              applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer].name,
+            ),
+            items: _.map(res3, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.name,
+                subTitle: u.email,
+              } as SelectTitlesModel
+            }) as SelectTitlesModel[],
+            selectedItems:
+              applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
+                .selectedItems,
+          },
+        ] as SearchAutoComplete[],
+      })
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)

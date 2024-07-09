@@ -32,11 +32,13 @@ export enum RouterPath {
   History = '/log',
   // 設定
   Setting = '/setting',
-  // 認証
-  AuthGoogleMeet = '/auth/google',
   // 企業
   Company = '/company',
   CompanyCreate = '/company/create',
+  // 認証
+  AuthGoogleMeet = '/auth/google',
+  // BACK
+  Back = '/back',
 }
 
 // ブラウザタイトル決定
@@ -89,6 +91,9 @@ export const decideTitle = (path: string) => {
       return 'common.title.company.list'
     case RouterPath.Admin + RouterPath.CompanyCreate:
       return 'common.title.company.create'
+    // 認証
+    case RouterPath.Management + RouterPath.AuthGoogleMeet:
+      return 'common.title.back'
     default:
       return '404' // TODO
   }
