@@ -19,6 +19,22 @@ export type Contents = {
   }
 }
 
+// ボタンコンテンツ
+export type ButtonContents = {
+  id?: number
+  key?: string
+  name: JSX.Element
+  contents?: ButtonContentsSub[]
+}
+
+// ボタンコンテンツサブ
+export type ButtonContentsSub = {
+  id?: number
+  key?: string
+  element: JSX.Element
+  onClick: () => void
+}
+
 // カラー
 export type Color = {
   color: string
