@@ -130,11 +130,17 @@ export const LoginMain = {
 
 export const DialogContentMain = {
   backgroundColor: common.white,
-  width: '90%',
   margin: '0 auto',
   boxShadow: '0 4px 8px',
   p: 3,
   borderRadius: 20,
+}
+
+export const DialogContentSetting = {
+  backgroundColor: common.white,
+  boxShadow: '0 1px 2px',
+  p: 3,
+  borderRadius: 4,
 }
 
 export const DirectionColumnForTable = {

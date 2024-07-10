@@ -52,7 +52,7 @@ const ToolBar = (props: Props) => {
 
   const [anchorEl, setAnchorEl] = useState(null)
 
-  const init = async () => {
+  const inits = async () => {
     // API: チーム検索_同一企業
     await SearchTeamByCompanyCSR({
       hash_key: user.hashKey,
@@ -153,12 +153,12 @@ const ToolBar = (props: Props) => {
   }
 
   useEffect(() => {
-    init()
-  }, [])
+    inits()
+  }, [router.pathname])
 
   return (
     <>
-      {!loading && (
+      {_.every([!loading]) && (
         <AppBar
           position="static"
           style={{
@@ -183,32 +183,36 @@ const ToolBar = (props: Props) => {
                 {t(decideTitle(router.pathname))}
               </Typography>
               <Box sx={SpaceBetweenContent}>
-                <Button
-                  sx={mr(1)}
-                  color="inherit"
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                >
-                  <Diversity2Icon sx={mr(0.25)} />
-                  {t('toolbar.teams')}
-                </Button>
-                <Menu
-                  id="simple-menu"
-                  anchorEl={anchorEl}
-                  keepMounted
-                  open={Boolean(anchorEl)}
-                  onClose={() => setAnchorEl(null)}
-                >
-                  {_.map(teams, (t, index) => {
-                    return (
-                      <MenuItem
-                        key={index}
-                        onClick={async () => await changeTeam(t.hashKey)}
-                      >
-                        {t.name}
-                      </MenuItem>
-                    )
-                  })}
-                </Menu>
+                {_.isEqual(user.path, RouterPath.Management) && (
+                  <>
+                    <Button
+                      sx={mr(1)}
+                      color="inherit"
+                      onClick={(e) => setAnchorEl(e.currentTarget)}
+                    >
+                      <Diversity2Icon sx={mr(0.25)} />
+                      {t('toolbar.teams')}
+                    </Button>
+                    <Menu
+                      id="simple-menu"
+                      anchorEl={anchorEl}
+                      keepMounted
+                      open={Boolean(anchorEl)}
+                      onClose={() => setAnchorEl(null)}
+                    >
+                      {_.map(teams, (t, index) => {
+                        return (
+                          <MenuItem
+                            key={index}
+                            onClick={async () => await changeTeam(t.hashKey)}
+                          >
+                            {t.name}
+                          </MenuItem>
+                        )
+                      })}
+                    </Menu>
+                  </>
+                )}
                 <Button
                   sx={mr(1)}
                   color="inherit"

@@ -321,7 +321,7 @@ const TeamEdit: FC<Props> = ({ isError, locale, id }) => {
         roles[Operation.ManagementTeamEdit],
         roles[Operation.ManagementTeamDetailRead],
       ]) && (
-        <DialogContent sx={[DialogContentMain, mt(15)]}>
+        <DialogContent sx={[DialogContentMain, w(90), mt(15)]}>
           <Box sx={[M0Auto, w(90)]}>
             <CssBaseline />
             <Box

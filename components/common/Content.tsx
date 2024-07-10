@@ -8,6 +8,7 @@ import {
   DialogKeyChild,
   mt,
   mb,
+  w,
 } from '@/styles/index'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
@@ -20,7 +21,7 @@ type Props = {
 
 const Content = (props: Props) => {
   return (
-    <DialogContent sx={[DialogContentMain, mt(props.mt ?? 15)]}>
+    <DialogContent sx={[DialogContentMain, w(90), mt(props.mt ?? 15)]}>
       {_.map(props.data, (item, index) => {
         const [maskShow, setMaskShow] = useState<boolean>(
           item.mask?.show ?? false,

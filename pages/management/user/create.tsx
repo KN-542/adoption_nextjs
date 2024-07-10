@@ -424,7 +424,7 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
     <>
       <NextHead></NextHead>
       {_.every([!init, roles[Operation.ManagementUserCreate]]) && (
-        <DialogContent sx={[DialogContentMain, mt(15)]}>
+        <DialogContent sx={[DialogContentMain, w(90), mt(15)]}>
           <Box sx={[M0Auto, w(90)]}>
             <CssBaseline />
             <Box

@@ -79,7 +79,7 @@ const Admin = ({ Component, pageProps }) => {
           router.push(_.isEmpty(routerPath) ? RouterPath.Login : routerPath)
         }
       })
-  }, [])
+  }, [router.pathname])
 
   return (
     <>
