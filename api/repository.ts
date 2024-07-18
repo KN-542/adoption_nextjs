@@ -30,6 +30,7 @@ import {
   SearchRoleByCompanyRequest,
   SearchTeamByCompanyRequest,
   ChangeTeamRequest,
+  UpdateStatusRequest,
 } from './model/request'
 
 /* 
@@ -326,6 +327,16 @@ export const SearchTeamByCompanyCSR = async (
 ) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_team_company`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// ステータス変更 CSR
+export const UpdateStatusCSR = async (req: UpdateStatusRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/team_setting`,
     req,
     APICommonHeader,
   )

@@ -16,6 +16,8 @@ import {
   maxW,
   ButtonColor,
   mr,
+  TableMenuButtons,
+  ButtonColorInverse,
 } from '@/styles/index'
 import {
   Box,
@@ -40,11 +42,16 @@ import {
   ApplicantStatusListResponse,
   ListStatusEventResponse,
 } from '@/api/model/response'
-import { ApplicantStatusListRequest, RolesRequest } from '@/api/model/request'
+import {
+  ApplicantStatusListRequest,
+  RolesRequest,
+  UpdateStatusRequest,
+} from '@/api/model/request'
 import {
   ApplicantStatusListCSR,
   ListStatusEventSSG,
   RolesCSR,
+  UpdateStatusCSR,
 } from '@/api/repository'
 import { HttpStatusCode } from 'axios'
 import { toast } from 'react-toastify'
@@ -141,7 +148,117 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
     }
   }
 
+  const update = async () => {
+    // API: ステータス変更
+    await UpdateStatusCSR({
+      user_hash_key: user.hashKey,
+      status: newStatusList,
+      association: _.map(statusList, (item) => {
+        return {
+          before_hash: item.hashKey,
+          after_index: item.selectedStatusID,
+        }
+      }),
+      events: _.map(events, (item) => {
+        return {
+          event_hash: item.hashKey,
+          status: item.selectedStatusID,
+        }
+      }),
+    } as UpdateStatusRequest)
+      .then(() => {
+        store.dispatch(
+          changeSetting({
+            successMsg: [t('common.toast.update_0')],
+          } as SettingModel),
+        )
+
+        router.push(RouterPath.Management + RouterPath.Back)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
   useEffect(() => {
+    // トースト
+    if (loading) {
+      if (!_.isEmpty(setting.errorMsg)) {
+        setTimeout(() => {
+          for (const msg of setting.errorMsg) {
+            toast(msg, {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 630,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+          }
+        }, 0.1 * 1000)
+
+        store.dispatch(
+          changeSetting({
+            errorMsg: [],
+          } as SettingModel),
+        )
+      }
+
+      if (!_.isEmpty(setting.successMsg)) {
+        setTimeout(() => {
+          for (const msg of setting.successMsg) {
+            toast(msg, {
+              style: {
+                backgroundColor: setting.toastSuccessColor,
+                color: common.white,
+                width: 630,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+          }
+        }, 0.1 * 1000)
+
+        store.dispatch(
+          changeSetting({
+            successMsg: [],
+          } as SettingModel),
+        )
+      }
+    }
+
     const initialize = async () => {
       try {
         if (isError) {
@@ -175,6 +292,20 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
               )}
               {!noContent && (
                 <>
+                  <Box sx={[TableMenuButtons, mt(1)]}>
+                    <Button
+                      variant="contained"
+                      sx={[
+                        mr(10),
+                        minW(100),
+                        ButtonColorInverse(common.white, setting.color),
+                      ]}
+                      onClick={update}
+                    >
+                      {t('common.button.update')}
+                    </Button>
+                  </Box>
+
                   <Box sx={[w(100), M0Auto, ColorRed, Bold]}>
                     {t('features.setting.attention')}
                   </Box>
