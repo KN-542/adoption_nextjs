@@ -189,6 +189,29 @@ export class GetTeamRequest extends AbstractRequest3 {
 export class SearchTeamByCompanyRequest extends AbstractRequest {
   hash_key: string
 }
+// ステータス変更
+export class UpdateStatusRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // ステータス
+  status: string[]
+  // ステータス紐づけ
+  association: UpdateStatusRequestSub[]
+  events: UpdateStatusRequestSub2[]
+}
+// ステータス変更サブ
+class UpdateStatusRequestSub {
+  // 変更前ハッシュ
+  before_hash: string
+  // 変更後インデックス
+  after_index: number
+}
+// ステータス変更サブ2
+class UpdateStatusRequestSub2 {
+  // イベントマスタハッシュ
+  event_hash: string
+  // ステータス
+  status: number
+}
 
 /* 
   ロール
