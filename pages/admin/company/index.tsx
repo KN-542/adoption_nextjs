@@ -264,7 +264,7 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([!isError, !loading, roles[Operation.AdminCompanyRead]]) && (
         <>
           <Box sx={mt(12)}>

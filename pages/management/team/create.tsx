@@ -260,7 +260,7 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([!init, roles[Operation.ManagementTeamCreate]]) && (
         <DialogContent sx={[DialogContentMain, w(90), mt(15)]}>
           <Box sx={[M0Auto, w(90)]}>

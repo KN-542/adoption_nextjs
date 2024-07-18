@@ -394,7 +394,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([!isError, !loading, roles[Operation.ManagementUserRead]]) && (
         <>
           <Box sx={mt(12)}>

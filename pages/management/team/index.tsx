@@ -385,7 +385,7 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([!isError, !loading, roles[Operation.ManagementTeamRead]]) && (
         <>
           <Box sx={mt(12)}>

@@ -425,3 +425,17 @@ export const SearchRoleByCompanyCSR = async (
   )
   return res
 }
+
+/* 
+  設定
+*/
+
+// ステータスイベントマスタ一覧
+export const ListStatusEventSSG = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSG_URL}/setting/status_events`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}

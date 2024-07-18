@@ -35,6 +35,23 @@ export const formatDate2 = (date: Date): string => {
   )
 }
 
+// Date型をyyyy-mm-dd HH:mmのstringに変更
+export const formatDate3 = (date: Date): string => {
+  const pad = (num) => (num < 10 ? '0' + num : num)
+
+  return (
+    date.getFullYear() +
+    '-' +
+    pad(date.getMonth() + 1) +
+    '-' +
+    pad(date.getDate()) +
+    ' ' +
+    pad(date.getHours()) +
+    ':' +
+    pad(date.getMinutes())
+  )
+}
+
 // 時刻作成(15分単位)
 export const Time15 = (): string[] => {
   const res: string[] = []

@@ -7,6 +7,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import {
   CheckboxPropsField,
   SearchAutoComplete,
+  SearchDates,
   SearchForm,
   SearchSelect,
   SearchSelectTerm,
@@ -26,6 +27,7 @@ import { blue, common } from '@mui/material/colors'
 import {
   DocumentUploaded,
   SearchAutoCompIndex,
+  SearchDateIndex,
   SearchIndex,
   SearchSortKey,
   SearchTextIndex,
@@ -78,13 +80,14 @@ import ClearIcon from '@mui/icons-material/Clear'
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
 import {
   applicantSearchAutoComp,
+  applicantSearchDates,
   applicantSearchSort,
   applicantSearchTerm,
   applicantSearchText,
   changeSetting,
 } from '@/hooks/store'
 import Pagination from '@/components/common/Pagination'
-import { formatDate2 } from '@/hooks/common'
+import { formatDate2, formatDate3 } from '@/hooks/common'
 import SelectedMenu from '@/components/common/SelectedMenu'
 import ItemsSelectModal from '@/components/common/modal/ItemsSelectModal'
 import UploadModal from '@/components/management/modal/UploadModal'
@@ -93,18 +96,19 @@ import { HttpStatusCode } from 'axios'
 import { Operation } from '@/enum/common'
 import {
   SearchApplicantResponse,
-  ApplicantStatusListResponse,
+  SiteListResponse,
   SearchUserByCompanyResponse,
 } from '@/api/model/response'
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
 import Spinner from '@/components/common/modal/Spinner'
 import { GetStaticProps } from 'next'
+import { Dayjs } from 'dayjs'
 
 type Props = {
   isError: boolean
   locale: string
-  sites: ApplicantStatusListResponse[]
+  sites: SiteListResponse[]
 }
 
 const APPLICANT_PAGE_SIZE = 30
@@ -119,15 +123,14 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   )
   const applicantSearchTextList = _.cloneDeep(applicant.search.textForm)
   const applicantSearchAutoCompForm = _.cloneDeep(applicant.search.autoCompForm)
+  const applicantSearchDatesForm = _.cloneDeep(applicant.search.dates)
   const applicantSearchSortList = Object.assign({}, applicant.search.sort)
 
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
   const [bodies, setBodies] = useState<SearchApplicantResponse[]>([])
-  const [statusList, setStatusList] = useState<ApplicantStatusListResponse[]>(
-    [],
-  )
+  const [statusList, setStatusList] = useState<SiteListResponse[]>([])
   const [usersBelongTeam, setUsersBelongTeam] = useState<
     SearchUserByCompanyResponse[]
   >([])
@@ -143,6 +146,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [noContent, isNoContent] = useState<boolean>(false)
   const [init, isInit] = useState<boolean>(true)
   const [spinner, isSpinner] = useState<boolean>(false)
+  const [pageDisp, isPageDisp] = useState<boolean>(false)
 
   const inits = async () => {
     try {
@@ -154,7 +158,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       setRoles(res.data.map as { [key: string]: boolean })
 
       // API: 応募者ステータス一覧取得
-      const res2: ApplicantStatusListResponse[] = []
+      const res2: SiteListResponse[] = []
       const tempList = await ApplicantStatusListCSR({
         user_hash_key: user.hashKey,
       } as ApplicantStatusListRequest)
@@ -169,7 +173,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           id: Number(index) + 1,
           hashKey: item.hash_key,
           name: item.status_name,
-        } as ApplicantStatusListResponse)
+        } as SiteListResponse)
       })
       setStatusList(res2)
 
@@ -325,6 +329,29 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                 .selectedItems,
           },
         ] as SearchAutoComplete[],
+        dates: [
+          {
+            id: applicantSearchDatesForm[SearchDateIndex.CreatedAt].id,
+            name: t(applicantSearchDatesForm[SearchDateIndex.CreatedAt].name),
+            views: applicantSearchDatesForm[SearchDateIndex.CreatedAt].views,
+            format: applicantSearchDatesForm[SearchDateIndex.CreatedAt].format,
+            from: applicantSearchDatesForm[SearchDateIndex.CreatedAt].from,
+            to: applicantSearchDatesForm[SearchDateIndex.CreatedAt].to,
+          },
+          {
+            id: applicantSearchDatesForm[SearchDateIndex.InterviewerDate].id,
+            name: t(
+              applicantSearchDatesForm[SearchDateIndex.InterviewerDate].name,
+            ),
+            views:
+              applicantSearchDatesForm[SearchDateIndex.InterviewerDate].views,
+            format:
+              applicantSearchDatesForm[SearchDateIndex.InterviewerDate].format,
+            from: applicantSearchDatesForm[SearchDateIndex.InterviewerDate]
+              .from,
+            to: applicantSearchDatesForm[SearchDateIndex.InterviewerDate].to,
+          },
+        ] as SearchDates[],
       })
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
@@ -419,6 +446,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           return item.key.trim()
         },
       ),
+      // 面接日時_From
+      interviewer_date_from:
+        applicantSearchDatesForm[SearchDateIndex.InterviewerDate].from,
+      // 面接日時_To
+      interviewer_date_to:
+        applicantSearchDatesForm[SearchDateIndex.InterviewerDate].to,
+      // 登録日時_From
+      created_at_from: applicantSearchDatesForm[SearchDateIndex.CreatedAt].from,
+      // 登録日時_To
+      created_at_to: applicantSearchDatesForm[SearchDateIndex.CreatedAt].to,
       // ソート(key)
       sort_key: applicantSearchSortList.key,
       // ソート(向き)
@@ -443,6 +480,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             google: r.google_meet_url,
             resume: r.resume,
             curriculumVitae: r.curriculum_vitae,
+            createdAt: new Date(r.created_at),
             users: _.map(r.users, (u) => {
               return u.hash_key
             }),
@@ -469,7 +507,6 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           )
           setCheckedList(list2)
         }
-        isLoading(false)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -502,6 +539,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
           )
         }
+      })
+      .finally(() => {
+        isLoading(false)
+        isPageDisp(true)
       })
   }
 
@@ -604,6 +645,30 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     setSearchObj(newObj)
   }
 
+  const changeSearchObjByFromDates = (index: number, from: Dayjs) => {
+    const f = new Date(from.year(), from.month(), from.date())
+
+    const newObj = Object.assign({}, searchObj)
+
+    newObj.dates[index].from = f
+    applicantSearchDatesForm[index].from = f
+
+    store.dispatch(applicantSearchDates(applicantSearchDatesForm))
+    setSearchObj(newObj)
+  }
+
+  const changeSearchObjByToDates = (index: number, to: Dayjs) => {
+    const t = new Date(to.year(), to.month(), to.date())
+
+    const newObj = Object.assign({}, searchObj)
+
+    newObj.dates[index].to = t
+    applicantSearchDatesForm[index].to = t
+
+    store.dispatch(applicantSearchDates(applicantSearchDatesForm))
+    setSearchObj(newObj)
+  }
+
   const initInputs = () => {
     const newObj = Object.assign({}, searchObj)
 
@@ -626,10 +691,19 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     for (const item of applicantSearchAutoCompForm) {
       item.selectedItems.length = 0
     }
+    for (const item of newObj.dates) {
+      item.from = null
+      item.to = null
+    }
+    for (const item of applicantSearchDatesForm) {
+      item.from = null
+      item.to = null
+    }
 
     store.dispatch(applicantSearchTerm(applicantSearchTermList))
     store.dispatch(applicantSearchText(applicantSearchTextList))
     store.dispatch(applicantSearchAutoComp(applicantSearchAutoCompForm))
+    store.dispatch(applicantSearchDates(applicantSearchDatesForm))
     setSearchObj(newObj)
   }
 
@@ -852,7 +926,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       ])
     ) {
       // ファイル名チェック
-      const site: ApplicantStatusListResponse = _.find(sites, (s) =>
+      const site: SiteListResponse = _.find(sites, (s) =>
         file.name.includes(s.fileName),
       )
       if (_.isEmpty(site)) {
@@ -976,6 +1050,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         }
 
         // API 応募者ダウンロード
+        isPageDisp(false)
         const res = await DownloadApplicantCSR(request)
         toast(
           t('features.applicant.uploadMsgSuccess') +
@@ -1153,9 +1228,15 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       id: 6,
       name: t('features.applicant.header.interviewerDate'),
       sort: {
-        key: SearchSortKey.IntervierDate,
-        target: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key),
-        isAsc: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key)
+        key: SearchSortKey.InterviewerDate,
+        target: _.isEqual(
+          SearchSortKey.InterviewerDate,
+          applicantSearchSortList.key,
+        ),
+        isAsc: _.isEqual(
+          SearchSortKey.InterviewerDate,
+          applicantSearchSortList.key,
+        )
           ? applicantSearchSortList.isAsc
           : true,
       },
@@ -1174,6 +1255,17 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       id: 9,
       name: t('features.applicant.header.curriculumVitae'),
       sort: null,
+    },
+    {
+      id: 10,
+      name: t('features.applicant.header.createdAt'),
+      sort: {
+        key: SearchSortKey.CreatedAt,
+        target: _.isEqual(SearchSortKey.CreatedAt, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.CreatedAt, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : true,
+      },
     },
   ])
 
@@ -1230,7 +1322,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([
         !isError,
         !loading,
@@ -1240,14 +1332,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           {spinner && <Spinner></Spinner>}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              <Pagination
-                show={_.size(bodies) > APPLICANT_PAGE_SIZE}
-                currentPage={page}
-                listSize={_.size(bodies)}
-                pageSize={APPLICANT_PAGE_SIZE}
-                search={search}
-                changePage={changePage}
-              ></Pagination>
+              {pageDisp && (
+                <Pagination
+                  show={_.size(bodies) > APPLICANT_PAGE_SIZE}
+                  currentPage={page}
+                  listSize={_.size(bodies)}
+                  pageSize={APPLICANT_PAGE_SIZE}
+                  search={search}
+                  changePage={changePage}
+                ></Pagination>
+              )}
               {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
                 <SelectedMenu
                   menu={dispMenu}
@@ -1340,6 +1434,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                       {t('features.applicant.documents.t')}
                     </Button>
                   ),
+                  createdAt: formatDate3(l.createdAt),
                 }
               }).slice(
                 APPLICANT_PAGE_SIZE * (page - 1),
@@ -1383,6 +1478,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             changePage={changePage}
             changeSearchObjByText={changeSearchObjByText}
             changeSearchObjByAutoComp={changeSearchObjByAutoComp}
+            changeSearchObjByFromDates={changeSearchObjByFromDates}
+            changeSearchObjByToDates={changeSearchObjByToDates}
           ></SearchModal>
           <ItemsSelectModal
             open={userSelectOpen}
@@ -1419,7 +1516,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError: boolean = false
 
   // API サイト一覧
-  const sites: ApplicantStatusListResponse[] = []
+  const sites: SiteListResponse[] = []
   await ApplicantSitesSSG()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
@@ -1435,7 +1532,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
           ageIndex: Number(item.age_index),
           nameCheckType: Number(item.name_check_type),
           columns: Number(item.num_of_column),
-        } as ApplicantStatusListResponse)
+        } as SiteListResponse)
       })
     })
     .catch(() => {

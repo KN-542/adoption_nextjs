@@ -2,6 +2,9 @@
   共通
 */
 
+import { DateOrTimeView } from '@mui/x-date-pickers'
+import dayjs from 'dayjs'
+
 // レフトメニュー model
 export type SidebarModel = {
   name: string
@@ -24,6 +27,7 @@ export type ButtonContents = {
   id?: number
   key?: string
   name: JSX.Element
+  role: boolean
   contents?: ButtonContentsSub[]
 }
 
@@ -31,7 +35,7 @@ export type ButtonContents = {
 export type ButtonContentsSub = {
   id?: number
   key?: string
-  element: JSX.Element
+  name: string
   onClick: () => void
 }
 
@@ -79,12 +83,14 @@ export type SearchForm = {
   selectList?: SearchSelect[]
   textForm?: SearchText[]
   autoCompForm?: SearchAutoComplete[]
+  dates?: SearchDates[]
 }
 // 検索 model
 export type SearchModel = {
   selectedList: SearchSelected[]
   textForm: SearchText[]
   autoCompForm: SearchAutoComplete[]
+  dates: SearchDates[]
   sort: SearchSortModel
 }
 
@@ -108,6 +114,16 @@ export type SearchAutoComplete = {
   name: string
   items: SelectTitlesModel[]
   selectedItems: SelectTitlesModel[]
+}
+
+// 検索 Date
+export type SearchDates = {
+  id: number
+  name: string
+  views: DateOrTimeView[]
+  format: string
+  from: Date
+  to: Date
 }
 
 // 検索ストレージ

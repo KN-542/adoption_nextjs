@@ -347,7 +347,7 @@ const Schedules = ({ isError, api }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([!isError, !loading]) && (
         <>
           <Box sx={[w(90), M0Auto, CustomTableContainer(80), mt(12)]}>

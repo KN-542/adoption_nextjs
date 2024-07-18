@@ -159,7 +159,7 @@ const Pagination = (props: Props) => {
 
   useEffect(() => {
     displayPagination()
-  }, [])
+  }, [props.currentPage])
 
   return (
     <>

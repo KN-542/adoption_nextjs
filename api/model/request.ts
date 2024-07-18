@@ -94,6 +94,14 @@ export class SearchApplicantRequest extends AbstractRequest2 {
   email: string
   // 面接官
   users: string[]
+  // 面接日時_From
+  interviewer_date_from: Date
+  // 面接日時_To
+  interviewer_date_to: Date
+  // 登録日時_From
+  created_at_from: Date
+  // 登録日時_To
+  created_at_to: Date
   // ソート(key)
   sort_key: string
   // ソート(向き)
