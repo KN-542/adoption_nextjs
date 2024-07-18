@@ -364,7 +364,7 @@ const Login = () => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {!loading && (
         <>
           <Container component="main" maxWidth="xs" sx={mt(30)}>

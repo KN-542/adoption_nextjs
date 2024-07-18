@@ -1,5 +1,5 @@
 // API サイト一覧
-export type ApplicantStatusListResponse = {
+export type SiteListResponse = {
   // id
   id: number
   // ハッシュキー
@@ -22,6 +22,18 @@ export type ApplicantStatusListResponse = {
   nameCheckType: number
   // カラム数
   columns: number
+}
+
+// API 応募者ステータス一覧
+export type ApplicantStatusListResponse = {
+  // ハッシュキー
+  hashKey: string
+  // ステータス名
+  name: string
+  // 選択済み新ステータスID
+  selectedStatusID: number
+  // 選択済み新ステータス
+  selectedStatus: string
 }
 
 // API 応募者検索
@@ -50,6 +62,8 @@ export type SearchApplicantResponse = {
   resume: string
   // 職務経歴書
   curriculumVitae: string
+  // 登録日時
+  createdAt: Date
   // 担当面接官
   users: string[]
   // 担当面接官氏名
@@ -117,4 +131,18 @@ export type SearchRoleByCompanyResponse = {
   hashKey: string
   // ロール名
   name: string
+}
+
+// API: ステータスイベントマスタ一覧
+export type ListStatusEventResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 説明
+  desc: string
+  // 選択済み新ステータスID
+  selectedStatusID?: number
+  // 選択済み新ステータス
+  selectedStatus?: string
 }

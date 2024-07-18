@@ -18,7 +18,7 @@ const Error = () => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       <Container component="main" maxWidth="sm">
         <Box
           sx={{

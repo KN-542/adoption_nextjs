@@ -314,7 +314,7 @@ const TeamEdit: FC<Props> = ({ isError, locale, id }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([
         !init,
         !loading,

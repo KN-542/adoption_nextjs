@@ -304,7 +304,7 @@ const Personal = () => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       <Content data={data}></Content>
     </>
   )

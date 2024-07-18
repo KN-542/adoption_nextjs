@@ -194,7 +194,6 @@ const ToolBar = (props: Props) => {
                       {t('toolbar.teams')}
                     </Button>
                     <Menu
-                      id="simple-menu"
                       anchorEl={anchorEl}
                       keepMounted
                       open={Boolean(anchorEl)}

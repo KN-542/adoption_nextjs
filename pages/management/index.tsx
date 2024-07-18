@@ -4,7 +4,7 @@ import { GetStaticProps } from 'next'
 const Home = () => {
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
     </>
   )
 }

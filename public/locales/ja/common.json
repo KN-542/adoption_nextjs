@@ -62,6 +62,7 @@
     "button": {
       "cancel": "キャンセル",
       "back": "戻る",
+      "add": "追加",
       "change": "変更",
       "auth": "認証する",
       "reSend": "再送する",
@@ -94,9 +95,13 @@
       "pattern": {
         "email": "メールアドレス形式で入力してください"
       },
+      "correlation": {
+        "dates": "の日付の範囲が不正です"
+      },
       "is": "は"
     },
     "api": {
+      "noContent": "権限がありません",
       "code": {
         "login1": "ユーザーIDまたはパスワードが違います",
         "expired1": "ログインされていないか、またはログイントークンの有効期限が切れました",
@@ -183,7 +188,8 @@
         "interviewerDate": "面接予定日",
         "resume": "履歴書",
         "curriculumVitae": "職務経歴書",
-        "users": "担当面接官"
+        "users": "担当面接官",
+        "createdAt": "登録日時"
       },
       "assign": {
         "subTitle": "ユーザー"
@@ -237,6 +243,29 @@
       }
     },
     "setting": {
+      "attention": "※リロードやページ遷移を行うと入力内容が失われます",
+      "company": {
+        "index": "企業設定"
+      },
+      "team": {
+        "index": "チーム設定",
+        "sub": {
+          "status": {
+            "index": "選考ステータス",
+            "old": "現在のステータス",
+            "new": "新ステータス",
+            "association": "ステータス紐づけ",
+            "event": "ステータスイベント",
+            "flg": "ステータス編集可能フラグ",
+            "attention": "※順番通りに記載してください",
+            "msg": "旧ステータスがどの新ステータスと入れ替わるのか選択してください"
+          },
+          "assign": "面接官割り振り方法"
+        }
+      },
+      "personal": {
+        "index": "個人設定"
+      },
       "name": "氏名",
       "email": "メールアドレス",
       "role": "ロール",

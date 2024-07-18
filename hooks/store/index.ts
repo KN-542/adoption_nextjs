@@ -1,4 +1,8 @@
-import { SearchAutoCompIndex, SearchTextIndex } from '@/enum/applicant'
+import {
+  SearchAutoCompIndex,
+  SearchDateIndex,
+  SearchTextIndex,
+} from '@/enum/applicant'
 import { SearchCompanyTextIndex } from '@/enum/company'
 import { Lang } from '@/enum/user'
 import { green, indigo, red } from '@mui/material/colors'
@@ -7,6 +11,7 @@ import _ from 'lodash'
 import {
   ApplicantModel,
   SearchAutoComplete,
+  SearchDates,
   SearchModel,
   SearchSelected,
   SearchSortModel,
@@ -50,6 +55,24 @@ const state = {
           selectedItems: [] as SelectTitlesModel[],
         },
       ] as SearchAutoComplete[],
+      dates: [
+        {
+          id: SearchDateIndex.CreatedAt,
+          name: 'features.applicant.header.createdAt',
+          views: ['year', 'month', 'day'],
+          format: 'YYYY/MM/DD',
+          from: null,
+          to: null,
+        },
+        {
+          id: SearchDateIndex.InterviewerDate,
+          name: 'features.applicant.header.interviewerDate',
+          views: ['year', 'month', 'day'],
+          format: 'YYYY/MM/DD',
+          from: null,
+          to: null,
+        },
+      ] as SearchDates[],
       sort: {
         key: '',
         isAsc: true,
@@ -100,6 +123,9 @@ export const slice = createSlice({
     ) => {
       state.applicant.search.autoCompForm = _.cloneDeep(action.payload)
     },
+    applicantSearchDates: (state, action: PayloadAction<SearchDates[]>) => {
+      state.applicant.search.dates = _.cloneDeep(action.payload)
+    },
     applicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
       Object.assign(state.applicant.search.sort, action.payload)
     },
@@ -116,6 +142,7 @@ export const {
   applicantSearchTerm,
   applicantSearchText,
   applicantSearchAutoComp,
+  applicantSearchDates,
   applicantSearchSort,
   companySearchText,
 } = slice.actions

@@ -422,7 +422,7 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
 
   return (
     <>
-      <NextHead></NextHead>
+      <NextHead />
       {_.every([!init, roles[Operation.ManagementUserCreate]]) && (
         <DialogContent sx={[DialogContentMain, w(90), mt(15)]}>
           <Box sx={[M0Auto, w(90)]}>

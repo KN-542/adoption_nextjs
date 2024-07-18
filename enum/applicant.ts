@@ -111,6 +111,14 @@ export enum SearchAutoCompIndex {
   SubInterviewer,
 }
 
+// 検索項目 Date
+export enum SearchDateIndex {
+  // 登録日時
+  CreatedAt = 0,
+  // 面接日時
+  InterviewerDate,
+}
+
 // 検索項目 sort key
 export enum SearchSortKey {
   // 氏名
@@ -122,5 +130,7 @@ export enum SearchSortKey {
   // 選考状況
   Status = 'status',
   // 面接希望日時
-  IntervierDate = 'desired_at',
+  InterviewerDate = 'start',
+  // 登録日時
+  CreatedAt = 'created_at',
 }
