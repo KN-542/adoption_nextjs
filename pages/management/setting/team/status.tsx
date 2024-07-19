@@ -18,6 +18,9 @@ import {
   mr,
   TableMenuButtons,
   ButtonColorInverse,
+  Color,
+  DisplayFlex,
+  FlexStart,
 } from '@/styles/index'
 import {
   Box,
@@ -40,17 +43,20 @@ import store, { RootState } from '@/hooks/store/store'
 import { useSelector } from 'react-redux'
 import {
   ApplicantStatusListResponse,
+  ListStatusEventByTeamResponse,
   ListStatusEventResponse,
 } from '@/api/model/response'
 import {
   ApplicantStatusListRequest,
   RolesRequest,
+  StatusEventsByTeamRequest,
   UpdateStatusRequest,
 } from '@/api/model/request'
 import {
   ApplicantStatusListCSR,
   ListStatusEventSSG,
   RolesCSR,
+  StatusEventsByTeamCSR,
   UpdateStatusCSR,
 } from '@/api/repository'
 import { HttpStatusCode } from 'axios'
@@ -63,13 +69,16 @@ import ClearIcon from '@mui/icons-material/Clear'
 import AddIcon from '@mui/icons-material/Add'
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt'
 import { Operation } from '@/enum/common'
+import DeleteIcon from '@mui/icons-material/Delete'
+import CopyAllIcon from '@mui/icons-material/CopyAll'
 
 type Props = {
   isError: boolean
+  locale: string
   eventsSSG: ListStatusEventResponse[]
 }
 
-const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
+const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -81,6 +90,9 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
     [],
   )
   const [newStatusList, setNewStatusList] = useState<string[]>([''])
+  const [oldEvents, setOldEvents] = useState<ListStatusEventByTeamResponse[]>(
+    [],
+  )
   const [events, setEvents] = useState<ListStatusEventResponse[]>(eventsSSG)
 
   const [noContent, isNoContent] = useState<boolean>(false)
@@ -114,6 +126,21 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
         } as ApplicantStatusListResponse)
       })
       setStatusList(list)
+
+      // API: ステータスイベント取得
+      const res2 = await StatusEventsByTeamCSR({
+        user_hash_key: user.hashKey,
+      } as StatusEventsByTeamRequest)
+
+      const list2: ListStatusEventByTeamResponse[] = []
+      _.forEach(res2.data.list, (item, index) => {
+        list2.push({
+          no: Number(index) + 1,
+          desc: item[`desc_${locale}`],
+          name: item.status_name,
+        })
+      })
+      setOldEvents(list2)
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
@@ -149,6 +176,41 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
   }
 
   const update = async () => {
+    // バリデーション
+    if (
+      _.size(_.filter(newStatusList, (s) => !_.isEmpty(s.trim()))) <
+      _.size(newStatusList)
+    ) {
+      toast(t('features.setting.team.sub.status.validate'), {
+        style: {
+          backgroundColor: setting.toastErrorColor,
+          color: common.white,
+          width: 500,
+        },
+        position: 'bottom-left',
+        hideProgressBar: true,
+        closeButton: () => <ClearIcon />,
+      })
+      return
+    }
+
+    if (
+      _.size(_.filter(statusList, (s) => !_.isEmpty(s.selectedStatus))) <
+      _.size(statusList)
+    ) {
+      toast(t('features.setting.team.sub.status.validate2'), {
+        style: {
+          backgroundColor: setting.toastErrorColor,
+          color: common.white,
+          width: 500,
+        },
+        position: 'bottom-left',
+        hideProgressBar: true,
+        closeButton: () => <ClearIcon />,
+      })
+      return
+    }
+
     // API: ステータス変更
     await UpdateStatusCSR({
       user_hash_key: user.hashKey,
@@ -159,12 +221,15 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
           after_index: item.selectedStatusID,
         }
       }),
-      events: _.map(events, (item) => {
-        return {
-          event_hash: item.hashKey,
-          status: item.selectedStatusID,
-        }
-      }),
+      events: _.map(
+        _.filter(events, (item) => !_.isEmpty(item.selectedStatus)),
+        (item) => {
+          return {
+            event_hash: item.hashKey,
+            status: item.selectedStatusID,
+          }
+        },
+      ),
     } as UpdateStatusRequest)
       .then(() => {
         store.dispatch(
@@ -329,28 +394,75 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
                     </List>
 
                     <FormLabel sx={[mt(6), mb(1)]}>
+                      {t('features.setting.team.sub.status.oldEvent')}
+                    </FormLabel>
+                    <List>
+                      {_.map(oldEvents, (c, index) => {
+                        return (
+                          <ListItem
+                            key={index}
+                            sx={[ml(2), MenuDisp(common.black)]}
+                          >
+                            <Box sx={[minW(400)]}>{'・' + c.desc}</Box>
+                            <ArrowRightAltIcon sx={mr(1)} />
+                            <Box>{c.name}</Box>
+                          </ListItem>
+                        )
+                      })}
+                    </List>
+
+                    <FormLabel sx={[mt(6), mb(1)]}>
                       {t('features.setting.team.sub.status.new') + '*'}
                     </FormLabel>
                     <Box sx={[ml(2), ColorRed, Bold]}>
                       {t('features.setting.team.sub.status.attention')}
                     </Box>
-                    {_.map(newStatusList, (_a, index) => {
+                    {_.map(newStatusList, (str, index) => {
                       return (
-                        <TextField
-                          key={index}
-                          margin="normal"
-                          sx={[ml(2), w(50)]}
-                          onChange={(e) => {
-                            setNewStatusList(
-                              _.map(newStatusList, (s, i) => {
-                                if (_.isEqual(i, index)) {
-                                  return e.target.value
-                                }
-                                return s
-                              }),
-                            )
-                          }}
-                        />
+                        <Box key={index} sx={DisplayFlex}>
+                          <TextField
+                            key={index}
+                            margin="normal"
+                            sx={[ml(2), w(50)]}
+                            value={str}
+                            onChange={(e) => {
+                              setNewStatusList(
+                                _.map(newStatusList, (s, i) => {
+                                  if (_.isEqual(i, index)) {
+                                    return e.target.value
+                                  }
+                                  return s
+                                }),
+                              )
+                            }}
+                          />
+                          <Button
+                            disabled={_.every([
+                              _.isEqual(index, 0),
+                              _.isEqual(_.size(newStatusList), 1),
+                            ])}
+                            sx={[ml(1), Color(setting.toastErrorColor)]}
+                            variant="text"
+                            onClick={() => {
+                              setNewStatusList(
+                                _.filter(
+                                  newStatusList,
+                                  (n) => !_.isEqual(n, str),
+                                ),
+                              )
+                              setStatusList(
+                                _.map(statusList, (s) => {
+                                  return {
+                                    hashKey: s.hashKey,
+                                    name: s.name,
+                                  } as ApplicantStatusListResponse
+                                }),
+                              )
+                            }}
+                          >
+                            <DeleteIcon />
+                          </Button>
+                        </Box>
                       )
                     })}
                     <Button
@@ -359,14 +471,42 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
                         minW(100),
                         maxW(100),
                         ButtonColor(setting.color, common.white),
-                        {
-                          justifyContent: 'flex-start',
-                        },
+                        FlexStart,
                       ]}
                       onClick={() => setNewStatusList([...newStatusList, ''])}
                     >
                       <AddIcon />
                       {t('common.button.add')}
+                    </Button>
+                    <Button
+                      variant="text"
+                      sx={[
+                        minW(300),
+                        maxW(300),
+                        ButtonColor(setting.color, common.white),
+                        FlexStart,
+                      ]}
+                      onClick={() => {
+                        const list = _.map(statusList, (item) => {
+                          return item.name
+                        })
+
+                        setNewStatusList(list)
+
+                        setStatusList(
+                          _.map(statusList, (s, idx) => {
+                            return {
+                              hashKey: s.hashKey,
+                              name: s.name,
+                              selectedStatusID: Number(idx),
+                              selectedStatus: list[Number(idx)],
+                            } as ApplicantStatusListResponse
+                          }),
+                        )
+                      }}
+                    >
+                      <CopyAllIcon />
+                      {t('features.setting.team.sub.status.same')}
                     </Button>
 
                     <FormLabel sx={[mt(6), mb(1)]}>
@@ -387,7 +527,10 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
                             <Select
                               disabled={
                                 _.size(
-                                  _.filter(newStatusList, (s) => !_.isEmpty(s)),
+                                  _.filter(
+                                    newStatusList,
+                                    (s) => !_.isEmpty(s.trim()),
+                                  ),
                                 ) < _.size(newStatusList)
                               }
                               value={c.selectedStatusID ?? ''}
@@ -440,7 +583,10 @@ const SettingTeamStatus: FC<Props> = ({ isError, eventsSSG }) => {
                             <Select
                               disabled={
                                 _.size(
-                                  _.filter(newStatusList, (s) => !_.isEmpty(s)),
+                                  _.filter(
+                                    newStatusList,
+                                    (s) => !_.isEmpty(s.trim()),
+                                  ),
                                 ) < _.size(newStatusList)
                               }
                               value={c.selectedStatusID ?? ''}
@@ -515,6 +661,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
   return {
     props: {
       isError,
+      locale,
       eventsSSG,
       messages: (
         await import(`../../../../public/locales/${locale}/common.json`)

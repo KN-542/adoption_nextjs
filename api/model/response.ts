@@ -146,3 +146,13 @@ export type ListStatusEventResponse = {
   // 選択済み新ステータス
   selectedStatus?: string
 }
+
+// API: ステータスイベント取得
+export type ListStatusEventByTeamResponse = {
+  // No
+  no: number
+  // 説明
+  desc: string
+  // ステータス名
+  name: string
+}

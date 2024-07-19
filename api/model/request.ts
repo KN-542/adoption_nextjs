@@ -212,6 +212,10 @@ class UpdateStatusRequestSub2 {
   // ステータス
   status: number
 }
+// チーム毎ステータスイベント取得
+export class StatusEventsByTeamRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
 
 /* 
   ロール
