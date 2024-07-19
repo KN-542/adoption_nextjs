@@ -72,6 +72,8 @@ export const TextCenter = {
 
 export const FlexGrow = { flexGrow: 1 }
 
+export const FlexStart = { justifyContent: 'flex-start' }
+
 export const Center = { display: 'flex', justifyContent: 'center' }
 export const SpaceBetween = { display: 'flex', justifyContent: 'space-between' }
 export const SpaceEvenly = { display: 'flex', justifyContent: 'space-evenly' }

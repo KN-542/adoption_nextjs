@@ -31,6 +31,7 @@ import {
   SearchTeamByCompanyRequest,
   ChangeTeamRequest,
   UpdateStatusRequest,
+  StatusEventsByTeamRequest,
 } from './model/request'
 
 /* 
@@ -333,16 +334,6 @@ export const SearchTeamByCompanyCSR = async (
   return res
 }
 
-// ステータス変更 CSR
-export const UpdateStatusCSR = async (req: UpdateStatusRequest) => {
-  const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/team_setting`,
-    req,
-    APICommonHeader,
-  )
-  return res
-}
-
 /* 
   予定
 */
@@ -440,6 +431,26 @@ export const SearchRoleByCompanyCSR = async (
 /* 
   設定
 */
+
+// ステータス変更 CSR
+export const UpdateStatusCSR = async (req: UpdateStatusRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム毎ステータスイベント取得 CSR
+export const StatusEventsByTeamCSR = async (req: StatusEventsByTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/status_events_of_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
 
 // ステータスイベントマスタ一覧
 export const ListStatusEventSSG = async () => {
