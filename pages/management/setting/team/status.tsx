@@ -1,3 +1,4 @@
+import React from 'react'
 import NextHead from '@/components/common/Header'
 import {
   M0Auto,
@@ -43,17 +44,21 @@ import store, { RootState } from '@/hooks/store/store'
 import { useSelector } from 'react-redux'
 import {
   ApplicantStatusListResponse,
+  GetOwnTeamResponse,
+  InterviewEvents,
   ListStatusEventByTeamResponse,
   ListStatusEventResponse,
 } from '@/api/model/response'
 import {
   ApplicantStatusListRequest,
+  GetOwnTeamRequest,
   RolesRequest,
   StatusEventsByTeamRequest,
   UpdateStatusRequest,
 } from '@/api/model/request'
 import {
   ApplicantStatusListCSR,
+  GetOwnTeamCSR,
   ListStatusEventSSG,
   RolesCSR,
   StatusEventsByTeamCSR,
@@ -71,6 +76,13 @@ import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt'
 import { Operation } from '@/enum/common'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CopyAllIcon from '@mui/icons-material/CopyAll'
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from 'react-beautiful-dnd'
+import DragHandleIcon from '@mui/icons-material/DragHandle'
 
 type Props = {
   isError: boolean
@@ -94,6 +106,9 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
     [],
   )
   const [events, setEvents] = useState<ListStatusEventResponse[]>(eventsSSG)
+
+  const [teamEvents, setTeamEvents] = useState<GetOwnTeamResponse>(null)
+  const [oldTeamEvents, setOldTeamEvents] = useState<GetOwnTeamResponse>(null)
 
   const [noContent, isNoContent] = useState<boolean>(false)
   const [loading, isLoading] = useState<boolean>(true)
@@ -141,6 +156,51 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
         })
       })
       setOldEvents(list2)
+
+      // API: チーム取得
+      const res3 = await GetOwnTeamCSR({
+        user_hash_key: user.hashKey,
+      } as GetOwnTeamRequest)
+
+      const list3: InterviewEvents[] = _.map(res3.data.events, (item) => {
+        return {
+          num: Number(item.num_of_interview),
+          hashKey: item.hash_key,
+          name: item.name,
+        } as InterviewEvents
+      })
+      for (let i = 2; i <= Number(res3.data.team.num_of_interview); i++) {
+        if (
+          _.isEqual(
+            _.findIndex(res3.data.events, (item) =>
+              _.isEqual(Number(item['num_of_interview']), i),
+            ),
+            -1,
+          )
+        ) {
+          list3.push({
+            num: i,
+            hashKey: '',
+            name: '',
+          })
+        }
+      }
+
+      setOldTeamEvents({
+        numOfInterview: 0,
+        events: _.map(res3.data.events, (item) => {
+          return {
+            num: Number(item.num_of_interview),
+            hashKey: item.select_status_hash_key,
+            name: item.status_name,
+          } as InterviewEvents
+        }),
+      } as GetOwnTeamResponse)
+
+      setTeamEvents({
+        numOfInterview: Number(res3.data.team.num_of_interview),
+        events: list3,
+      } as GetOwnTeamResponse)
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
@@ -226,6 +286,15 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
         (item) => {
           return {
             event_hash: item.hashKey,
+            status: item.selectedStatusID,
+          }
+        },
+      ),
+      events_of_interview: _.map(
+        _.filter(teamEvents.events, (item) => !_.isEmpty(item.selectedStatus)),
+        (item) => {
+          return {
+            num: item.num,
             status: item.selectedStatusID,
           }
         },
@@ -340,6 +409,16 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
     initialize()
   }, [router.pathname])
 
+  const drag = (result: DropResult) => {
+    if (!result.destination) return
+
+    const reorderedList = Array.from(newStatusList)
+    const [removed] = reorderedList.splice(result.source.index, 1)
+    reorderedList.splice(result.destination.index, 0, removed)
+
+    setNewStatusList(reorderedList)
+  }
+
   return (
     <>
       <NextHead />
@@ -410,6 +489,22 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
                         )
                       })}
                     </List>
+                    <List>
+                      {_.map(oldTeamEvents.events, (c, index) => {
+                        return (
+                          <ListItem
+                            key={index}
+                            sx={[ml(2), MenuDisp(common.black)]}
+                          >
+                            <Box sx={[minW(400)]}>{`・${String(c.num)}${t(
+                              'features.setting.team.sub.status.eventTransactionContent',
+                            )}`}</Box>
+                            <ArrowRightAltIcon sx={mr(1)} />
+                            <Box>{c.name}</Box>
+                          </ListItem>
+                        )
+                      })}
+                    </List>
 
                     <FormLabel sx={[mt(6), mb(1)]}>
                       {t('features.setting.team.sub.status.new') + '*'}
@@ -417,54 +512,82 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
                     <Box sx={[ml(2), ColorRed, Bold]}>
                       {t('features.setting.team.sub.status.attention')}
                     </Box>
-                    {_.map(newStatusList, (str, index) => {
-                      return (
-                        <Box key={index} sx={DisplayFlex}>
-                          <TextField
-                            key={index}
-                            margin="normal"
-                            sx={[ml(2), w(50)]}
-                            value={str}
-                            onChange={(e) => {
-                              setNewStatusList(
-                                _.map(newStatusList, (s, i) => {
-                                  if (_.isEqual(i, index)) {
-                                    return e.target.value
-                                  }
-                                  return s
-                                }),
-                              )
-                            }}
-                          />
-                          <Button
-                            disabled={_.every([
-                              _.isEqual(index, 0),
-                              _.isEqual(_.size(newStatusList), 1),
-                            ])}
-                            sx={[ml(1), Color(setting.toastErrorColor)]}
-                            variant="text"
-                            onClick={() => {
-                              setNewStatusList(
-                                _.filter(
-                                  newStatusList,
-                                  (n) => !_.isEqual(n, str),
-                                ),
-                              )
-                              setStatusList(
-                                _.map(statusList, (s) => {
-                                  return {
-                                    hashKey: s.hashKey,
-                                    name: s.name,
-                                  } as ApplicantStatusListResponse
-                                }),
-                              )
-                            }}
+
+                    <DragDropContext onDragEnd={drag}>
+                      <Droppable droppableId="newStatusList">
+                        {(provided) => (
+                          <Box
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
                           >
-                            <DeleteIcon />
-                          </Button>
-                        </Box>
-                      )
-                    })}
+                            {_.map(newStatusList, (str, index) => (
+                              <Draggable
+                                key={index}
+                                draggableId={`item-${index}`}
+                                index={index}
+                              >
+                                {(provided) => (
+                                  <Box
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    sx={DisplayFlex}
+                                  >
+                                    <DragHandleIcon sx={mt(4)} />
+                                    <TextField
+                                      margin="normal"
+                                      sx={[ml(2), w(50)]}
+                                      value={str}
+                                      onChange={(e) => {
+                                        setNewStatusList(
+                                          _.map(newStatusList, (s, i) => {
+                                            if (_.isEqual(i, index)) {
+                                              return e.target.value
+                                            }
+                                            return s
+                                          }),
+                                        )
+                                      }}
+                                    />
+                                    <Button
+                                      disabled={_.every([
+                                        _.isEqual(index, 0),
+                                        _.isEqual(_.size(newStatusList), 1),
+                                      ])}
+                                      sx={[
+                                        ml(1),
+                                        Color(setting.toastErrorColor),
+                                      ]}
+                                      variant="text"
+                                      onClick={() => {
+                                        setNewStatusList(
+                                          _.filter(
+                                            newStatusList,
+                                            (n) => !_.isEqual(n, str),
+                                          ),
+                                        )
+                                        setStatusList(
+                                          _.map(statusList, (s) => {
+                                            return {
+                                              hashKey: s.hashKey,
+                                              name: s.name,
+                                            } as ApplicantStatusListResponse
+                                          }),
+                                        )
+                                      }}
+                                    >
+                                      <DeleteIcon />
+                                    </Button>
+                                  </Box>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </Box>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+
                     <Button
                       variant="text"
                       sx={[
@@ -610,6 +733,68 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
                                     return s
                                   }),
                                 )
+                              }}
+                            >
+                              {_.map(newStatusList, (s, index2) => {
+                                return (
+                                  <MenuItem key={index2} value={index2}>
+                                    {s}
+                                  </MenuItem>
+                                )
+                              })}
+                            </Select>
+                          </ListItem>
+                        )
+                      })}
+                    </List>
+
+                    <FormLabel sx={[mt(6), mb(1)]}>
+                      {`${teamEvents.numOfInterview}${t(
+                        'features.setting.team.sub.status.eventTransaction',
+                      )}`}
+                    </FormLabel>
+                    <List>
+                      {_.map(teamEvents.events, (c, index) => {
+                        return (
+                          <ListItem
+                            key={index}
+                            sx={[ml(2), MenuDisp(common.black)]}
+                          >
+                            <Box sx={[minW(400)]}>{`・${String(c.num)}${t(
+                              'features.setting.team.sub.status.eventTransactionContent',
+                            )}`}</Box>
+                            <ArrowRightAltIcon sx={mr(1)} />
+                            <Select
+                              disabled={
+                                _.size(
+                                  _.filter(
+                                    newStatusList,
+                                    (s) => !_.isEmpty(s.trim()),
+                                  ),
+                                ) < _.size(newStatusList)
+                              }
+                              value={c?.selectedStatusID ?? ''}
+                              sx={minW(200)}
+                              onChange={(e) => {
+                                setTeamEvents({
+                                  numOfInterview: teamEvents.numOfInterview,
+                                  events: _.map(teamEvents.events, (s, idx) => {
+                                    if (_.isEqual(idx, index)) {
+                                      return {
+                                        num: s.num,
+                                        hashKey: s.hashKey,
+                                        name: s.name,
+                                        selectedStatusID: Number(
+                                          e.target.value,
+                                        ),
+                                        selectedStatus:
+                                          newStatusList[Number(e.target.value)],
+                                      } as InterviewEvents
+                                    }
+
+                                    return s
+                                  }),
+                                })
                               }}
                             >
                               {_.map(newStatusList, (s, index2) => {

@@ -32,6 +32,7 @@ export enum RouterPath {
   History = '/log',
   // 設定
   Setting = '/setting',
+  SettingTeam = '/team/basic',
   SettingTeamStatus = '/team/status',
   // 企業
   Company = '/company',
@@ -80,6 +81,8 @@ export const decideTitle = (path: string) => {
     case RouterPath.Admin + RouterPath.Setting:
       return 'common.title.setting.index'
     case RouterPath.Management + RouterPath.Setting:
+      return 'common.title.setting.index'
+    case RouterPath.Management + RouterPath.Setting + RouterPath.SettingTeam:
       return 'common.title.setting.index'
     case RouterPath.Management +
       RouterPath.Setting +

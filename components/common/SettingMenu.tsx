@@ -19,7 +19,6 @@ import { ButtonContents, ButtonContentsSub, SettingModel } from '@/types/index'
 import {
   MenuDisp,
   M0Auto,
-  minW,
   w,
   DialogContentSetting,
   ml,
@@ -75,6 +74,15 @@ const SettingMenu: FC<Props> = () => {
             ),
             role: res.data.map[Operation.ManagementSettingTeam],
             contents: [
+              {
+                name: t('features.setting.team.sub.basic.index'),
+                onClick: () =>
+                  router.push(
+                    RouterPath.Management +
+                      RouterPath.Setting +
+                      RouterPath.SettingTeam,
+                  ),
+              },
               {
                 name: t('features.setting.team.sub.status.index'),
                 onClick: () =>
