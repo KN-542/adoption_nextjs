@@ -175,6 +175,11 @@ export class UpdateTeamRequest extends AbstractRequest3 {
   name: string
   users: string[]
 }
+// チーム基本情報更新
+export class UpdateBasicTeamRequest extends AbstractRequest2 {
+  user_hash_key: string
+  num_of_interview: number
+}
 // チーム削除
 export class DeleteTeamRequest extends AbstractRequest3 {
   user_hash_key: string
@@ -184,6 +189,10 @@ export class DeleteTeamRequest extends AbstractRequest3 {
 export class GetTeamRequest extends AbstractRequest3 {
   user_hash_key: string
   hash_key: string
+}
+// 自チーム取得
+export class GetOwnTeamRequest extends AbstractRequest2 {
+  user_hash_key: string
 }
 // チーム検索_同一企業
 export class SearchTeamByCompanyRequest extends AbstractRequest {
@@ -197,6 +206,7 @@ export class UpdateStatusRequest extends AbstractRequest2 {
   // ステータス紐づけ
   association: UpdateStatusRequestSub[]
   events: UpdateStatusRequestSub2[]
+  events_of_interview: UpdateStatusRequestSub3[]
 }
 // ステータス変更サブ
 class UpdateStatusRequestSub {
@@ -209,6 +219,13 @@ class UpdateStatusRequestSub {
 class UpdateStatusRequestSub2 {
   // イベントマスタハッシュ
   event_hash: string
+  // ステータス
+  status: number
+}
+// ステータス変更サブ3
+class UpdateStatusRequestSub3 {
+  // 面接回数
+  num: number
   // ステータス
   status: number
 }

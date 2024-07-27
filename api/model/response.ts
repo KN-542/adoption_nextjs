@@ -125,6 +125,26 @@ export type GetTeamResponse = {
   users: SearchUserByCompanyResponse[]
 }
 
+// API 自チーム取得
+export type GetOwnTeamResponse = {
+  // 最大面接回数
+  numOfInterview: number
+  // 面接毎イベント
+  events?: InterviewEvents[]
+}
+export type InterviewEvents = {
+  // 面接回数
+  num: number
+  // 選考状況ハッシュキー
+  hashKey: string
+  // ステータス名
+  name: string
+  // 選択済み新ステータスID
+  selectedStatusID?: number
+  // 選択済み新ステータス
+  selectedStatus?: string
+}
+
 // API ロール検索_同一企業
 export type SearchRoleByCompanyResponse = {
   // ハッシュキー

@@ -32,6 +32,8 @@ import {
   ChangeTeamRequest,
   UpdateStatusRequest,
   StatusEventsByTeamRequest,
+  GetOwnTeamRequest,
+  UpdateBasicTeamRequest,
 } from './model/request'
 
 /* 
@@ -431,6 +433,26 @@ export const SearchRoleByCompanyCSR = async (
 /* 
   設定
 */
+
+// 自チーム取得 CSR
+export const GetOwnTeamCSR = async (req: GetOwnTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/get_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// チーム基本情報更新 CSR
+export const UpdateBasicTeamCSR = async (req: UpdateBasicTeamRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/update_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
 
 // ステータス変更 CSR
 export const UpdateStatusCSR = async (req: UpdateStatusRequest) => {
