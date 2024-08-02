@@ -251,21 +251,13 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
       hash_key: deleteList[0].hashKey,
     } as DeleteTeamRequest)
       .then(async () => {
-        toast(t(`features.team.index`) + t(`common.toast.delete`), {
-          style: {
-            backgroundColor: setting.toastSuccessColor,
-            color: common.white,
-            width: 500,
-          },
-          position: 'bottom-left',
-          hideProgressBar: true,
-          closeButton: () => <ClearIcon />,
-        })
+        store.dispatch(
+          changeSetting({
+            successMsg: [t(`features.team.index`) + t(`common.toast.delete`)],
+          } as SettingModel),
+        )
 
-        isLoading(true)
-        await search()
-        setDeleteList([])
-        isLoading(false)
+        router.push(RouterPath.Management + RouterPath.Back)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
