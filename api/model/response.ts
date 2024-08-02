@@ -1,3 +1,5 @@
+import { SelectTitlesModel } from '@/types/index'
+
 // API サイト一覧
 export type SiteListResponse = {
   // id
@@ -145,6 +147,12 @@ export type InterviewEvents = {
   selectedStatusID?: number
   // 選択済み新ステータス
   selectedStatus?: string
+}
+export type Possible = {
+  // 面接回数
+  num: number
+  // 参加可能者
+  ableList: SelectTitlesModel[]
 }
 export type InterviewerPriority = {
   // 優先順位

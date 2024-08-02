@@ -275,6 +275,10 @@
           "assign": {
             "index": "面接官割り振り方法",
             "num": "面接に参加する最低人数",
+            "possibleTransaction": "次面接までの参加可能者",
+            "possibleTransactionContent": "次面接",
+            "possibleTransactionContentValidation": "の参加者が指定されていません",
+            "possibleTransactionContentValidation2": "の参加者が最低人数を下回っています",
             "rule": "アサインルール",
             "auto": "自動割り当ての方法",
             "priority": "優先順位",
