@@ -93,8 +93,13 @@ const SettingMenu: FC<Props> = () => {
                   ),
               },
               {
-                name: t('features.setting.team.sub.assign'),
-                onClick: () => console.log(222),
+                name: t('features.setting.team.sub.assign.index'),
+                onClick: () =>
+                  router.push(
+                    RouterPath.Management +
+                      RouterPath.Setting +
+                      RouterPath.SettingTeamAssign,
+                  ),
               },
             ] as ButtonContentsSub[],
           },

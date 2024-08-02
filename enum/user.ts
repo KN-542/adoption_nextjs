@@ -18,3 +18,9 @@ export enum InterviewerStatus {
   None = 0,
   Interview = 1,
 }
+
+// 割り振り追加設定
+export enum RuleAdditionalConfiguration {
+  UnRequired = 0,
+  Required = 1,
+}

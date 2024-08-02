@@ -129,6 +129,8 @@ export type GetTeamResponse = {
 export type GetOwnTeamResponse = {
   // 最大面接回数
   numOfInterview: number
+  // 最低面接人数
+  userMin?: number
   // 面接毎イベント
   events?: InterviewEvents[]
 }
@@ -143,6 +145,14 @@ export type InterviewEvents = {
   selectedStatusID?: number
   // 選択済み新ステータス
   selectedStatus?: string
+}
+export type InterviewerPriority = {
+  // 優先順位
+  priority: number
+  // ハッシュキー
+  hashKey: string
+  // 氏名
+  name: string
 }
 
 // API ロール検索_同一企業
@@ -175,4 +185,36 @@ export type ListStatusEventByTeamResponse = {
   desc: string
   // ステータス名
   name: string
+}
+
+// API: アサインルールマスタ取得
+export type AssignRuleMasterResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 説明
+  desc: string
+  // 追加設定フラグ
+  setFlg: number
+  // 選択済み
+  selected: boolean
+  // 選択済みハッシュ
+  selectedHash?: string
+}
+
+// API: 自動アサインルールマスタ取得
+export type AutoAssignRuleMasterResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 説明
+  desc: string
+  // 追加設定フラグ
+  setFlg: number
+  // 選択済み
+  selected: boolean
+  // 選択済みハッシュ
+  selectedHash?: string
 }

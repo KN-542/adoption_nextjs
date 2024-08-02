@@ -233,6 +233,14 @@ class UpdateStatusRequestSub3 {
 export class StatusEventsByTeamRequest extends AbstractRequest2 {
   user_hash_key: string
 }
+// 面接官割り振り方法更新
+export class UpdateAssignMethodRequest extends AbstractRequest2 {
+  user_hash_key: string
+  user_min: number
+  rule_hash: string
+  auto_rule_hash?: string
+  priority?: string[]
+}
 
 /* 
   ロール

@@ -34,6 +34,7 @@ import {
   StatusEventsByTeamRequest,
   GetOwnTeamRequest,
   UpdateBasicTeamRequest,
+  UpdateAssignMethodRequest,
 } from './model/request'
 
 /* 
@@ -474,10 +475,30 @@ export const StatusEventsByTeamCSR = async (req: StatusEventsByTeamRequest) => {
   return res
 }
 
+// 面接官割り振り方法更新 CSR
+export const UpdateAssignMethodCSR = async (req: UpdateAssignMethodRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/update_assign`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
 // ステータスイベントマスタ一覧
 export const ListStatusEventSSG = async () => {
   const res = await axios.post(
     `${process.env.NEXT_SSG_URL}/setting/status_events`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}
+
+// ステータスイベントマスタ一覧
+export const AssignMasterSSG = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSG_URL}/setting/assign_masters`,
     {},
     APICommonHeader,
   )

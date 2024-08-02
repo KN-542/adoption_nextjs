@@ -1,7 +1,6 @@
 import NextHead from '@/components/common/Header'
 import {
   M0Auto,
-  minW,
   mt,
   w,
   DialogContentSetting,
