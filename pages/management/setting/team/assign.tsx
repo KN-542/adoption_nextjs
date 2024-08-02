@@ -12,6 +12,8 @@ import {
   DialogContent,
   FormControlLabel,
   FormLabel,
+  List,
+  ListItem,
   Radio,
   RadioGroup,
   TextField,
@@ -26,6 +28,7 @@ import {
   FontSize,
   M0Auto,
   mb,
+  MenuDisp,
   minW,
   ml,
   mr,
@@ -41,6 +44,7 @@ import {
   AutoAssignRuleMasterResponse,
   GetOwnTeamResponse,
   InterviewerPriority,
+  Possible,
 } from '@/api/model/response'
 import {
   AssignMasterSSG,
@@ -52,10 +56,11 @@ import {
   GetOwnTeamRequest,
   RolesRequest,
   UpdateAssignMethodRequest,
+  UpdateAssignMethodSubRequest,
 } from '@/api/model/request'
 import _ from 'lodash'
 import { changeSetting } from '@/hooks/store'
-import { SettingModel } from '@/types/index'
+import { SelectTitlesModel, SettingModel } from '@/types/index'
 import { RouterPath } from '@/enum/router'
 import { Operation } from '@/enum/common'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -66,6 +71,8 @@ import {
   Draggable,
   DropResult,
 } from 'react-beautiful-dnd'
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt'
+import DropDownList from '@/components/common/DropDownList'
 
 const INTERVIEW_MIN = 1
 const INTERVIEW_MAX = 6
@@ -140,6 +147,10 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
     api.autoAssignRules,
   )
   const [priority, setPriority] = useState<InterviewerPriority[]>([])
+  const [possibleList, setPossibleList] = useState<Possible[]>([])
+  const [selectedPossibleList, setSelectedPossibleList] = useState<Possible[]>(
+    [],
+  )
 
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
@@ -237,6 +248,41 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
           }),
         )
       }
+
+      const pList: Possible[] = []
+      const p2List: Possible[] = []
+
+      for (let i = 1; i <= Number(res2.data.team.num_of_interview); i++) {
+        p2List.push({
+          num: i,
+          ableList: _.map(res2.data.team.users, (item) => {
+            return {
+              key: item.hash_key,
+              title: item.name,
+              subTitle: item.email,
+            } as SelectTitlesModel
+          }),
+        } as Possible)
+
+        const ableList: SelectTitlesModel[] = []
+        for (const item of _.filter(
+          _.cloneDeep(res2.data.possible_list),
+          (possible) => _.isEqual(Number(possible.num_of_interview), i),
+        )) {
+          ableList.push({
+            key: item.hash_key,
+            title: item.name,
+            subTitle: item.email,
+          } as SelectTitlesModel)
+        }
+        pList.push({
+          num: i,
+          ableList: ableList,
+        } as Possible)
+      }
+
+      setPossibleList(p2List)
+      setSelectedPossibleList(pList)
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
@@ -282,10 +328,61 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
   }
 
   const update = async () => {
-    console.log(team.userMin)
-    console.log(rules)
-    console.log(autoRules)
-    console.log(priority)
+    // バリデーション
+    for (const possible of selectedPossibleList) {
+      if (_.isEmpty(possible.ableList)) {
+        toast(
+          `${String(possible.num)}${t(
+            'features.setting.team.sub.assign.possibleTransactionContent',
+          )}${t(
+            'features.setting.team.sub.assign.possibleTransactionContentValidation',
+          )}`,
+          {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 600,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
+        return
+      }
+
+      if (possible.num < team.userMin) {
+        toast(
+          `${String(possible.num)}${t(
+            'features.setting.team.sub.assign.possibleTransactionContent',
+          )}${t(
+            'features.setting.team.sub.assign.possibleTransactionContentValidation2',
+          )}`,
+          {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 600,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
+        return
+      }
+    }
+
+    // リクエスト整備(面接参加可能者)
+    const subRequests: UpdateAssignMethodSubRequest[] = []
+    for (const possible of selectedPossibleList) {
+      for (const item of possible.ableList) {
+        subRequests.push({
+          num_of_interview: possible.num,
+          hash_key: item.key,
+        } as UpdateAssignMethodSubRequest)
+      }
+    }
 
     // API: 面接官割り振り方法更新
     await UpdateAssignMethodCSR({
@@ -296,10 +393,11 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
         '',
       auto_rule_hash:
         _.find(autoRules, (rule) => !_.isEmpty(rule.selectedHash))
-          .selectedHash ?? '',
+          ?.selectedHash ?? '',
       priority: _.map(priority, (p) => {
         return p.hashKey
       }),
+      possible_list: subRequests,
     } as UpdateAssignMethodRequest)
       .then(() => {
         store.dispatch(
@@ -474,6 +572,56 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
                     })
                   }}
                 />
+
+                <FormLabel sx={[mt(6), mb(1)]}>
+                  {`${team.numOfInterview}${t(
+                    'features.setting.team.sub.assign.possibleTransaction',
+                  )}`}
+                </FormLabel>
+                <List>
+                  {_.map(possibleList, (c, index) => {
+                    return (
+                      <ListItem
+                        key={index}
+                        sx={[ml(2), MenuDisp(common.black)]}
+                      >
+                        <Box>{`・${String(c.num)}${t(
+                          'features.setting.team.sub.assign.possibleTransactionContent',
+                        )}`}</Box>
+                        <ArrowRightAltIcon sx={mr(1)} />
+                        <DropDownList
+                          list={
+                            _.find(selectedPossibleList, (item) =>
+                              _.isEqual(item.num, c.num),
+                            ).ableList ?? []
+                          }
+                          initList={
+                            _.find(possibleList, (item) =>
+                              _.isEqual(item.num, c.num),
+                            ).ableList ?? []
+                          }
+                          sx={[ml(2), w(50)]}
+                          onChange={(value) =>
+                            setSelectedPossibleList((items) => {
+                              const res: Possible[] = []
+                              for (const item of items) {
+                                if (_.isEqual(c.num, item.num)) {
+                                  res.push({
+                                    num: item.num,
+                                    ableList: value,
+                                  })
+                                } else {
+                                  res.push(item)
+                                }
+                              }
+                              return res
+                            })
+                          }
+                        />
+                      </ListItem>
+                    )
+                  })}
+                </List>
 
                 <FormLabel sx={[mt(6), mb(1)]}>
                   {t('features.setting.team.sub.assign.rule')}

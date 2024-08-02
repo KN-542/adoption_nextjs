@@ -235,11 +235,24 @@ export class StatusEventsByTeamRequest extends AbstractRequest2 {
 }
 // 面接官割り振り方法更新
 export class UpdateAssignMethodRequest extends AbstractRequest2 {
+  // ハッシュキー
   user_hash_key: string
+  // 面接参加最低人数
   user_min: number
+  // ルールハッシュ
   rule_hash: string
+  // 自動ルールハッシュ
   auto_rule_hash?: string
+  // 優先順位
   priority?: string[]
+  // 各面接参加可能者
+  possible_list: UpdateAssignMethodSubRequest[]
+}
+export class UpdateAssignMethodSubRequest {
+  // ~次面接
+  num_of_interview: number
+  // ハッシュキー
+  hash_key: string
 }
 
 /* 
