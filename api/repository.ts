@@ -35,6 +35,10 @@ import {
   GetOwnTeamRequest,
   UpdateBasicTeamRequest,
   UpdateAssignMethodRequest,
+  SearchScheduleRequest,
+  CreateScheduleRequest,
+  UpdateScheduleRequest,
+  DeleteScheduleRequest,
 } from './model/request'
 
 /* 
@@ -342,7 +346,7 @@ export const SearchTeamByCompanyCSR = async (
 */
 
 // 予定登録 CSR
-export const CreateSchedulesCSR = async (req: SchedulesRequest) => {
+export const CreateScheduleCSR = async (req: CreateScheduleRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_schedule`,
     req,
@@ -352,7 +356,7 @@ export const CreateSchedulesCSR = async (req: SchedulesRequest) => {
 }
 
 // 予定更新 CSR
-export const UpdateSchedulesCSR = async (req: SchedulesRequest) => {
+export const UpdateScheduleCSR = async (req: UpdateScheduleRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/user/update_schedule`,
     req,
@@ -362,7 +366,7 @@ export const UpdateSchedulesCSR = async (req: SchedulesRequest) => {
 }
 
 // 予定削除 CSR
-export const DeleteSchedulesCSR = async (req: HashKeyRequest) => {
+export const DeleteSchedulesCSR = async (req: DeleteScheduleRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete_schedule`,
     req,
@@ -372,10 +376,10 @@ export const DeleteSchedulesCSR = async (req: HashKeyRequest) => {
 }
 
 // 予定一覧 CSR
-export const SchedulesCSR = async () => {
+export const SchedulesCSR = async (req: SearchScheduleRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/user/schedules`,
-    {},
+    req,
     APICommonHeader,
   )
   return res

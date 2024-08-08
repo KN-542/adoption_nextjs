@@ -48,7 +48,7 @@ import {
   ApplicantSitesSSG,
   GetApplicantCSR,
   GoogleAuth,
-  UpdateSchedulesCSR,
+  UpdateScheduleCSR,
   SearchUserByCompanyCSR,
   DownloadApplicantDocumentCSR,
   DownloadApplicantCSR,
@@ -712,7 +712,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     const calendarHashKey = _.filter(bodies, (b) =>
       _.isEqual(b.hashKey, applicantHashKey),
     )[0].calendarHashKey
-    await UpdateSchedulesCSR({
+    await UpdateScheduleCSR({
       hash_key: calendarHashKey,
       applicant_hash_key: applicantHashKey,
       user_hash_keys: hashKeys.join(','),

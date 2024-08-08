@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import rrulePlugin from '@fullcalendar/rrule'
@@ -18,18 +18,17 @@ import _ from 'lodash'
 import {
   CalendarModel,
   SelectTitlesModel,
-  TeamTableBody,
   ScheduleType,
-  UsersTableBody,
   Schedule,
   SettingModel,
 } from '@/types/index'
 import {
-  CreateSchedulesCSR,
+  CreateScheduleCSR,
   DeleteSchedulesCSR,
+  GetOwnTeamCSR,
+  RolesCSR,
   SchedulesCSR,
-  SearchTeamCSR,
-  SearchUserCSR,
+  UpdateScheduleCSR,
   UserListScheduleTypeSSG,
 } from '@/api/repository'
 import { useRouter } from 'next/router'
@@ -37,7 +36,6 @@ import { useTranslations } from 'next-intl'
 import store, { RootState } from '@/hooks/store/store'
 import { useSelector } from 'react-redux'
 import { RouterPath } from '@/enum/router'
-import { APICommonCode } from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -45,83 +43,147 @@ import { InterviewerStatus, ScheduleTypes } from '@/enum/user'
 import {
   SchedulesRequest,
   HashKeyRequest,
-  SearchUserRequest,
+  RolesRequest,
+  GetOwnTeamRequest,
+  SearchScheduleRequest,
+  CreateScheduleRequest,
+  UpdateScheduleRequest,
+  DeleteScheduleRequest,
 } from '@/api/model/request'
 import CalendarModal from '@/components/management/modal/CalendarModal'
 import { changeSetting } from '@/hooks/store'
 import { GetStaticProps } from 'next'
+import { EventInput } from '@fullcalendar/core/index.js'
+import { Operation } from '@/enum/common'
+import {
+  GetTeamResponse,
+  SearchUserByCompanyResponse,
+} from '@/api/model/response'
 
-const Schedules = ({ isError, api }) => {
+type Props = {
+  isError: boolean
+  scheduleList: ScheduleType[]
+}
+
+const Schedules: FC<Props> = ({ isError, scheduleList }) => {
   const router = useRouter()
   const t = useTranslations()
 
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [events, setEvents] = useState([])
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [open, isOpen] = useState(false)
+  const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
+
+  const [events, setEvents] = useState<EventInput[]>([])
+  const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const [model, setModel] = useState<CalendarModel>({} as CalendarModel)
-  const [users, setUsers] = useState<(UsersTableBody | TeamTableBody)[]>([])
   const [calendars, setCalendars] = useState<Schedule[]>([])
-  const [loading, isLoading] = useState(true)
+  const [team, setTeam] = useState<GetTeamResponse>(null)
+
+  const [open, isOpen] = useState<boolean>(false)
+  const [loading, isLoading] = useState<boolean>(true)
+  const [init, isInit] = useState<boolean>(true)
+
+  const inits = async () => {
+    try {
+      // API: 使用可能ロール一覧
+      const res = await RolesCSR({
+        hash_key: user.hashKey,
+      } as RolesRequest)
+
+      setRoles(res.data.map as { [key: string]: boolean })
+
+      // API: チーム取得
+      const res2 = await GetOwnTeamCSR({
+        user_hash_key: user.hashKey,
+      } as GetOwnTeamRequest)
+
+      setTeam({
+        hashKey: res2.data.team.hash_key,
+        name: res2.data.team.name,
+        users: _.map(res2.data.team.users, (user) => {
+          return {
+            hashKey: user.hash_key,
+            name: user.name,
+            email: user.email,
+          } as SearchUserByCompanyResponse
+        }),
+      } as GetTeamResponse)
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+      if (isServerError) {
+        router.push(routerPath)
+        return
+      }
+
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+        return
+      }
+
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(_.isEmpty(routerPath) ? RouterPath.Management : routerPath)
+      }
+    } finally {
+      isInit(false)
+    }
+  }
 
   const search = async () => {
     isLoading(true)
-    const list: (UsersTableBody | TeamTableBody)[] = []
-    const list2: Schedule[] = []
-    const tempList = []
 
     try {
-      // API ユーザー一覧
-      const res = await SearchUserCSR({} as SearchUserRequest)
-      res.data.users.forEach((u) => {
-        list.push({
-          hashKey: u.hash_key,
-          name: u.name,
-          email: u.email,
-        } as UsersTableBody)
-      })
-
-      // API チーム一覧
-      const res2 = await SearchTeamCSR({
-        user_hash_key: user.hashKey,
-      })
-      res2.data.user_groups.forEach((u) => {
-        list.push({
-          hashKey: u.hash_key,
-          name: u.name,
-          email: '',
-        } as TeamTableBody)
-      })
-
       // API スケジュール一覧
-      const res3 = await SchedulesCSR()
-      for (const item of res3.data.list) {
-        list2.push({
+      const list: Schedule[] = []
+      const list2: EventInput[] = []
+      const res = await SchedulesCSR({
+        user_hash_key: user.hashKey,
+      } as SearchScheduleRequest)
+      for (const item of _.isEmpty(res.data.list) ? [] : res.data.list) {
+        list.push({
           hashKey: item.hash_key,
-          userHashKeys: item.user_hash_keys.split(','),
+          users: _.map(item.users, (user) => {
+            return {
+              key: user.hash_key,
+              title: user.name,
+              subTitle: user.email,
+            } as SelectTitlesModel
+          }),
           interviewFlg: item.interview_flg,
           start: new Date(item.start),
           end: new Date(item.end),
           title: item.title,
           freqId: Number(item.freq_id),
-          freq: item.freq,
+          freq: item.freq_name,
         } as Schedule)
 
         const start = formatDateToHHMM(new Date(item.start))
         const end = formatDateToHHMM(new Date(item.end))
 
-        if (_.isEmpty(item.freq)) {
-          tempList.push({
+        if (_.isEmpty(item.freq_name)) {
+          list2.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
             start: new Date(item.start),
             allDay: true,
             color: setting.color,
           })
-        } else if (_.isEqual(item.freq, ScheduleTypes.Daily)) {
-          tempList.push({
+        } else if (_.isEqual(item.freq_name, ScheduleTypes.Daily)) {
+          list2.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
             start: new Date(item.start),
@@ -133,8 +195,8 @@ const Schedules = ({ isError, api }) => {
               dtstart: new Date(item.start),
             },
           })
-        } else if (_.isEqual(item.freq, ScheduleTypes.Weekly)) {
-          tempList.push({
+        } else if (_.isEqual(item.freq_name, ScheduleTypes.Weekly)) {
+          list2.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
             start: new Date(item.start),
@@ -147,8 +209,8 @@ const Schedules = ({ isError, api }) => {
               dtstart: new Date(item.start),
             },
           })
-        } else if (_.isEqual(item.freq, ScheduleTypes.Monthly)) {
-          tempList.push({
+        } else if (_.isEqual(item.freq_name, ScheduleTypes.Monthly)) {
+          list2.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
             start: new Date(item.start),
@@ -161,8 +223,8 @@ const Schedules = ({ isError, api }) => {
               dtstart: new Date(item.start),
             },
           })
-        } else if (_.isEqual(item.freq, ScheduleTypes.Yearly)) {
-          tempList.push({
+        } else if (_.isEqual(item.freq_name, ScheduleTypes.Yearly)) {
+          list2.push({
             id: item.hash_key,
             title: `${start}~${end} ${item.title}`,
             start: new Date(item.start),
@@ -177,9 +239,9 @@ const Schedules = ({ isError, api }) => {
           })
         }
       }
-      setUsers(list)
-      setCalendars(list2)
-      setEvents(tempList)
+
+      setCalendars(list)
+      setEvents(list2)
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
@@ -214,7 +276,7 @@ const Schedules = ({ isError, api }) => {
     }
   }
 
-  const calendarSetting = async (m: CalendarModel) => {
+  const createSchedule = async (m: CalendarModel) => {
     const start = new Date(
       m.date.getFullYear(),
       m.date.getMonth(),
@@ -231,16 +293,17 @@ const Schedules = ({ isError, api }) => {
     ).toISOString()
 
     // API スケジュール登録
-    await CreateSchedulesCSR({
-      user_hash_keys: _.map(m.users, (item) => {
+    await CreateScheduleCSR({
+      user_hash_key: user.hashKey,
+      users: _.map(m.users, (item) => {
         return item.key
-      }).join(','),
+      }),
       freq_id: Number(m.type.value),
       interview_flg: InterviewerStatus.None,
       start: start,
       end: end,
       title: m.title,
-    } as SchedulesRequest)
+    } as CreateScheduleRequest)
       .then(() => {
         toast(t('features.user.schedule.schedule') + t('common.toast.create'), {
           style: {
@@ -289,9 +352,89 @@ const Schedules = ({ isError, api }) => {
       })
   }
 
-  const deleteSchedule = async (id: string, date: Date) => {
+  const updateSchedule = async (m: CalendarModel) => {
+    const start = new Date(
+      m.date.getFullYear(),
+      m.date.getMonth(),
+      m.date.getDate(),
+      Number(m.start.split(':')[0]),
+      Number(m.start.split(':')[1]),
+    ).toISOString()
+    const end = new Date(
+      m.date.getFullYear(),
+      m.date.getMonth(),
+      m.date.getDate(),
+      Number(m.end.split(':')[0]),
+      Number(m.end.split(':')[1]),
+    ).toISOString()
+
+    // API スケジュール更新
+    await UpdateScheduleCSR({
+      user_hash_key: user.hashKey,
+      hash_key: m.id,
+      users: _.map(m.users, (item) => {
+        return item.key
+      }),
+      freq_id: Number(m.type.value),
+      interview_flg: InterviewerStatus.None,
+      start: start,
+      end: end,
+      title: m.title,
+    } as UpdateScheduleRequest)
+      .then(() => {
+        toast(t('features.user.schedule.schedule') + t('common.toast.edit'), {
+          style: {
+            backgroundColor: setting.toastSuccessColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        setCurrentDate(m.date)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
+  const deleteSchedule = async (id: string) => {
     // API カレンダー削除
-    await DeleteSchedulesCSR({ hash_key: id } as HashKeyRequest)
+    await DeleteSchedulesCSR({
+      user_hash_key: user.hashKey,
+      hash_key: id,
+    } as DeleteScheduleRequest)
       .then(() => {
         toast(t('features.user.schedule.schedule') + t('common.toast.delete'), {
           style: {
@@ -303,8 +446,6 @@ const Schedules = ({ isError, api }) => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
-
-        setCurrentDate(date)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -341,14 +482,32 @@ const Schedules = ({ isError, api }) => {
   }
 
   useEffect(() => {
-    if (isError) router.push(RouterPath.Error)
-    search()
+    const initialize = async () => {
+      try {
+        if (isError) {
+          router.push(RouterPath.Error)
+          return
+        }
+
+        if (init) await inits()
+
+        await search()
+      } finally {
+        isLoading(false)
+      }
+    }
+
+    initialize()
   }, [])
 
   return (
     <>
       <NextHead />
-      {_.every([!isError, !loading]) && (
+      {_.every([
+        !isError,
+        !loading,
+        roles[Operation.ManagementScheduleRead],
+      ]) && (
         <>
           <Box sx={[w(90), M0Auto, CustomTableContainer(80), mt(12)]}>
             <FullCalendar
@@ -422,11 +581,7 @@ const Schedules = ({ isError, api }) => {
                   start: formatDateToHHMM(new Date(obj.start)),
                   end: formatDateToHHMM(new Date(obj.end)),
                   title: obj.title,
-                  users: _.map(obj.userHashKeys, (hash) => {
-                    return {
-                      key: hash,
-                    } as SelectTitlesModel
-                  }),
+                  users: obj.users,
                   type: { value: String(obj.freqId) } as ScheduleType,
                 } as CalendarModel)
                 isOpen(true)
@@ -447,25 +602,30 @@ const Schedules = ({ isError, api }) => {
                   type: model.type,
                 } as CalendarModel
               }
-              users={_.map(users, (user) => {
+              users={_.map(team.users, (user) => {
                 return {
                   key: user.hashKey,
                   title: user.name,
                   subTitle: user.email,
                 } as SelectTitlesModel
               })}
-              radios={api.scheduleList}
+              radios={scheduleList}
               isEdit={!_.isEmpty(model.start)}
               close={() => isOpen(false)}
-              delete={async (id: string, date: Date) => {
-                await deleteSchedule(id, date)
+              delete={async (id: string) => {
+                await deleteSchedule(id)
                 await search()
               }}
               submit={async (m: CalendarModel) => {
-                // TODO 絶対に編集用APIを作ること！(面倒なので一旦こうしてる)
-                // 削除 → 登録にするとしても、1つのAPIで同一トランザクションにて処理したい
-                if (!_.isEmpty(m.id)) await deleteSchedule(m.id, m.date)
-                await calendarSetting(m)
+                // 編集
+                if (!_.isEmpty(m.id)) {
+                  await updateSchedule(m)
+                  await search()
+                  return
+                }
+
+                // 登録
+                await createSchedule(m)
                 await search()
               }}
             ></CalendarModal>
@@ -486,18 +646,15 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
       scheduleList.push({
         value: String(item.id),
         name: item[`name_${locale}`],
-        freq: item.freq,
+        freqName: item.freq_name,
       } as ScheduleType)
     }
   })
 
   return {
     props: {
-      api: {
-        scheduleList: scheduleList,
-      },
+      scheduleList,
       isError,
-      locale,
       messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },

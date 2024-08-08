@@ -236,7 +236,7 @@ export type ScheduleType = {
   // 名前
   name: string
   // 頻度
-  freq: string
+  freqName: string
 }
 
 // カレンダー model
@@ -253,7 +253,7 @@ export type CalendarModel = {
 // スケジュール
 export type Schedule = {
   hashKey: string
-  userHashKeys: string[]
+  users: SelectTitlesModel[]
   interviewFlg: number
   start: Date
   end: Date

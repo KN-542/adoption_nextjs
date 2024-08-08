@@ -60,7 +60,7 @@ import { Time15 } from '@/hooks/common'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import { CalendarModel, SelectTitlesModel, ScheduleType } from '@/types/index'
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import DropDownList from '@/components/common/DropDownList'
 
 type Props = {
   open: boolean
@@ -69,7 +69,7 @@ type Props = {
   radios?: ScheduleType[]
   isEdit: boolean
   close: () => void
-  delete: (id: string, date: Date) => void
+  delete: (id: string) => void
   submit: (model: CalendarModel) => void
 }
 
@@ -108,7 +108,6 @@ const CalendarModal = (props: Props) => {
 
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [options, _] = useState<SelectTitlesModel[]>(props.users)
   const [selectedOptions, setSelectedOptions] = useState<SelectTitlesModel[]>(
     filter(props.users, (option) =>
       includes(
@@ -288,6 +287,7 @@ const CalendarModal = (props: Props) => {
                       ></ErrorHandler>
                     </Box>
                   </Box>
+
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(16), mt(0.5), Bold]}>
@@ -316,6 +316,7 @@ const CalendarModal = (props: Props) => {
                       ></ErrorHandler>
                     </Box>
                   </Box>
+
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(16), mt(0.5), Bold]}>
@@ -345,6 +346,7 @@ const CalendarModal = (props: Props) => {
                     </Box>
                   </Box>
                 </Box>
+
                 <Box sx={[DisplayFlex, w(90)]}>
                   <Box>
                     <Box sx={[mb(1)]}>
@@ -370,6 +372,7 @@ const CalendarModal = (props: Props) => {
                     </Box>
                   </Box>
                 </Box>
+
                 <Box sx={[DisplayFlex, w(90)]}>
                   <Box>
                     <Box sx={[mb(1)]}>
@@ -377,65 +380,15 @@ const CalendarModal = (props: Props) => {
                         {t('features.user.schedule.modal.user')}
                       </Box>
                     </Box>
-                    <Autocomplete
-                      multiple
+                    <DropDownList
+                      list={selectedOptions}
+                      initList={props.users}
                       sx={[ml(4), mr(4), w(100)]}
-                      options={filter(
-                        options,
-                        (option) =>
-                          !includes(
-                            map(selectedOptions, (item) => {
-                              return item.key
-                            }),
-                            option.key,
-                          ),
-                      )}
-                      getOptionLabel={(option) => option.title}
-                      renderOption={(props, option) => (
-                        <ListItem {...props} sx={[w(100)]}>
-                          <AccountCircleIcon fontSize="large" sx={mr(2)} />
-                          <Box sx={[Column, w(100)]}>
-                            <Box sx={w(100)}>{option.title}</Box>
-                            {!isEmpty(option.subTitle) && (
-                              <Box
-                                sx={[
-                                  w(100),
-                                  ml(0.25),
-                                  Color(grey[500]),
-                                  { fontSize: 12 },
-                                ]}
-                              >
-                                {option.subTitle}
-                              </Box>
-                            )}
-                          </Box>
-                        </ListItem>
-                      )}
-                      filterOptions={createFilterOptions({
-                        matchFrom: 'any',
-                        stringify: (option) =>
-                          `${option.title} ${option.subTitle}`,
-                      })}
-                      value={selectedOptions}
-                      onChange={(_e, value) => setSelectedOptions(value)}
-                      renderTags={(value, getTagProps) =>
-                        value.map((option, index) => (
-                          <Chip
-                            variant="outlined"
-                            label={option.title}
-                            {...getTagProps({ index })}
-                          />
-                        ))
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          sx={[mr(4), w(100), minW(500), Color(setting.color)]}
-                        />
-                      )}
+                      onChange={(value) => setSelectedOptions(value)}
                     />
                   </Box>
                 </Box>
+
                 <Box sx={[DisplayFlex, w(90)]}>
                   <Box>
                     <Box sx={[mb(1)]}>
@@ -510,7 +463,7 @@ const CalendarModal = (props: Props) => {
                     ButtonColor(common.white, setting.toastErrorColor),
                   ]}
                   onClick={async () => {
-                    await props.delete(props.model.id, props.model.date)
+                    await props.delete(props.model.id)
                     setSelectedOptions([])
                     props.close()
                   }}

@@ -254,6 +254,53 @@ export class UpdateAssignMethodSubRequest {
   // ハッシュキー
   hash_key: string
 }
+// 予定検索
+export class SearchScheduleRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
+// 予定登録
+export class CreateScheduleRequest extends AbstractRequest2 {
+  // ユーザーハッシュキー
+  user_hash_key: string
+  // 該当ユーザー
+  users: string[]
+  // 頻度ID
+  freq_id: number
+  // 面接フラグ
+  interview_flg: number
+  // 開始時刻
+  start: string
+  // 終了時刻
+  end: string
+  // タイトル
+  title: string
+}
+// 予定更新
+export class UpdateScheduleRequest extends AbstractRequest3 {
+  // ユーザーハッシュキー
+  user_hash_key: string
+  // ハッシュキー
+  hash_key: string
+  // 該当ユーザー
+  users: string[]
+  // 頻度ID
+  freq_id: number
+  // 面接フラグ
+  interview_flg: number
+  // 開始時刻
+  start: string
+  // 終了時刻
+  end: string
+  // タイトル
+  title: string
+}
+// 予定削除
+export class DeleteScheduleRequest extends AbstractRequest3 {
+  // ユーザーハッシュキー
+  user_hash_key: string
+  // ハッシュキー
+  hash_key: string
+}
 
 /* 
   ロール
@@ -281,8 +328,8 @@ export type ApplicantDocumentDownloadRequest = {
 // スケジュール関連 request
 export type SchedulesRequest = {
   hash_key: string
-  applicant_hash_key: string
-  user_hash_keys: string
+  applicant_hash_key?: string
+  users: string
   freq_id: number
   interview_flg: number
   start: string
