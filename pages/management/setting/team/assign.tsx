@@ -351,7 +351,7 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
         return
       }
 
-      if (possible.num < team.userMin) {
+      if (_.size(possible.ableList) < team.userMin) {
         toast(
           `${String(possible.num)}${t(
             'features.setting.team.sub.assign.possibleTransactionContent',
