@@ -43,6 +43,7 @@ import {
   RolesRequest,
   SchedulesRequest,
   SearchUserByCompanyRequest,
+  UpdateScheduleRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
@@ -712,11 +713,14 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     const calendarHashKey = _.filter(bodies, (b) =>
       _.isEqual(b.hashKey, applicantHashKey),
     )[0].calendarHashKey
+
+    // TODO
     await UpdateScheduleCSR({
-      hash_key: calendarHashKey,
-      applicant_hash_key: applicantHashKey,
-      user_hash_keys: hashKeys.join(','),
-    } as SchedulesRequest)
+      user_hash_key: user.hashKey,
+      // hash_key: calendarHashKey,
+      // applicant_hash_key: applicantHashKey,
+      // user_hash_keys: hashKeys.join(','),
+    } as UpdateScheduleRequest)
       .then(async () => {
         toast(t('features.applicant.menu.user') + t('common.toast.create'), {
           style: {
@@ -1302,6 +1306,55 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   }
 
   useEffect(() => {
+    // トースト
+    if (loading) {
+      if (!_.isEmpty(setting.errorMsg)) {
+        setTimeout(() => {
+          for (const msg of setting.errorMsg) {
+            toast(msg, {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 630,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+          }
+        }, 0.1 * 1000)
+
+        store.dispatch(
+          changeSetting({
+            errorMsg: [],
+          } as SettingModel),
+        )
+      }
+
+      if (!_.isEmpty(setting.successMsg)) {
+        setTimeout(() => {
+          for (const msg of setting.successMsg) {
+            toast(msg, {
+              style: {
+                backgroundColor: setting.toastSuccessColor,
+                color: common.white,
+                width: 630,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+          }
+        }, 0.1 * 1000)
+
+        store.dispatch(
+          changeSetting({
+            successMsg: [],
+          } as SettingModel),
+        )
+      }
+    }
+
     const initialize = async () => {
       try {
         if (isError) {
@@ -1318,7 +1371,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     }
 
     initialize()
-  }, [])
+  }, [router.pathname])
 
   return (
     <>
@@ -1474,7 +1527,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             changeSearchObjBySelect={changeSearchObjBySelect}
             selectInit={selectInit}
             initInputs={initInputs}
-            submit={search}
+            submit={() => {
+              router.push(RouterPath.Management + RouterPath.Back)
+            }}
             changePage={changePage}
             changeSearchObjByText={changeSearchObjByText}
             changeSearchObjByAutoComp={changeSearchObjByAutoComp}

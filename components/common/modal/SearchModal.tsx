@@ -58,7 +58,7 @@ type Props = {
   changeSearchObjByAutoComp(i: number, values: SelectTitlesModel[]): void
   changeSearchObjByFromDates(index: number, from: Dayjs): void
   changeSearchObjByToDates(index: number, to: Dayjs): void
-  submit: (i?: number) => void
+  submit: () => void
   changePage: (i: number) => void
 }
 
@@ -337,9 +337,7 @@ const SearchModal = (props: Props) => {
                     }
                   }
 
-                  props.changePage(1)
-                  await props.submit(1)
-                  props.closeModal()
+                  props.submit()
                 }}
               >
                 <ManageSearchIcon sx={mr(0.25)} />
