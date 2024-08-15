@@ -17,17 +17,26 @@ import {
   mr,
   SpaceBetween,
   SpaceBetweenContent,
+  TextTransformNone,
   ToolBarMlMedia,
 } from '@/styles/index'
 import {
   ChangeTeamRequest,
+  GetOwnTeamRequest,
   LogoutRequest,
   SearchTeamByCompanyRequest,
 } from '@/api/model/request'
 import { SettingModel, UserModel } from '@/types/index'
-import { ChangeTeamCSR, SearchTeamByCompanyCSR } from '@/api/repository'
+import {
+  ChangeTeamCSR,
+  GetOwnTeamCSR,
+  SearchTeamByCompanyCSR,
+} from '@/api/repository'
 import _ from 'lodash'
-import { SearchTeamByCompanyResponse } from '@/api/model/response'
+import {
+  GetTeamResponse,
+  SearchTeamByCompanyResponse,
+} from '@/api/model/response'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
@@ -46,6 +55,7 @@ const ToolBar = (props: Props) => {
   const setting: SettingModel = useSelector((state: RootState) => state.setting)
   const user: UserModel = useSelector((state: RootState) => state.user)
 
+  const [team, setTeam] = useState<GetTeamResponse>(null)
   const [teams, setTeams] = useState<SearchTeamByCompanyResponse[]>([])
 
   const [loading, isLoading] = useState(true)
@@ -53,52 +63,63 @@ const ToolBar = (props: Props) => {
   const [anchorEl, setAnchorEl] = useState(null)
 
   const inits = async () => {
-    // API: チーム検索_同一企業
-    await SearchTeamByCompanyCSR({
-      hash_key: user.hashKey,
-    } as SearchTeamByCompanyRequest)
-      .then((res) => {
-        const list: SearchTeamByCompanyResponse[] = []
-        _.forEach(res.data.list, (u) => {
-          list.push({
-            hashKey: u.hash_key,
-            name: u.name,
-            sub: '',
-          } as SearchTeamByCompanyResponse)
+    try {
+      // API: チーム検索_同一企業
+      const res = await SearchTeamByCompanyCSR({
+        hash_key: user.hashKey,
+      } as SearchTeamByCompanyRequest)
+
+      const list: SearchTeamByCompanyResponse[] = []
+      _.forEach(res.data.list, (u) => {
+        list.push({
+          hashKey: u.hash_key,
+          name: u.name,
+          sub: '',
+        } as SearchTeamByCompanyResponse)
+      })
+      setTeams(list)
+
+      // API: チーム取得
+      const res2 = await GetOwnTeamCSR({
+        user_hash_key: user.hashKey,
+      } as GetOwnTeamRequest)
+
+      setTeam({
+        hashKey: res2.data.team.hash_key,
+        name: res2.data.team.name,
+      } as GetTeamResponse)
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+      if (isServerError) {
+        router.push(routerPath)
+        return
+      }
+
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
         })
-        setTeams(list)
-        isLoading(false)
-      })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
-        if (isServerError) {
-          router.push(routerPath)
-          return
-        }
+        return
+      }
 
-        if (!_.isEmpty(toastMsg)) {
-          toast(t(toastMsg), {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
-            },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
-          return
-        }
-
-        if (!_.isEmpty(storeMsg)) {
-          const msg = t(storeMsg)
-          store.dispatch(
-            changeSetting({
-              errorMsg: _.isEmpty(msg) ? [] : [msg],
-            } as SettingModel),
-          )
-          router.push(_.isEmpty(routerPath) ? RouterPath.Login : routerPath)
-        }
-      })
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(_.isEmpty(routerPath) ? RouterPath.Login : routerPath)
+      }
+    } finally {
+      isLoading(false)
+    }
   }
 
   const logout = async () => {
@@ -153,7 +174,11 @@ const ToolBar = (props: Props) => {
   }
 
   useEffect(() => {
-    inits()
+    if (_.isEqual(user.path, RouterPath.Management)) {
+      inits()
+    } else {
+      isLoading(false)
+    }
   }, [router.pathname])
 
   return (
@@ -186,12 +211,12 @@ const ToolBar = (props: Props) => {
                 {_.isEqual(user.path, RouterPath.Management) && (
                   <>
                     <Button
-                      sx={mr(1)}
+                      sx={[mr(1), TextTransformNone]}
                       color="inherit"
                       onClick={(e) => setAnchorEl(e.currentTarget)}
                     >
                       <Diversity2Icon sx={mr(0.25)} />
-                      {t('toolbar.teams')}
+                      {team.name}
                     </Button>
                     <Menu
                       anchorEl={anchorEl}

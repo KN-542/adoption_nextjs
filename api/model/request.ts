@@ -116,7 +116,6 @@ export class DownloadApplicantRequest extends AbstractRequest2 {
   // 応募者
   applicants: DownloadApplicantSubRequest[]
 }
-// 応募者
 export type DownloadApplicantSubRequest = {
   // 媒体側ID
   outer_id: string
@@ -128,6 +127,33 @@ export type DownloadApplicantSubRequest = {
   tel: string
   // 年齢
   age: number
+}
+// 応募者取得
+export class GetApplicantRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+}
+// Google認証URL作成
+export class GoogleAuthRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+}
+// GoogleMeetURL発行
+export class GoogleMeetURLRequest extends AbstractRequest2 {
+  user_hash_key: string
+  code: string
+}
+// 書類ダウンロード
+export class ApplicantDocumentDownloadRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+  name_pre: string
+}
+// 面接官割り振り
+export class AssignUserRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+  hash_keys: string[]
 }
 
 /* 
@@ -308,38 +334,4 @@ export class DeleteScheduleRequest extends AbstractRequest3 {
 // ロール検索_同一企業
 export class SearchRoleByCompanyRequest extends AbstractRequest2 {
   user_hash_key: string
-}
-
-/* 
-  精査中
-*/
-
-// hashKey only
-export type HashKeyRequest = {
-  hash_key: string
-}
-
-// 書類ダウンロード request
-export type ApplicantDocumentDownloadRequest = {
-  hash_key: string
-  name_pre: string
-}
-
-// スケジュール関連 request
-export type SchedulesRequest = {
-  hash_key: string
-  applicant_hash_key?: string
-  users: string
-  freq_id: number
-  interview_flg: number
-  start: string
-  end: string
-  title: string
-}
-
-// Google認証URL作成 request
-export type GoogleMeetURLRequest = {
-  applicant: HashKeyRequest
-  user_hash_key: string
-  code: string
 }

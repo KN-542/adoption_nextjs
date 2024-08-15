@@ -234,7 +234,7 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
           )
           router.push(
             _.isEmpty(routerPath)
-              ? RouterPath.Admin + RouterPath.Company
+              ? RouterPath.Management + RouterPath.Team
               : routerPath,
           )
         }

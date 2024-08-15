@@ -38,18 +38,18 @@ import {
   SearchApplicantRequest,
   ApplicantStatusListRequest,
   DownloadApplicantRequest,
-  GoogleMeetURLRequest,
-  HashKeyRequest,
+  GoogleAuthRequest,
+  GetApplicantRequest,
   RolesRequest,
-  SchedulesRequest,
   SearchUserByCompanyRequest,
   UpdateScheduleRequest,
+  AssignUserRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
   GetApplicantCSR,
-  GoogleAuth,
-  UpdateScheduleCSR,
+  GoogleAuthCSR,
+  AssignUserCSR,
   SearchUserByCompanyCSR,
   DownloadApplicantDocumentCSR,
   DownloadApplicantCSR,
@@ -476,11 +476,11 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             site: Number(r.site_id),
             siteName: r.site_name,
             email: r.email,
-            status: Number(r.status),
+            statusName: r.status_name,
             interviewerDate: new Date(r.start),
             google: r.google_meet_url,
-            resume: r.resume,
-            curriculumVitae: r.curriculum_vitae,
+            resume: r.resume_extension,
+            curriculumVitae: r.curriculum_vitae_extension,
             createdAt: new Date(r.created_at),
             users: _.map(r.users, (u) => {
               return u.hash_key
@@ -495,7 +495,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
         if (currentPage) {
           _.forEach(
-            res.data.applicants.slice(
+            res.data.list.slice(
               APPLICANT_PAGE_SIZE * (currentPage - 1),
               _.min([APPLICANT_PAGE_SIZE * currentPage, _.size(list)]),
             ),
@@ -710,17 +710,13 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
   const submitUsers = async (hashKeys: string[]) => {
     const applicantHashKey = _.filter(checkedList, (c) => c.checked)[0].key
-    const calendarHashKey = _.filter(bodies, (b) =>
-      _.isEqual(b.hashKey, applicantHashKey),
-    )[0].calendarHashKey
 
-    // TODO
-    await UpdateScheduleCSR({
+    // API: 面接官割り振り
+    await AssignUserCSR({
       user_hash_key: user.hashKey,
-      // hash_key: calendarHashKey,
-      // applicant_hash_key: applicantHashKey,
-      // user_hash_keys: hashKeys.join(','),
-    } as UpdateScheduleRequest)
+      hash_key: applicantHashKey,
+      hash_keys: hashKeys,
+    } as AssignUserRequest)
       .then(async () => {
         toast(t('features.applicant.menu.user') + t('common.toast.create'), {
           style: {
@@ -801,12 +797,13 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         try {
           // API 応募者取得(1件)
           const res = await GetApplicantCSR({
+            user_hash_key: user.hashKey,
             hash_key: hashKey,
-          } as HashKeyRequest)
+          } as GetApplicantRequest)
 
-          if (!_.isEmpty(res.data?.google_meet_url)) {
+          if (!_.isEmpty(res.data?.applicant.google_meet_url)) {
             window.open(
-              res.data?.google_meet_url,
+              res.data?.applicant.google_meet_url,
               '_blank',
               'noopener,noreferrer',
             )
@@ -814,12 +811,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           }
 
           // API Google認証URL作成
-          const res2 = await GoogleAuth({
-            applicant: {
-              hash_key: hashKey,
-            } as HashKeyRequest,
+          const res2 = await GoogleAuthCSR({
             user_hash_key: user.hashKey,
-          } as GoogleMeetURLRequest)
+            hash_key: hashKey,
+          } as GoogleAuthRequest)
 
           window.open(res2.data?.url, '_blank', 'noopener,noreferrer')
         } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
@@ -1124,12 +1119,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     }
   }
 
-  const download = async (
-    hashKey: string,
-    namePre: string,
-    fileName: string,
-  ) => {
+  const download = async (hashKey: string, namePre: string) => {
+    // API: 書類ダウンロード
     await DownloadApplicantDocumentCSR({
+      user_hash_key: user.hashKey,
       hash_key: hashKey,
       name_pre: namePre,
     } as ApplicantDocumentDownloadRequest)
@@ -1137,9 +1130,21 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         const url = window.URL.createObjectURL(
           new Blob([res.data], { type: 'application/octet-stream' }),
         )
+
+        const applicant = _.find(bodies, (body) =>
+          _.isEqual(body.hashKey, hashKey),
+        )
+
         const link = document.createElement('a')
         link.href = url
-        link.setAttribute('download', fileName)
+        link.setAttribute(
+          'download',
+          `${namePre}_${applicant.name}_${applicant.email}.${
+            _.isEqual(namePre, 'resume')
+              ? applicant.resume
+              : applicant.curriculumVitae
+          }`,
+        )
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -1443,7 +1448,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                   name: l.name,
                   site: l.siteName,
                   email: l.email,
-                  status: statusList[l.status].name,
+                  status: l.statusName,
                   interviewerDate:
                     l.interviewerDate.getFullYear() < 2
                       ? ''
@@ -1462,7 +1467,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                       variant="text"
                       sx={Resume(setting.color)}
                       onClick={async () => {
-                        await download(l.hashKey, 'resume', l.resume)
+                        await download(l.hashKey, 'resume')
                       }}
                     >
                       <UploadFileIcon sx={mr(0.25)} />
@@ -1476,11 +1481,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                       variant="text"
                       sx={Resume(setting.color)}
                       onClick={async () => {
-                        await download(
-                          l.hashKey,
-                          'curriculum_vitae',
-                          l.curriculumVitae,
-                        )
+                        await download(l.hashKey, 'curriculum_vitae')
                       }}
                     >
                       <UploadFileIcon sx={mr(0.25)} />

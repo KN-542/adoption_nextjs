@@ -25,7 +25,7 @@ import store, { RootState } from '@/hooks/store/store'
 import _ from 'lodash'
 import { RouterPath } from '@/enum/router'
 import { Color, mb, mt, SidebarBody, SidebarName, wBlock } from '@/styles/index'
-import { HashKeyRequest, SidebarRequest } from '@/api/model/request'
+import { LogoutRequest, SidebarRequest } from '@/api/model/request'
 import { useEffect, useState } from 'react'
 import { SidebarCSR } from '@/api/repository'
 import { toast } from 'react-toastify'
@@ -40,7 +40,7 @@ import { changeSetting } from '@/hooks/store'
 type Props = {
   drawerOpen: boolean
   onToggleDrawer: () => void
-  logout: (req: HashKeyRequest, msg: string) => void
+  logout: (req: LogoutRequest, msg: string) => void
 }
 
 const Sidebar = (props: Props) => {
@@ -179,7 +179,7 @@ const Sidebar = (props: Props) => {
         await props.logout(
           {
             hash_key: user.hashKey,
-          } as HashKeyRequest,
+          } as LogoutRequest,
           '',
         )
       },

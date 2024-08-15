@@ -46,12 +46,6 @@ import {
   MFARequest,
   ChangePasswordRequest,
 } from '@/api/model/request'
-import {
-  APICommonCode,
-  APILoginCode,
-  APIMFACode,
-  APISessionCheckCode,
-} from '@/enum/apiError'
 import { toast } from 'react-toastify'
 import { useSelector } from 'react-redux'
 import { common } from '@mui/material/colors'
@@ -164,6 +158,7 @@ const Login = () => {
       } as LoginRequest)
 
       setHash(String(res.data.hash_key))
+
       // API MFAコード生成
       await CreateMFACSR({
         hash_key: String(res.data.hash_key),
@@ -177,9 +172,23 @@ const Login = () => {
         } as UserModel),
       )
       isOpen(true)
-    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg, code }) {
       if (isServerError) {
         router.push(routerPath)
+        return
+      }
+
+      if (code) {
+        toast(t('common.api.code.login1'), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
         return
       }
 
@@ -259,36 +268,49 @@ const Login = () => {
           ? router.push(RouterPath.Admin + RouterPath.Home)
           : router.push(RouterPath.Management + RouterPath.Home)
       })
-      .catch(async (error) => {
-        if (error.response?.status >= 500) {
-          router.push(RouterPath.Error)
-          return
-        }
+      .catch(
+        async ({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+          if (isServerError) {
+            router.push(routerPath)
+            return
+          }
 
-        let msg = ''
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.header.400`)
-        } else {
-          msg = t(`common.api.code.mfa${error.response?.data.code}`)
-        }
+          if (code) {
+            setTimeout(async () => {
+              await submitButtonRef.current.click()
+            }, 0.25 * 1000)
+            return
+          }
 
-        toast(msg, {
-          style: {
-            backgroundColor: setting.toastErrorColor,
-            color: common.white,
-            width: 600,
-          },
-          position: 'bottom-left',
-          hideProgressBar: true,
-          closeButton: () => <ClearIcon />,
-        })
+          if (!_.isEmpty(toastMsg)) {
+            toast(t(toastMsg), {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 500,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            })
+            return
+          }
 
-        if (_.isEqual(error.response?.data.code, APIMFACode.Expired)) {
-          setTimeout(async () => {
-            await submitButtonRef.current.click()
-          }, 0.25 * 1000)
-        }
-      })
+          if (!_.isEmpty(storeMsg)) {
+            const msg = t(storeMsg)
+            store.dispatch(
+              changeSetting({
+                errorMsg: _.isEmpty(msg) ? [] : [msg],
+              } as SettingModel),
+            )
+            router.push(
+              _.isEmpty(routerPath)
+                ? RouterPath.Admin + RouterPath.Company
+                : routerPath,
+            )
+          }
+        },
+      )
   }
 
   const passwordChangeSubmit = async (obj: InputsPassword) => {
@@ -303,29 +325,53 @@ const Login = () => {
           ? router.push(RouterPath.Admin + RouterPath.Home)
           : router.push(RouterPath.Management + RouterPath.Home)
       })
-      .catch((error) => {
-        if (error.response?.status >= 500) {
-          router.push(RouterPath.Error)
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        if (isServerError) {
+          router.push(routerPath)
           return
         }
 
-        let msg = ''
-        if (_.isEqual(error.response?.data.code, APICommonCode.BadRequest)) {
-          msg = t(`common.api.header.400`)
-        } else {
-          msg = t(`common.api.code.passwordChange${error.response?.data.code}`)
+        if (code) {
+          toast(t('common.api.code.passwordChange1'), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 600,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          return
         }
 
-        toast(msg, {
-          style: {
-            backgroundColor: setting.toastErrorColor,
-            color: common.white,
-            width: 600,
-          },
-          position: 'bottom-left',
-          hideProgressBar: true,
-          closeButton: () => <ClearIcon />,
-        })
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          return
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath)
+              ? RouterPath.Admin + RouterPath.Company
+              : routerPath,
+          )
+        }
       })
   }
 

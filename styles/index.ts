@@ -236,6 +236,10 @@ export const TableMenuButtons = {
   m: '0 auto',
 }
 
+export const TextTransformNone = {
+  textTransform: 'none',
+}
+
 export const Resume = (color: string) => {
   return { textTransform: 'none', color: color }
 }

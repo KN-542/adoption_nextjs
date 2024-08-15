@@ -54,8 +54,8 @@ export type SearchApplicantResponse = {
   siteName: string
   // 年齢
   age: number
-  // 選考状況
-  status: number
+  // 選考状況名
+  statusName: string
   // 面接予定日
   interviewerDate: Date
   // Google Meet URL

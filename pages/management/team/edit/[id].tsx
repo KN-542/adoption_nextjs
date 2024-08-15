@@ -45,7 +45,6 @@ import {
   ButtonColor,
   ColumnMt4,
   DialogContentMain,
-  FormButtons,
   FormThreeButtons,
   M0Auto,
   mb,
@@ -61,7 +60,6 @@ import ClearIcon from '@mui/icons-material/Clear'
 
 type Props = {
   isError: boolean
-  locale: string
   id: string
 }
 
@@ -69,7 +67,7 @@ type Inputs = {
   name: string
 }
 
-const TeamEdit: FC<Props> = ({ isError, locale, id }) => {
+const TeamEdit: FC<Props> = ({ isError, id }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -283,7 +281,7 @@ const TeamEdit: FC<Props> = ({ isError, locale, id }) => {
           )
           router.push(
             _.isEmpty(routerPath)
-              ? RouterPath.Admin + RouterPath.Company
+              ? RouterPath.Management + RouterPath.Team
               : routerPath,
           )
         }

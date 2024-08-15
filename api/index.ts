@@ -23,6 +23,17 @@ axios1.interceptors.response.use(
       })
     }
 
+    // エラーコード
+    if (error.response?.data.code > 0) {
+      return Promise.reject({
+        isServerError: false,
+        routerPath: '',
+        toastMsg: '',
+        storeMsg: '',
+        code: error.response?.data.code,
+      })
+    }
+
     // 400
     if (_.isEqual(error.response?.status, HttpStatusCode.BadRequest)) {
       return Promise.reject({
@@ -52,14 +63,5 @@ axios1.interceptors.response.use(
         storeMsg: 'common.api.header.403',
       })
     }
-
-    // その他
-    return Promise.reject({
-      isServerError: false,
-      routerPath: '',
-      toastMsg: '',
-      storeMsg: '',
-      code: error.response?.data.code,
-    })
   },
 )

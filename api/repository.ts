@@ -4,9 +4,7 @@ import {
   ApplicantDocumentDownloadRequest,
   SearchApplicantRequest,
   DownloadApplicantRequest,
-  SchedulesRequest,
   GoogleMeetURLRequest,
-  HashKeyRequest,
   LoginRequest,
   MFARequest,
   ChangePasswordRequest,
@@ -39,6 +37,9 @@ import {
   CreateScheduleRequest,
   UpdateScheduleRequest,
   DeleteScheduleRequest,
+  GetApplicantRequest,
+  GoogleAuthRequest,
+  AssignUserRequest,
 } from './model/request'
 
 /* 
@@ -67,7 +68,7 @@ export const LogoutCSR = async (req: LogoutRequest) => {
 
 // MFA CSR
 export const MFACSR = async (req: MFARequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/mfa`,
     req,
     APICommonHeader,
@@ -97,7 +98,7 @@ export const DecodeJWTCSR = async (req: DecodeJWTRequest) => {
 
 // パスワード変更 CSR
 export const ChangePasswordCSR = async (req: ChangePasswordRequest) => {
-  const res = await axios.post(
+  const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/password_change`,
     req,
     APICommonHeader,
@@ -172,7 +173,7 @@ export const DownloadApplicantCSR = async (req: DownloadApplicantRequest) => {
 }
 
 // 応募者取得(1件) CSR
-export const GetApplicantCSR = async (req: HashKeyRequest) => {
+export const GetApplicantCSR = async (req: GetApplicantRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get`,
     req,
@@ -210,7 +211,7 @@ export const ApplicantSitesSSG = async () => {
 }
 
 // Google認証URL作成 CSR
-export const GoogleAuth = async (req: GoogleMeetURLRequest) => {
+export const GoogleAuthCSR = async (req: GoogleAuthRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get_url`,
     req,
@@ -219,10 +220,20 @@ export const GoogleAuth = async (req: GoogleMeetURLRequest) => {
   return res
 }
 
-// Google認証URL作成 CSR
-export const GoogleMeetURL = async (req: GoogleMeetURLRequest) => {
+// GoogleMeetURL作成 CSR
+export const GoogleMeetURLCSR = async (req: GoogleMeetURLRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get_google_meet_url`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 面接官割り振り CSR
+export const AssignUserCSR = async (req: AssignUserRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/assign_user`,
     req,
     APICommonHeader,
   )

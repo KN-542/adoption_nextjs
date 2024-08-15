@@ -41,8 +41,6 @@ import { common } from '@mui/material/colors'
 import ClearIcon from '@mui/icons-material/Clear'
 import { InterviewerStatus, ScheduleTypes } from '@/enum/user'
 import {
-  SchedulesRequest,
-  HashKeyRequest,
   RolesRequest,
   GetOwnTeamRequest,
   SearchScheduleRequest,
