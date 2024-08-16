@@ -140,6 +140,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [searchObj, setSearchObj] = useState<SearchForm>({})
 
+  const [size, setSize] = useState<number>(0)
+
   const [loading, isLoading] = useState<boolean>(true)
   const [open, isOpen] = useState<boolean>(false)
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
@@ -388,7 +390,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     }
   }
 
-  const search = async (currentPage?: number) => {
+  const search = async (currentPage: number) => {
     if (init) isLoading(true)
 
     // API 応募者検索
@@ -405,6 +407,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     await SearchApplicantCSR({
       // ユーザーハッシュキー
       user_hash_key: user.hashKey,
+      // ページ
+      page: currentPage,
       // サイト一覧
       sites: _.map(
         _.filter(applicantSearchTermList, (item) =>
@@ -492,6 +496,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           } as SearchApplicantResponse)
         })
         setBodies(list)
+        setSize(Number(res.data.num))
 
         if (currentPage) {
           _.forEach(
@@ -1392,9 +1397,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
               {pageDisp && (
                 <Pagination
-                  show={_.size(bodies) > APPLICANT_PAGE_SIZE}
+                  show={size > APPLICANT_PAGE_SIZE}
                   currentPage={page}
-                  listSize={_.size(bodies)}
+                  listSize={size}
                   pageSize={APPLICANT_PAGE_SIZE}
                   search={search}
                   changePage={changePage}
@@ -1490,10 +1495,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                   ),
                   createdAt: formatDate3(l.createdAt),
                 }
-              }).slice(
-                APPLICANT_PAGE_SIZE * (page - 1),
-                APPLICANT_PAGE_SIZE * page,
-              )}
+              })}
               checkbox={
                 {
                   checkedList: checkedList,

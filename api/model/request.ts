@@ -80,6 +80,8 @@ export class ApplicantStatusListRequest extends AbstractRequest2 {
 export class SearchApplicantRequest extends AbstractRequest2 {
   // ユーザーハッシュキー
   user_hash_key: string
+  // ページ
+  page: number
   // サイト一覧
   sites: string[]
   // 応募者ステータス
