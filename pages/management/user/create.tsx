@@ -316,7 +316,7 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
         }
 
         if (code) {
-          toast(t('common.api.code.teamDelete'), {
+          toast(t('common.api.code.createUserDupl'), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,

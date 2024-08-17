@@ -42,7 +42,6 @@ import {
   GetApplicantRequest,
   RolesRequest,
   SearchUserByCompanyRequest,
-  UpdateScheduleRequest,
   AssignUserRequest,
 } from '@/api/model/request'
 import {
@@ -499,18 +498,12 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         setSize(Number(res.data.num))
 
         if (currentPage) {
-          _.forEach(
-            res.data.list.slice(
-              APPLICANT_PAGE_SIZE * (currentPage - 1),
-              _.min([APPLICANT_PAGE_SIZE * currentPage, _.size(list)]),
-            ),
-            (r) => {
-              list2.push({
-                key: r.hash_key,
-                checked: false,
-              } as SelectedCheckbox)
-            },
-          )
+          _.forEach(res.data.list, (r) => {
+            list2.push({
+              key: r.hash_key,
+              checked: false,
+            } as SelectedCheckbox)
+          })
           setCheckedList(list2)
         }
       })

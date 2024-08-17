@@ -266,16 +266,21 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
         }
 
         if (code) {
-          toast(t('common.api.code.teamDelete'), {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
+          toast(
+            `${t(`common.api.code.teamDelete.${String(code)}`)}${t(
+              'common.api.code.teamDelete.index',
+            )}`,
+            {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 500,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
             },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
+          )
           return
         }
 
