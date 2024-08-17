@@ -473,7 +473,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
         _.forEach(_.isEmpty(res.data.list) ? [] : res.data.list, (r, index) => {
           list.push({
-            no: Number(index) + 1,
+            no: APPLICANT_PAGE_SIZE * (currentPage - 1) + Number(index) + 1,
             hashKey: r.hash_key,
             name: r.name,
             site: Number(r.site_id),
