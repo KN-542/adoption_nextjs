@@ -111,6 +111,17 @@ const SettingMenu: FC<Props> = () => {
               </>
             ),
             role: true,
+            contents: [
+              {
+                name: t('features.setting.personal.sub.color.index'),
+                onClick: () =>
+                  router.push(
+                    RouterPath.Management +
+                      RouterPath.Setting +
+                      RouterPath.SettingPersonalColor,
+                  ),
+              },
+            ] as ButtonContentsSub[],
           },
         ])
       })

@@ -35,6 +35,7 @@ export enum RouterPath {
   SettingTeam = '/team/basic',
   SettingTeamStatus = '/team/status',
   SettingTeamAssign = '/team/assign',
+  SettingPersonalColor = '/personal/color',
   // 企業
   Company = '/company',
   CompanyCreate = '/company/create',
@@ -92,6 +93,10 @@ export const decideTitle = (path: string) => {
     case RouterPath.Management +
       RouterPath.Setting +
       RouterPath.SettingTeamAssign:
+      return 'common.title.setting.index'
+    case RouterPath.Management +
+      RouterPath.Setting +
+      RouterPath.SettingPersonalColor:
       return 'common.title.setting.index'
     // 認証
     case RouterPath.Management + RouterPath.AuthGoogleMeet:

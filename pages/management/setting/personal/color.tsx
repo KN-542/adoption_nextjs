@@ -1,15 +1,8 @@
-import Content from '@/components/common/Content'
-import { changeSetting } from '@/hooks/store'
 import store, { RootState } from '@/hooks/store/store'
-import { Color, Contents } from '@/types/index'
-import { deepPurple, indigo, red } from '@material-ui/core/colors'
-import { Box, Button, Typography } from '@mui/material'
+import { GetStaticProps } from 'next'
 import { useTranslations } from 'next-intl'
-import { useSelector } from 'react-redux'
 import { useRouter } from 'next/router'
-import { RouterPath } from '@/enum/router'
-import _ from 'lodash'
-import NextHead from '@/components/common/Header'
+import { useSelector } from 'react-redux'
 import {
   amber,
   blue,
@@ -22,17 +15,41 @@ import {
   lime,
   pink,
   teal,
+  indigo,
+  red,
+  deepPurple,
 } from '@mui/material/colors'
+import { Color } from '@/types/index'
+import NextHead from '@/components/common/Header'
+import { Box, Button, DialogContent, Typography } from '@mui/material'
 import {
   ButtonColor,
   ColorBox,
   ColorBoxChild,
   ColorBoxChildNowrap,
   ColorButton,
+  DialogContentSetting,
+  M0Auto,
+  ml,
+  mt,
+  SpaceBetween,
+  w,
 } from '@/styles/index'
-import { GetStaticProps } from 'next'
+import SettingMenu from '@/components/common/SettingMenu'
+import _ from 'lodash'
+import { changeSetting } from '@/hooks/store'
 
-const Personal = () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
+  return {
+    props: {
+      messages: (
+        await import(`../../../../public/locales/${locale}/common.json`)
+      ).default,
+    },
+  }
+}
+
+const PersonalColor = () => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -261,62 +278,37 @@ const Personal = () => {
     },
   ]
 
-  const data: Contents[] = [
-    {
-      key: t('features.setting.name'),
-      element: <>{'面接官1'}</>,
-    },
-    {
-      key: t('features.setting.email'),
-      element: <>{'a@au.com'}</>,
-    },
-    {
-      key: t('features.setting.role'),
-      element: <>{'面接官'}</>,
-    },
-    {
-      key: t('features.setting.color'),
-      element: (
-        <Box sx={ColorBox}>
-          <Box sx={ColorBoxChild}>
-            {_.map(colorSet, (obj, index) => (
-              <Box key={index} sx={ColorBoxChildNowrap}>
-                <Button
-                  variant="contained"
-                  sx={[ColorButton, ButtonColor(common.white, obj.color)]}
-                  onClick={(e) => {
-                    e.preventDefault()
-
-                    store.dispatch(changeSetting(obj))
-
-                    router.push(RouterPath.Setting)
-                  }}
-                >
-                  <Typography variant="body2">{obj.color}</Typography>
-                </Button>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      ),
-    },
-  ]
-
   return (
     <>
       <NextHead />
-      <Content data={data}></Content>
+
+      <Box sx={mt(18)}>
+        <Box sx={[SpaceBetween, w(90), M0Auto]}>
+          <SettingMenu />
+          <DialogContent sx={[DialogContentSetting, w(90), ml(3)]}>
+            <Box sx={ColorBox}>
+              <Box sx={ColorBoxChild}>
+                {_.map(colorSet, (obj, index) => (
+                  <Box key={index} sx={ColorBoxChildNowrap}>
+                    <Button
+                      variant="contained"
+                      sx={[ColorButton, ButtonColor(common.white, obj.color)]}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        store.dispatch(changeSetting(obj))
+                      }}
+                    >
+                      <Typography variant="body2">{obj.color}</Typography>
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </DialogContent>
+        </Box>
+      </Box>
     </>
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-  return {
-    props: {
-      messages: (await import(`../../../public/locales/${locale}/common.json`))
-        .default,
-    },
-  }
-}
-
-export default Personal
+export default PersonalColor
