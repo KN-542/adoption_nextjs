@@ -110,6 +110,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
           desc: item[`desc_${locale}`],
           setFlg: Number(item.additional_configuration),
           selected: _.isEqual(index, 0),
+          selectedHash: _.isEqual(index, 0) ? item.hash_key : '',
         })
       })
     })
@@ -277,6 +278,7 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
         }
         pList.push({
           num: i,
+          userMin: Number(res2.data.per_list[i - 1].user_min),
           ableList: ableList,
         } as Possible)
       }
@@ -351,7 +353,7 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
         return
       }
 
-      if (_.size(possible.ableList) < team.userMin) {
+      if (_.size(possible.ableList) < possible.userMin) {
         toast(
           `${String(possible.num)}${t(
             'features.setting.team.sub.assign.possibleTransactionContent',
@@ -376,18 +378,18 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
     // リクエスト整備(面接参加可能者)
     const subRequests: UpdateAssignMethodSubRequest[] = []
     for (const possible of selectedPossibleList) {
-      for (const item of possible.ableList) {
-        subRequests.push({
-          num_of_interview: possible.num,
-          hash_key: item.key,
-        } as UpdateAssignMethodSubRequest)
-      }
+      subRequests.push({
+        num_of_interview: possible.num,
+        user_min: possible.userMin,
+        hash_keys: _.map(possible.ableList, (item) => {
+          return item.key
+        }),
+      } as UpdateAssignMethodSubRequest)
     }
 
     // API: 面接官割り振り方法更新
     await UpdateAssignMethodCSR({
       user_hash_key: user.hashKey,
-      user_min: team.userMin,
       rule_hash:
         _.find(rules, (rule) => !_.isEmpty(rule.selectedHash)).selectedHash ??
         '',
@@ -536,42 +538,63 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
 
               <Box sx={ColumnMt4}>
                 <FormLabel sx={[mt(2), mb(1)]}>
-                  {t('features.setting.team.sub.assign.num') + '*'}
+                  {`${team.numOfInterview}${t(
+                    'features.setting.team.sub.assign.num',
+                  )}`}
                 </FormLabel>
-                <TextField
-                  margin="normal"
-                  type="number"
-                  sx={[ml(2), w(10)]}
-                  value={team.userMin}
-                  inputProps={{ min: INTERVIEW_MIN, max: INTERVIEW_MAX }}
-                  onChange={(e) => {
-                    const value = Number(e.target.value)
-                    if (value < INTERVIEW_MIN) {
-                      setTeam((obj) => {
-                        return {
-                          numOfInterview: obj.numOfInterview,
-                          userMin: INTERVIEW_MIN,
-                        }
-                      })
-                      return
-                    }
-                    if (value > INTERVIEW_MAX) {
-                      setTeam((obj) => {
-                        return {
-                          numOfInterview: obj.numOfInterview,
-                          userMin: INTERVIEW_MAX,
-                        }
-                      })
-                      return
-                    }
-                    setTeam((obj) => {
-                      return {
-                        numOfInterview: obj.numOfInterview,
-                        userMin: value,
-                      }
-                    })
-                  }}
-                />
+                <List>
+                  {_.map(selectedPossibleList, (c, index) => {
+                    return (
+                      <ListItem
+                        key={index}
+                        sx={[ml(2), MenuDisp(common.black)]}
+                      >
+                        <Box>{`・${String(c.num)}${t(
+                          'features.setting.team.sub.assign.possibleTransactionContent',
+                        )}`}</Box>
+                        <ArrowRightAltIcon sx={mr(1)} />
+                        <TextField
+                          margin="normal"
+                          type="number"
+                          sx={[ml(2), w(10)]}
+                          value={c.userMin}
+                          inputProps={{
+                            min: INTERVIEW_MIN,
+                            max: INTERVIEW_MAX,
+                          }}
+                          onChange={(e) => {
+                            const value = Number(e.target.value)
+                            let userMin = value
+
+                            if (value < INTERVIEW_MIN) {
+                              userMin = INTERVIEW_MIN
+                            }
+                            if (value > INTERVIEW_MAX) {
+                              userMin = INTERVIEW_MAX
+                            }
+
+                            setSelectedPossibleList((items) => {
+                              const res: Possible[] = []
+                              for (const item of items) {
+                                if (_.isEqual(c.num, item.num)) {
+                                  res.push({
+                                    num: item.num,
+                                    userMin: userMin,
+                                    ableList: item.ableList,
+                                  })
+                                } else {
+                                  res.push(item)
+                                }
+                              }
+                              console.log(res)
+                              return res
+                            })
+                          }}
+                        />
+                      </ListItem>
+                    )
+                  })}
+                </List>
 
                 <FormLabel sx={[mt(6), mb(1)]}>
                   {`${team.numOfInterview}${t(
@@ -608,6 +631,7 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
                                 if (_.isEqual(c.num, item.num)) {
                                   res.push({
                                     num: item.num,
+                                    userMin: item.userMin,
                                     ableList: value,
                                   })
                                 } else {

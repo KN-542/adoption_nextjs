@@ -131,8 +131,6 @@ export type GetTeamResponse = {
 export type GetOwnTeamResponse = {
   // 最大面接回数
   numOfInterview: number
-  // 最低面接人数
-  userMin?: number
   // 面接毎イベント
   events?: InterviewEvents[]
 }
@@ -151,6 +149,8 @@ export type InterviewEvents = {
 export type Possible = {
   // 面接回数
   num: number
+  // 最低面接人数
+  userMin?: number
   // 参加可能者
   ableList: SelectTitlesModel[]
 }

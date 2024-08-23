@@ -265,8 +265,6 @@ export class StatusEventsByTeamRequest extends AbstractRequest2 {
 export class UpdateAssignMethodRequest extends AbstractRequest2 {
   // ハッシュキー
   user_hash_key: string
-  // 面接参加最低人数
-  user_min: number
   // ルールハッシュ
   rule_hash: string
   // 自動ルールハッシュ
@@ -279,8 +277,10 @@ export class UpdateAssignMethodRequest extends AbstractRequest2 {
 export class UpdateAssignMethodSubRequest {
   // ~次面接
   num_of_interview: number
-  // ハッシュキー
-  hash_key: string
+  // 面接参加最低人数
+  user_min: number
+  // ハッシュキーリスト
+  hash_keys: string[]
 }
 // 予定検索
 export class SearchScheduleRequest extends AbstractRequest2 {
