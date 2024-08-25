@@ -62,15 +62,19 @@ const ItemsSelectModal = (props: Props) => {
   )
 
   const submit = async () => {
-    await props.submit(
-      _.map(selectedOptions, (s) => {
-        return s.key
-      }),
-    )
+    try {
+      await props.submit(
+        _.map(selectedOptions, (s) => {
+          return s.key
+        }),
+      )
 
-    setSelectedOptions([])
+      setSelectedOptions([])
 
-    props.close()
+      props.close()
+    } catch (_) {
+      return
+    }
   }
 
   useEffect(() => {

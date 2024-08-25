@@ -151,6 +151,12 @@ export class ApplicantDocumentDownloadRequest extends AbstractRequest3 {
   hash_key: string
   name_pre: string
 }
+// 面接官割り振り可能判定
+export class CheckAssignableUserRequest extends AbstractRequest2 {
+  user_hash_key: string
+  start: Date
+  hash_keys: string[]
+}
 // 面接官割り振り
 export class AssignUserRequest extends AbstractRequest3 {
   user_hash_key: string

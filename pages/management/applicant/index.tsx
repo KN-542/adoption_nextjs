@@ -707,12 +707,15 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   }
 
   const submitUsers = async (hashKeys: string[]) => {
-    const applicantHashKey = _.filter(checkedList, (c) => c.checked)[0].key
+    const a = _.find(checkedList, (c) => c.checked)
+    if (_.isUndefined(a)) {
+      router.push(RouterPath.Error)
+    }
 
     // API: 面接官割り振り
     await AssignUserCSR({
       user_hash_key: user.hashKey,
-      hash_key: applicantHashKey,
+      hash_key: a.key,
       hash_keys: hashKeys,
     } as AssignUserRequest)
       .then(async () => {
@@ -729,10 +732,25 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
         await search(1)
       })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
         if (isServerError) {
           router.push(routerPath)
           return
+        }
+
+        if (code) {
+          toast(t(`common.api.code.assign.${String(code)}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          throw error
         }
 
         if (!_.isEmpty(toastMsg)) {
@@ -746,7 +764,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
-          return
+          throw error
         }
 
         if (!_.isEmpty(storeMsg)) {
@@ -788,33 +806,34 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             )
           ]?.resume,
         ),
+        !_.isEmpty(
+          bodies[
+            _.findIndex(bodies, (item) =>
+              _.isEqual(
+                item.hashKey,
+                _.filter(checkedList, (c) => c.checked)[0]?.key,
+              ),
+            )
+          ]?.curriculumVitae,
+        ),
       ]),
       onClick: async () => {
         const hashKey = _.filter(checkedList, (c) => c.checked)[0].key
 
         try {
-          // API 応募者取得(1件)
-          const res = await GetApplicantCSR({
-            user_hash_key: user.hashKey,
-            hash_key: hashKey,
-          } as GetApplicantRequest)
-
-          if (!_.isEmpty(res.data?.applicant.google_meet_url)) {
-            window.open(
-              res.data?.applicant.google_meet_url,
-              '_blank',
-              'noopener,noreferrer',
-            )
-            return
-          }
-
           // API Google認証URL作成
           const res2 = await GoogleAuthCSR({
             user_hash_key: user.hashKey,
             hash_key: hashKey,
           } as GoogleAuthRequest)
 
-          window.open(res2.data?.url, '_blank', 'noopener,noreferrer')
+          window.open(
+            _.isEmpty(res2.data?.auth_url)
+              ? res2.data?.google_meet_url
+              : res2.data?.auth_url,
+            '_blank',
+            'noopener,noreferrer',
+          )
         } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
           if (isServerError) {
             router.push(routerPath)
@@ -871,6 +890,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
               ),
             )
           ]?.resume,
+        ),
+        !_.isEmpty(
+          bodies[
+            _.findIndex(bodies, (item) =>
+              _.isEqual(
+                item.hashKey,
+                _.filter(checkedList, (c) => c.checked)[0]?.key,
+              ),
+            )
+          ]?.curriculumVitae,
         ),
         roles[Operation.ManagementApplicantAssignUser],
       ]),

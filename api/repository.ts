@@ -40,6 +40,7 @@ import {
   GetApplicantRequest,
   GoogleAuthRequest,
   AssignUserRequest,
+  CheckAssignableUserRequest,
 } from './model/request'
 
 /* 
@@ -224,6 +225,18 @@ export const GoogleAuthCSR = async (req: GoogleAuthRequest) => {
 export const GoogleMeetURLCSR = async (req: GoogleMeetURLRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/get_google_meet_url`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 面接官割り振り可能判定 CSR
+export const CheckAssignableUserCSR = async (
+  req: CheckAssignableUserRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/check_assign_user`,
     req,
     APICommonHeader,
   )
