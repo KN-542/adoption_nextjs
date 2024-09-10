@@ -11,6 +11,7 @@ import {
   SettingModel,
   TeamTableBody,
   Icons,
+  Body,
 } from '@/types/index'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
@@ -34,7 +35,7 @@ import {
 import Pagination from '@/components/common/Pagination'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
-import { changeSetting } from '@/hooks/store'
+import { changeSetting, userSearchPageSize } from '@/hooks/store'
 import { GetStaticProps } from 'next'
 import {
   DeleteUserRequest,
@@ -52,8 +53,6 @@ type Props = {
   locale: string
 }
 
-const USER_PAGE_SIZE = 20
-
 const User: FC<Props> = ({ isError, locale: _locale }) => {
   const router = useRouter()
   const t = useTranslations()
@@ -68,13 +67,15 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
   const [deleteList, setDeleteList] = useState<UsersTableBody[]>([])
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
 
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(user.search.pageSize)
 
   const [loading, isLoading] = useState(true)
   const [init, isInit] = useState<boolean>(true)
   const [deleteOpen, isDeleteOpen] = useState<boolean>(false)
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
+  const [pageDisp, isPageDisp] = useState<boolean>(false)
 
   const inits = async () => {
     // API 使用可能ロール一覧
@@ -157,7 +158,8 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
       })
   }
 
-  const search = async () => {
+  const search = async (currentPage: number, currentSize: number) => {
+    isPageDisp(false)
     isLoading(true)
 
     // API: ユーザー検索
@@ -180,7 +182,11 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
           } as UsersTableBody)
         })
         setBodies(users)
-        isLoading(false)
+
+        if (currentSize) {
+          setPageSize(currentSize)
+          store.dispatch(userSearchPageSize(currentSize))
+        }
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -214,23 +220,23 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
           )
         }
       })
+      .finally(() => {
+        isLoading(false)
+        isPageDisp(true)
+      })
   }
 
   const tableHeader: TableHeader[] = [
     {
-      id: 1,
       name: 'No',
     },
     {
-      id: 2,
       name: t('features.user.header.name'),
     },
     {
-      id: 3,
       name: t('features.user.header.email'),
     },
     {
-      id: 4,
       name: t('features.user.header.role'),
     },
   ]
@@ -272,7 +278,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         })
 
         isLoading(true)
-        await search()
+        await search(1, pageSize)
         setDeleteList([])
         isLoading(false)
       })
@@ -322,6 +328,10 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
           )
         }
       })
+  }
+
+  const changePageSize = (i: number) => {
+    setPageSize(i)
   }
 
   useEffect(() => {
@@ -383,7 +393,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
 
         if (init) await inits()
 
-        await search()
+        await search(1, pageSize)
       } finally {
         isLoading(false)
       }
@@ -399,14 +409,17 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         <>
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              <Pagination
-                show={_.size(bodies) > USER_PAGE_SIZE}
-                currentPage={page}
-                listSize={_.size(bodies)}
-                pageSize={USER_PAGE_SIZE}
-                search={search}
-                changePage={changePage}
-              ></Pagination>
+              {_.every([pageDisp, !_.isEmpty(bodies)]) && (
+                <Pagination
+                  show={_.size(bodies) > pageSize}
+                  currentPage={page}
+                  listSize={_.size(bodies)}
+                  pageSize={pageSize}
+                  search={search}
+                  changePage={changePage}
+                  changePageSize={changePageSize}
+                ></Pagination>
+              )}
               <Box sx={[TableMenuButtons, , mb(3)]}>
                 <Button
                   variant="contained"
@@ -438,14 +451,15 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
               headers={tableHeader}
               isNoContent={noContent}
               icons={icons}
+              pageSize={pageSize}
               bodies={_.map(bodies, (u) => {
                 return {
-                  no: u.no,
-                  name: u.name,
-                  email: u.email,
-                  role: u.roleName,
+                  no: new Body(u.no),
+                  name: new Body(u.name),
+                  email: new Body(u.email),
+                  role: new Body(u.roleName),
                 }
-              }).slice(USER_PAGE_SIZE * (page - 1), USER_PAGE_SIZE * page)}
+              }).slice(pageSize * (page - 1), pageSize * page)}
             />
           </Box>
         </>

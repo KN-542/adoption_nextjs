@@ -586,7 +586,6 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
                                   res.push(item)
                                 }
                               }
-                              console.log(res)
                               return res
                             })
                           }}

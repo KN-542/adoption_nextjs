@@ -12,6 +12,7 @@ import Paper from '@mui/material/Paper'
 import Checkbox from '@mui/material/Checkbox'
 import { useTranslations } from 'next-intl'
 import {
+  Body,
   CheckboxPropsField,
   Icons,
   TableHeader,
@@ -46,11 +47,12 @@ type Props = {
   height: number
   isNoContent: boolean
   headers: TableHeader[]
-  bodies: Record<string, any>[]
+  bodies: Record<string, Body>[]
+  pageSize: number
   icons?: Icons[]
   checkbox?: CheckboxPropsField
   changeTarget?: (s: TableSort) => void
-  search?: (i?: number) => void
+  search?: (i: number, i2: number) => void
   changePage?: (i: number) => void
 }
 
@@ -99,9 +101,9 @@ const CustomTable = (props: Props) => {
                     <TableCell
                       sx={[Cell, BackGroundColor(setting.color)]}
                     ></TableCell>
-                    {_.map(props.headers, (header) => (
+                    {_.map(props.headers, (header, index) => (
                       <TableCell
-                        key={header.id}
+                        key={index}
                         align="left"
                         padding="none"
                         sx={[
@@ -118,7 +120,7 @@ const CustomTable = (props: Props) => {
                                 onClick={async () => {
                                   props.changePage(1)
                                   props.changeTarget(header.sort)
-                                  await props.search(1)
+                                  await props.search(1, props.pageSize)
                                 }}
                               >
                                 {header.name}
@@ -138,7 +140,7 @@ const CustomTable = (props: Props) => {
                                 onClick={async () => {
                                   props.changePage(1)
                                   props.changeTarget(header.sort)
-                                  await props.search(1)
+                                  await props.search(1, props.pageSize)
                                 }}
                               >
                                 {header.name}
@@ -209,19 +211,22 @@ const CustomTable = (props: Props) => {
                           </TableCell>
                         )}
                         <TableCell padding="none"></TableCell>
-                        {_.map(_.keys(row), (item, index2) => {
-                          return (
-                            <TableCell
-                              component="th"
-                              scope="row"
-                              padding="none"
-                              key={index2}
-                              sx={hBlock(75)}
-                            >
-                              {_.isEmpty(row.item) && row[item]}
-                            </TableCell>
-                          )
-                        })}
+                        {_.map(
+                          _.filter(_.keys(row), (str) => row[str].display),
+                          (item: string, index2) => {
+                            return (
+                              <TableCell
+                                component="th"
+                                scope="row"
+                                padding="none"
+                                key={index2}
+                                sx={hBlock(75)}
+                              >
+                                {row[item] && row[item].body}
+                              </TableCell>
+                            )
+                          },
+                        )}
                         {!_.isEmpty(props.icons) && (
                           <>
                             <TableCell

@@ -22,6 +22,9 @@ export enum RouterPath {
   Schedule = '/schedule',
   // ロール
   Role = '/role',
+  // 原稿
+  Manuscript = '/manuscript',
+  ManuscriptCreate = '/manuscript/create',
   // メールテンプレート
   Email = '/mail',
   // 変数
@@ -35,6 +38,8 @@ export enum RouterPath {
   SettingTeam = '/team/basic',
   SettingTeamStatus = '/team/status',
   SettingTeamAssign = '/team/assign',
+  SettingTeamApplicantType = '/team/type',
+  SettingTeamApplicantTypeCreate = '/team/type/create',
   SettingPersonalColor = '/personal/color',
   // 企業
   Company = '/company',
@@ -79,6 +84,11 @@ export const decideTitle = (path: string) => {
     // 予定
     case RouterPath.Management + RouterPath.Schedule:
       return 'common.title.schedule.list'
+    // 原稿
+    case RouterPath.Management + RouterPath.Manuscript:
+      return 'common.title.manuscript.list'
+    case RouterPath.Management + RouterPath.ManuscriptCreate:
+      return 'common.title.manuscript.create'
     // 設定
     case RouterPath.Admin + RouterPath.Setting:
       return 'common.title.setting.index'
@@ -93,6 +103,14 @@ export const decideTitle = (path: string) => {
     case RouterPath.Management +
       RouterPath.Setting +
       RouterPath.SettingTeamAssign:
+      return 'common.title.setting.index'
+    case RouterPath.Management +
+      RouterPath.Setting +
+      RouterPath.SettingTeamApplicantType:
+      return 'common.title.setting.index'
+    case RouterPath.Management +
+      RouterPath.Setting +
+      RouterPath.SettingTeamApplicantTypeCreate:
       return 'common.title.setting.index'
     case RouterPath.Management +
       RouterPath.Setting +

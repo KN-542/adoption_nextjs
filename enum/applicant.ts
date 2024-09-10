@@ -133,4 +133,8 @@ export enum SearchSortKey {
   InterviewerDate = 'start',
   // 登録日時
   CreatedAt = 'created_at',
+  // 原稿
+  Manuscript = 'manuscript',
+  // 種別
+  Type = 'type',
 }

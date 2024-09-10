@@ -1,7 +1,6 @@
 import { CreateCompanyRequest, RolesRequest } from '@/api/model/request'
 import { CreateCompanyCSR, RolesCSR } from '@/api/repository'
 import NextHead from '@/components/common/Header'
-import { APICommonCode } from '@/enum/apiError'
 import { RouterPath } from '@/enum/router'
 import store, { RootState } from '@/hooks/store/store'
 import { common } from '@mui/material/colors'
@@ -198,9 +197,23 @@ const CompanyCreate: FC<Props> = ({ isError, locale }) => {
 
         router.push(RouterPath.Admin + RouterPath.Company)
       })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
           router.push(routerPath)
+          return
+        }
+
+        if (code) {
+          toast(t(`common.api.code.companyCreate.${String(code)}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
           return
         }
 

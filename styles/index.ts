@@ -416,3 +416,24 @@ export const SpinnerSx = {
   alignItems: 'center',
   zIndex: 9999,
 }
+
+export const SelectWithoutBox = {
+  border: 'none',
+  backgroundColor: 'transparent',
+  '&:hover': {
+    backgroundColor: 'transparent',
+  },
+  '&:focus': {
+    backgroundColor: 'transparent',
+  },
+  '& fieldset': {
+    border: 'none',
+  },
+  '& .MuiSelect-select': {
+    padding: '16.5px 32px 0 8px',
+  },
+  '& .MuiSelect-icon': {
+    right: 4,
+    top: 24,
+  },
+}

@@ -41,6 +41,10 @@ import {
   GoogleAuthRequest,
   AssignUserRequest,
   CheckAssignableUserRequest,
+  SearchManuscriptRequest,
+  CreateManuscriptRequest,
+  CreateApplicantTypeRequest,
+  ListApplicantTypeRequest,
 } from './model/request'
 
 /* 
@@ -306,7 +310,7 @@ export const DeleteUserCSR = async (req: DeleteUserRequest) => {
 // チーム一覧 CSR
 export const SearchTeamCSR = async (req: SearchTeamRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_team`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/team/search`,
     req,
     APICommonHeader,
   )
@@ -316,7 +320,7 @@ export const SearchTeamCSR = async (req: SearchTeamRequest) => {
 // チーム登録 CSR
 export const CreateTeamCSR = async (req: CreateTeamRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_team`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/team/create`,
     req,
     APICommonHeader,
   )
@@ -326,7 +330,7 @@ export const CreateTeamCSR = async (req: CreateTeamRequest) => {
 // チーム更新 CSR
 export const UpdateTeamCSR = async (req: UpdateTeamRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/update_team`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/team/update`,
     req,
     APICommonHeader,
   )
@@ -336,7 +340,7 @@ export const UpdateTeamCSR = async (req: UpdateTeamRequest) => {
 // チーム削除 CSR
 export const DeleteTeamCSR = async (req: DeleteTeamRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete_team`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/team/delete`,
     req,
     APICommonHeader,
   )
@@ -346,7 +350,7 @@ export const DeleteTeamCSR = async (req: DeleteTeamRequest) => {
 // チーム取得 CSR
 export const GetTeamCSR = async (req: GetTeamRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/get_team`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/team/get`,
     req,
     APICommonHeader,
   )
@@ -358,7 +362,7 @@ export const SearchTeamByCompanyCSR = async (
   req: SearchTeamByCompanyRequest,
 ) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/search_team_company`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/team/search_company`,
     req,
     APICommonHeader,
   )
@@ -372,7 +376,7 @@ export const SearchTeamByCompanyCSR = async (
 // 予定登録 CSR
 export const CreateScheduleCSR = async (req: CreateScheduleRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/create_schedule`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/schedule/create`,
     req,
     APICommonHeader,
   )
@@ -382,7 +386,7 @@ export const CreateScheduleCSR = async (req: CreateScheduleRequest) => {
 // 予定更新 CSR
 export const UpdateScheduleCSR = async (req: UpdateScheduleRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/update_schedule`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/schedule/update`,
     req,
     APICommonHeader,
   )
@@ -392,7 +396,7 @@ export const UpdateScheduleCSR = async (req: UpdateScheduleRequest) => {
 // 予定削除 CSR
 export const DeleteSchedulesCSR = async (req: DeleteScheduleRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/delete_schedule`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/schedule/delete`,
     req,
     APICommonHeader,
   )
@@ -402,7 +406,7 @@ export const DeleteSchedulesCSR = async (req: DeleteScheduleRequest) => {
 // 予定一覧 CSR
 export const SchedulesCSR = async (req: SearchScheduleRequest) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/user/schedules`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/schedule/search`,
     req,
     APICommonHeader,
   )
@@ -412,7 +416,7 @@ export const SchedulesCSR = async (req: SearchScheduleRequest) => {
 // 予定登録種別一覧 SSG
 export const UserListScheduleTypeSSG = async () => {
   const res = await axios1.post(
-    `${process.env.NEXT_SSG_URL}/user/schedule_type`,
+    `${process.env.NEXT_SSG_URL}/schedule/type`,
     {},
     APICommonHeader,
   )
@@ -453,6 +457,30 @@ export const SearchRoleByCompanyCSR = async (
 ) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/role/search_company`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+/* 
+  原稿
+*/
+
+// 原稿検索 CSR
+export const SearchManuscriptCSR = async (req: SearchManuscriptRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/search`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 原稿登録 CSR
+export const CreateManuscriptCSR = async (req: CreateManuscriptRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/create`,
     req,
     APICommonHeader,
   )
@@ -513,7 +541,7 @@ export const UpdateAssignMethodCSR = async (req: UpdateAssignMethodRequest) => {
   return res
 }
 
-// ステータスイベントマスタ一覧
+// ステータスイベントマスタ一覧 SSG
 export const ListStatusEventSSG = async () => {
   const res = await axios.post(
     `${process.env.NEXT_SSG_URL}/setting/status_events`,
@@ -523,11 +551,53 @@ export const ListStatusEventSSG = async () => {
   return res
 }
 
-// ステータスイベントマスタ一覧
+// ステータスイベントマスタ一覧 SSG
 export const AssignMasterSSG = async () => {
   const res = await axios.post(
     `${process.env.NEXT_SSG_URL}/setting/assign_masters`,
     {},
+    APICommonHeader,
+  )
+  return res
+}
+
+// 書類提出ルールマスタ一覧 SSG
+export const DocumentRulesSSG = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSG_URL}/setting/document_rules`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}
+
+// 職種マスタ一覧 SSG
+export const OccupationsSSG = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSG_URL}/setting/occupations`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}
+
+// 応募者種別登録 CSR
+export const CreateApplicantTypeCSR = async (
+  req: CreateApplicantTypeRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/create_applicant_type`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 応募者種別一覧 CSR
+export const ListApplicantTypeCSR = async (req: ListApplicantTypeRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/applicant_types`,
+    req,
     APICommonHeader,
   )
   return res

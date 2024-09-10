@@ -1,150 +1,178 @@
-import { SearchCompanyRequest, RolesRequest } from '@/api/model/request'
-import { SearchCompanyResponse } from '@/api/model/response'
-import { SearchCompanyCSR, RolesCSR } from '@/api/repository'
-import NextHead from '@/components/common/Header'
-import { SearchCompanyTextIndex } from '@/enum/company'
+import { RolesRequest, SearchManuscriptRequest } from '@/api/model/request'
+import {
+  SearchManuscriptResponse,
+  SiteListResponse,
+} from '@/api/model/response'
+import { RolesCSR, SearchManuscriptCSR } from '@/api/repository'
 import { RouterPath } from '@/enum/router'
+import { changeSetting, manuscriptSearchPageSize } from '@/hooks/store'
 import store, { RootState } from '@/hooks/store/store'
+import { Body, Icons, SettingModel, TableHeader } from '@/types/index'
 import { common } from '@mui/material/colors'
-import { HttpStatusCode } from 'axios'
 import _ from 'lodash'
+import { GetStaticProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
+import { HttpStatusCode } from 'axios'
+import NextHead from '@/components/common/Header'
 import { Operation } from '@/enum/common'
-import {
-  Body,
-  CheckboxPropsField,
-  SelectedCheckbox,
-  SelectedMenuModel,
-  SettingModel,
-  TableHeader,
-} from '@/types/index'
 import { Box, Button } from '@mui/material'
 import {
   ButtonColorInverse,
+  DirectionColumnForTable,
   M0Auto,
-  SpaceBetween,
-  TableMenuButtons,
-  maxW,
   mb,
   ml,
   mr,
   mt,
+  SpaceBetween,
+  TableMenuButtons,
   w,
 } from '@/styles/index'
-import CustomTable from '@/components/common/Table'
 import Pagination from '@/components/common/Pagination'
-import SelectedMenu from '@/components/common/SelectedMenu'
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
-import { changeSetting, companySearchPageSize } from '@/hooks/store'
-import { GetStaticProps } from 'next'
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
+import CustomTable from '@/components/common/Table'
+import EditNoteIcon from '@mui/icons-material/EditNote'
+import DeleteIcon from '@mui/icons-material/Delete'
+import Spinner from '@/components/common/modal/Spinner'
 
 type Props = {
   isError: boolean
   locale: string
 }
 
-const Company: React.FC<Props> = ({ isError, locale }) => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
+  return {
+    props: {
+      locale,
+      messages: (await import(`../../../public/locales/${locale}/common.json`))
+        .default,
+    },
+  }
+}
+
+const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
-  const company = useSelector((state: RootState) => state.company)
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [bodies, setBodies] = useState<SearchCompanyResponse[]>([])
-  const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
-  const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
+  const manuscript = useSelector((state: RootState) => state.manuscript)
 
-  const [loading, isLoading] = useState<boolean>(true)
-  const [init, isInit] = useState<boolean>(true)
-  const [noContent, isNoContent] = useState<boolean>(false)
-  const [pageDisp, isPageDisp] = useState<boolean>(false)
+  const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
+  const [icons, setIcons] = useState<Icons[]>([])
+  const [bodies, setBodies] = useState<SearchManuscriptResponse[]>([])
 
   const [page, setPage] = useState<number>(1)
-  const [pageSize, setPageSize] = useState<number>(company.search.pageSize)
+  const [size, setSize] = useState<number>(0)
+  const [pageSize, setPageSize] = useState<number>(manuscript.search.pageSize)
 
-  const searchTextList = _.cloneDeep(company.search.textForm)
+  const [init, isInit] = useState<boolean>(true)
+  const [loading, isLoading] = useState<boolean>(true)
+  const [noContent, isNoContent] = useState<boolean>(false)
+  const [spinner, isSpinner] = useState<boolean>(false)
+  const [pageDisp, isPageDisp] = useState<boolean>(false)
 
   const inits = async () => {
-    // API 使用可能ロール一覧
-    await RolesCSR({
-      hash_key: user.hashKey,
-    } as RolesRequest)
-      .then((res) => {
-        setRoles(res.data.map as { [key: string]: boolean })
-      })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
-        if (isServerError) {
-          router.push(routerPath)
-          return
-        }
+    try {
+      // API: 使用可能ロール一覧
+      const res = await RolesCSR({
+        hash_key: user.hashKey,
+      } as RolesRequest)
 
-        if (!_.isEmpty(toastMsg)) {
-          toast(t(toastMsg), {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
-            },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
-          return
-        }
+      setRoles(res.data.map as { [key: string]: boolean })
 
-        if (!_.isEmpty(storeMsg)) {
-          const msg = t(storeMsg)
-          store.dispatch(
-            changeSetting({
-              errorMsg: _.isEmpty(msg) ? [] : [msg],
-            } as SettingModel),
-          )
-          router.push(
-            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
-          )
-        }
-      })
-      .finally(() => {
-        isInit(false)
-      })
+      setIcons([
+        {
+          color: setting.toastSuccessColor,
+          element: <EditNoteIcon />,
+          role: res.data.map[Operation.ManagementUserEdit],
+          onClick: (_i: number) => {},
+        },
+        {
+          color: setting.toastErrorColor,
+          element: <DeleteIcon />,
+          role: res.data.map[Operation.ManagementUserDelete],
+          onClick: (_i: number) => {},
+        },
+      ])
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+      if (isServerError) {
+        router.push(routerPath)
+        return
+      }
+
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+        return
+      }
+
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(_.isEmpty(routerPath) ? RouterPath.Management : routerPath)
+      }
+    } finally {
+      isInit(false)
+    }
   }
 
-  // 検索
   const search = async (currentPage: number, currentSize: number) => {
     isPageDisp(false)
+    isLoading(true)
     if (init) isLoading(true)
 
-    // API: 企業検索
-    const list: SearchCompanyResponse[] = []
-    await SearchCompanyCSR({
+    // API: 原稿検索
+    const list: SearchManuscriptResponse[] = []
+    await SearchManuscriptCSR({
       user_hash_key: user.hashKey,
-      name: searchTextList[SearchCompanyTextIndex.Name].value.trim(),
-    } as SearchCompanyRequest)
+      page: currentPage,
+      page_size: currentSize,
+    } as SearchManuscriptRequest)
       .then((res) => {
         if (_.isEqual(res.data.code, HttpStatusCode.NoContent)) {
           isNoContent(true)
           return
         }
 
-        _.forEach(res.data.list, (r, index) => {
+        _.forEach(res.data.list, (m, index) => {
           list.push({
-            no: Number(index) + 1,
-            hashKey: r.hash_key,
-            name: r.name,
-          } as SearchCompanyResponse)
+            no: currentSize * (currentPage - 1) + Number(index) + 1,
+            hashKey: m.hash_key,
+            content: m.content,
+            sites: _.map(_.cloneDeep(m.sites), (site) => {
+              return {
+                hashKey: site.hash_key,
+                name: site.site_name,
+              } as SiteListResponse
+            }),
+          } as SearchManuscriptResponse)
         })
         setBodies(list)
+        setSize(Number(res.data.num))
 
         if (currentSize) {
           setPageSize(currentSize)
-          store.dispatch(companySearchPageSize(currentSize))
+          store.dispatch(manuscriptSearchPageSize(currentSize))
         }
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
@@ -180,6 +208,7 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
         }
       })
       .finally(() => {
+        isSpinner(false)
         isLoading(false)
         isPageDisp(true)
       })
@@ -196,16 +225,14 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
   const tableHeader: TableHeader[] = [
     {
       name: 'No',
-      sort: null,
     },
     {
-      name: t('features.company.header.name'),
-      sort: null,
+      name: t('features.manuscript.header.content'),
+    },
+    {
+      name: t('features.manuscript.header.site'),
     },
   ]
-
-  // 選択済みメニュー表示
-  const dispMenu: SelectedMenuModel[] = []
 
   useEffect(() => {
     // トースト
@@ -259,11 +286,6 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
 
     const initialize = async () => {
       try {
-        if (isError) {
-          router.push(RouterPath.Error)
-          return
-        }
-
         if (init) await inits()
 
         await search(1, pageSize)
@@ -278,34 +300,23 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
   return (
     <>
       <NextHead />
-      {_.every([!isError, !loading, roles[Operation.AdminCompanyRead]]) && (
+      {_.every([!loading, roles[Operation.ManagementManuscriptRead]]) && (
         <>
+          {spinner && <Spinner />}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              <Pagination
-                show={_.size(bodies) > pageSize}
-                currentPage={page}
-                listSize={_.size(bodies)}
-                pageSize={pageSize}
-                search={search}
-                changePage={changePage}
-                changePageSize={changePageSize}
-              ></Pagination>
-              {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
-                <SelectedMenu
-                  menu={dispMenu}
-                  size={_.size(_.filter(checkedList, (c) => c.checked))}
-                ></SelectedMenu>
+              {_.every([pageDisp, !_.isEqual(size, 0)]) && (
+                <Pagination
+                  show={_.size(bodies) > pageSize}
+                  currentPage={page}
+                  listSize={_.size(bodies)}
+                  pageSize={pageSize}
+                  search={search}
+                  changePage={changePage}
+                  changePageSize={changePageSize}
+                ></Pagination>
               )}
-              <Box
-                sx={[
-                  TableMenuButtons,
-                  mb(3),
-                  _.size(_.filter(checkedList, (c) => c.checked)) > 0
-                    ? maxW(300)
-                    : null,
-                ]}
-              >
+              <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
@@ -314,7 +325,7 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
                   <ManageSearchIcon sx={mr(0.25)} />
                   {t('common.button.condSearch')}
                 </Button>
-                {roles[Operation.AdminCompanyCreate] && (
+                {roles[Operation.ManagementManuscriptCreate] && (
                   <Button
                     variant="contained"
                     sx={[
@@ -322,46 +333,38 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
                       ButtonColorInverse(common.white, setting.color),
                     ]}
                     onClick={() =>
-                      router.push(RouterPath.Admin + RouterPath.CompanyCreate)
+                      router.push(
+                        RouterPath.Management + RouterPath.ManuscriptCreate,
+                      )
                     }
                   >
                     <AddCircleOutlineIcon sx={mr(0.25)} />
-                    {t('features.company.create')}
+                    {t('features.manuscript.create')}
                   </Button>
                 )}
               </Box>
             </Box>
             <CustomTable
-              height={75}
+              height={67}
               headers={tableHeader}
               isNoContent={noContent}
+              icons={icons}
               pageSize={pageSize}
-              bodies={_.map(bodies, (l) => {
+              bodies={_.map(bodies, (m) => {
                 return {
-                  no: new Body(l.no),
-                  name: new Body(l.name),
+                  no: new Body(m.no),
+                  content: new Body(m.content),
+                  site: new Body(
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(m.sites, (site, index) => {
+                          return <Box key={index}>{site.name}</Box>
+                        })}
+                      </Box>
+                    ),
+                  ),
                 }
               }).slice(pageSize * (page - 1), pageSize * page)}
-              checkbox={
-                {
-                  checkedList: checkedList,
-                  onClick: (i: number, checked: boolean) => {
-                    const list = _.cloneDeep(checkedList)
-                    list[i].checked = !checked
-                    setCheckedList(list)
-                  },
-                  onClickAll: (b: boolean) => {
-                    const list = _.cloneDeep(checkedList)
-                    for (const item of list) {
-                      item.checked = b
-                    }
-                    setCheckedList(list)
-                  },
-                } as CheckboxPropsField
-              }
-              changeTarget={() => {}}
-              search={search}
-              changePage={changePage}
             />
           </Box>
         </>
@@ -370,17 +373,4 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-  let isError: boolean = false
-
-  return {
-    props: {
-      isError,
-      locale,
-      messages: (await import(`../../../public/locales/${locale}/common.json`))
-        .default,
-    },
-  }
-}
-
-export default Company
+export default Manuscripts

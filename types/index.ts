@@ -3,7 +3,20 @@
 */
 
 import { DateOrTimeView } from '@mui/x-date-pickers'
-import dayjs from 'dayjs'
+import _ from 'lodash'
+
+// Body
+export class Body {
+  public body: any
+  display: boolean = true
+
+  constructor(body: any, display?: boolean) {
+    this.body = body
+    if (!_.isUndefined(display)) {
+      this.display = display
+    }
+  }
+}
 
 // レフトメニュー model
 export type SidebarModel = {
@@ -46,8 +59,9 @@ export type Color = {
   toastErrorColor: string
 }
 
-// ログインユーザー model
+// ユーザー model
 export type UserModel = {
+  search: SearchModel
   hashKey: string
   name: string
   email: string
@@ -71,10 +85,16 @@ export type TableSort = {
   isAsc: boolean
 }
 
+// table display option
+export type TableDisplayOption = {
+  isChange: boolean
+  display: boolean
+}
+
 // table head
 export type TableHeader = {
-  id: number
   name: string
+  option?: TableDisplayOption
   sort?: TableSort
 }
 
@@ -87,11 +107,13 @@ export type SearchForm = {
 }
 // 検索 model
 export type SearchModel = {
-  selectedList: SearchSelected[]
-  textForm: SearchText[]
-  autoCompForm: SearchAutoComplete[]
-  dates: SearchDates[]
-  sort: SearchSortModel
+  pageSize: number
+  selectedList?: SearchSelected[]
+  textForm?: SearchText[]
+  autoCompForm?: SearchAutoComplete[]
+  dates?: SearchDates[]
+  sort?: SearchSortModel
+  option?: Record<string, TableDisplayOption>
 }
 
 // 検索 選択
@@ -199,6 +221,10 @@ export type ApplicantModel = {
   ユーザー
 */
 
+export type TeamModel = {
+  search: SearchModel
+}
+
 // ユーザー一覧 table body
 export type UsersTableBody = {
   // No
@@ -267,4 +293,12 @@ export type SelectTitlesModel = {
   key: string
   title: string
   subTitle: string
+}
+
+/* 
+  原稿
+*/
+
+export type ManuscriptModel = {
+  search: SearchModel
 }

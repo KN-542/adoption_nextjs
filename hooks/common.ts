@@ -1,4 +1,4 @@
-// Date型をyyyy-mm-ddTHH:mm:ssのstringに変更
+// Date型をyyyy-mm-ddのstringに変更
 export const formatDate = (date: Date): string => {
   const pad = (num) => (num < 10 ? '0' + num : num)
 
@@ -7,13 +7,7 @@ export const formatDate = (date: Date): string => {
     '-' +
     pad(date.getMonth() + 1) +
     '-' +
-    pad(date.getDate()) +
-    'T' +
-    pad(date.getHours()) +
-    ':' +
-    pad(date.getMinutes()) +
-    ':' +
-    pad(date.getSeconds())
+    pad(date.getDate())
   )
 }
 // Date型をyyyy-mm-dd HH:mm:ssのstringに変更

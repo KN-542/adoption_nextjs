@@ -82,6 +82,8 @@ export class SearchApplicantRequest extends AbstractRequest2 {
   user_hash_key: string
   // ページ
   page: number
+  // ページサイズ
+  page_size: number
   // サイト一覧
   sites: string[]
   // 応募者ステータス
@@ -162,6 +164,20 @@ export class AssignUserRequest extends AbstractRequest3 {
   user_hash_key: string
   hash_key: string
   hash_keys: string[]
+}
+// 種別登録
+export class CreateApplicantTypeRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 種別名
+  name: string
+  // 書類提出ルールハッシュ
+  rule_hash: string
+  // 職種ハッシュ
+  occupation_hash: string
+}
+// 種別一覧
+export class ListApplicantTypeRequest extends AbstractRequest2 {
+  user_hash_key: string
 }
 
 /* 
@@ -342,4 +358,28 @@ export class DeleteScheduleRequest extends AbstractRequest3 {
 // ロール検索_同一企業
 export class SearchRoleByCompanyRequest extends AbstractRequest2 {
   user_hash_key: string
+}
+
+/* 
+  原稿
+*/
+// 原稿検索
+export class SearchManuscriptRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // ページ
+  page: number
+  // ページサイズ
+  page_size: number
+  // サイト一覧
+  sites: string[]
+}
+// 原稿登録
+export class CreateManuscriptRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 内容
+  content: string
+  // 使用可能チーム
+  teams: string[]
+  // 使用可能サイト
+  sites: string[]
 }

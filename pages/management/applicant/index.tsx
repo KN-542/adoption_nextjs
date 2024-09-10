@@ -4,7 +4,9 @@ import store, { RootState } from '@/hooks/store/store'
 import CustomTable from '@/components/common/Table'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
+import ViewColumnIcon from '@mui/icons-material/ViewColumn'
 import {
+  Body,
   CheckboxPropsField,
   SearchAutoComplete,
   SearchDates,
@@ -39,14 +41,12 @@ import {
   ApplicantStatusListRequest,
   DownloadApplicantRequest,
   GoogleAuthRequest,
-  GetApplicantRequest,
   RolesRequest,
   SearchUserByCompanyRequest,
   AssignUserRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
-  GetApplicantCSR,
   GoogleAuthCSR,
   AssignUserCSR,
   SearchUserByCompanyCSR,
@@ -81,13 +81,14 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
 import {
   applicantSearchAutoComp,
   applicantSearchDates,
+  applicantSearchPageSize,
   applicantSearchSort,
   applicantSearchTerm,
   applicantSearchText,
   changeSetting,
 } from '@/hooks/store'
 import Pagination from '@/components/common/Pagination'
-import { formatDate2, formatDate3 } from '@/hooks/common'
+import { formatDate, formatDate3 } from '@/hooks/common'
 import SelectedMenu from '@/components/common/SelectedMenu'
 import ItemsSelectModal from '@/components/common/modal/ItemsSelectModal'
 import UploadModal from '@/components/management/modal/UploadModal'
@@ -111,8 +112,6 @@ type Props = {
   sites: SiteListResponse[]
 }
 
-const APPLICANT_PAGE_SIZE = 30
-
 const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const router = useRouter()
   const t = useTranslations()
@@ -125,6 +124,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const applicantSearchAutoCompForm = _.cloneDeep(applicant.search.autoCompForm)
   const applicantSearchDatesForm = _.cloneDeep(applicant.search.dates)
   const applicantSearchSortList = Object.assign({}, applicant.search.sort)
+  const applicantSearchOption = Object.assign({}, applicant.search.option)
 
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
@@ -135,6 +135,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     SearchUserByCompanyResponse[]
   >([])
   const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(applicant.search.pageSize)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [searchObj, setSearchObj] = useState<SearchForm>({})
@@ -389,7 +390,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     }
   }
 
-  const search = async (currentPage: number) => {
+  const search = async (currentPage: number, currentSize: number) => {
+    isSpinner(true)
+    isPageDisp(false)
     if (init) isLoading(true)
 
     // API 応募者検索
@@ -408,6 +411,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       user_hash_key: user.hashKey,
       // ページ
       page: currentPage,
+      // ページサイズ
+      page_size: currentSize,
       // サイト一覧
       sites: _.map(
         _.filter(applicantSearchTermList, (item) =>
@@ -473,7 +478,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
         _.forEach(_.isEmpty(res.data.list) ? [] : res.data.list, (r, index) => {
           list.push({
-            no: APPLICANT_PAGE_SIZE * (currentPage - 1) + Number(index) + 1,
+            no: currentSize * (currentPage - 1) + Number(index) + 1,
             hashKey: r.hash_key,
             name: r.name,
             site: Number(r.site_id),
@@ -505,6 +510,11 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             } as SelectedCheckbox)
           })
           setCheckedList(list2)
+        }
+
+        if (currentSize) {
+          setPageSize(currentSize)
+          store.dispatch(applicantSearchPageSize(currentSize))
         }
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
@@ -540,6 +550,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         }
       })
       .finally(() => {
+        isSpinner(false)
         isLoading(false)
         isPageDisp(true)
       })
@@ -730,7 +741,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           closeButton: () => <ClearIcon />,
         })
 
-        await search(1)
+        await search(1, pageSize)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         const error = { isServerError, routerPath, toastMsg, storeMsg, code }
@@ -1127,7 +1138,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         }
       }
 
-      await search(1)
+      await search(1, pageSize)
 
       isOpen(false)
       isSpinner(false)
@@ -1210,15 +1221,21 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       })
   }
 
-  const [tableHeader, setTableHeader] = useState<TableHeader[]>([
-    {
-      id: 1,
+  const [tableHeader, setTableHeader] = useState<Record<string, TableHeader>>({
+    no: {
       name: 'No',
+      option: {
+        isChange: false,
+        display: true,
+      },
       sort: null,
     },
-    {
-      id: 2,
+    name: {
       name: t('features.applicant.header.name'),
+      option: {
+        isChange: false,
+        display: true,
+      },
       sort: {
         key: SearchSortKey.Name,
         target: _.isEqual(SearchSortKey.Name, applicantSearchSortList.key),
@@ -1227,20 +1244,12 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : false,
       },
     },
-    {
-      id: 3,
-      name: t('features.applicant.header.site'),
-      sort: {
-        key: SearchSortKey.Site,
-        target: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key),
-        isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key)
-          ? applicantSearchSortList.isAsc
-          : false,
-      },
-    },
-    {
-      id: 4,
+    email: {
       name: t('features.applicant.header.email'),
+      option: {
+        isChange: false,
+        display: true,
+      },
       sort: {
         key: SearchSortKey.Email,
         target: _.isEqual(SearchSortKey.Email, applicantSearchSortList.key),
@@ -1249,9 +1258,26 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : false,
       },
     },
-    {
-      id: 5,
+    site: {
+      name: t('features.applicant.header.site'),
+      option: {
+        isChange: applicantSearchOption['site'].isChange,
+        display: applicantSearchOption['site'].display,
+      },
+      sort: {
+        key: SearchSortKey.Site,
+        target: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : false,
+      },
+    },
+    status: {
       name: t('features.applicant.header.status'),
+      option: {
+        isChange: applicantSearchOption['status'].isChange,
+        display: applicantSearchOption['status'].display,
+      },
       sort: {
         key: SearchSortKey.Status,
         target: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key),
@@ -1260,9 +1286,43 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : true,
       },
     },
-    {
-      id: 6,
+    manuscript: {
+      name: t('features.applicant.header.manuscript'),
+      option: {
+        isChange: applicantSearchOption['manuscript'].isChange,
+        display: applicantSearchOption['manuscript'].display,
+      },
+      sort: {
+        key: SearchSortKey.Manuscript,
+        target: _.isEqual(
+          SearchSortKey.Manuscript,
+          applicantSearchSortList.key,
+        ),
+        isAsc: _.isEqual(SearchSortKey.Manuscript, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : true,
+      },
+    },
+    type: {
+      name: t('features.applicant.header.type'),
+      option: {
+        isChange: applicantSearchOption['type'].isChange,
+        display: applicantSearchOption['type'].display,
+      },
+      sort: {
+        key: SearchSortKey.Type,
+        target: _.isEqual(SearchSortKey.Type, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Type, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : true,
+      },
+    },
+    interviewerDate: {
       name: t('features.applicant.header.interviewerDate'),
+      option: {
+        isChange: applicantSearchOption['interviewerDate'].isChange,
+        display: applicantSearchOption['interviewerDate'].display,
+      },
       sort: {
         key: SearchSortKey.InterviewerDate,
         target: _.isEqual(
@@ -1277,24 +1337,36 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : true,
       },
     },
-    {
-      id: 7,
+    users: {
       name: t('features.applicant.header.users'),
+      option: {
+        isChange: applicantSearchOption['users'].isChange,
+        display: applicantSearchOption['users'].display,
+      },
       sort: null,
     },
-    {
-      id: 8,
+    resume: {
       name: t('features.applicant.header.resume'),
+      option: {
+        isChange: applicantSearchOption['resume'].isChange,
+        display: applicantSearchOption['resume'].display,
+      },
       sort: null,
     },
-    {
-      id: 9,
+    curriculumVitae: {
       name: t('features.applicant.header.curriculumVitae'),
+      option: {
+        isChange: applicantSearchOption['curriculumVitae'].isChange,
+        display: applicantSearchOption['curriculumVitae'].display,
+      },
       sort: null,
     },
-    {
-      id: 10,
+    createdAt: {
       name: t('features.applicant.header.createdAt'),
+      option: {
+        isChange: applicantSearchOption['createdAt'].isChange,
+        display: applicantSearchOption['createdAt'].display,
+      },
       sort: {
         key: SearchSortKey.CreatedAt,
         target: _.isEqual(SearchSortKey.CreatedAt, applicantSearchSortList.key),
@@ -1303,17 +1375,20 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : true,
       },
     },
-  ])
+  })
 
   const changeTarget = (sort: TableSort) => {
     const newObj = Object.assign({}, searchObj)
-    const list = _.cloneDeep(tableHeader)
+    const obj = Object.assign({}, tableHeader)
+    const list = _.values(obj)
 
     const index = _.findIndex(list, (item) =>
       _.every([!_.isNull(item.sort), _.isEqual(item.sort?.key, sort.key)]),
     )
 
-    for (const item of _.filter(list, (el) => !_.isEmpty(el.sort))) {
+    for (const item of _.filter(list, (el, i) =>
+      _.every([!_.isEmpty(el.sort), !_.isEqual(i, index)]),
+    )) {
       item.sort.target = false
       item.sort.isAsc = true
     }
@@ -1323,11 +1398,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
     const newSort = {
       key: sort.key,
-      isAsc: !sort.isAsc,
+      isAsc: list[index].sort.isAsc,
     } as SearchSortModel
 
     Object.assign(applicantSearchSortList, newSort)
-    setTableHeader(list)
+
+    const header: Record<string, TableHeader> = {}
+    for (let i = 0; i < _.size(list); i++) {
+      header[_.keys(obj)[i]] = list[i]
+    }
+    setTableHeader(header)
     setSearchObj(newObj)
 
     store.dispatch(applicantSearchSort(newSort))
@@ -1335,6 +1415,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
   const changePage = (i: number) => {
     setPage(i)
+  }
+  const changePageSize = (i: number) => {
+    setPageSize(i)
   }
 
   useEffect(() => {
@@ -1396,7 +1479,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
         if (init) await inits()
 
-        await search(1)
+        await search(1, pageSize)
       } finally {
         isLoading(false)
       }
@@ -1414,17 +1497,18 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         roles[Operation.ManagementApplicantRead],
       ]) && (
         <>
-          {spinner && <Spinner></Spinner>}
+          {spinner && <Spinner />}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              {pageDisp && (
+              {_.every([pageDisp, !_.isEqual(size, 0)]) && (
                 <Pagination
-                  show={size > APPLICANT_PAGE_SIZE}
+                  show={size > pageSize}
                   currentPage={page}
                   listSize={size}
-                  pageSize={APPLICANT_PAGE_SIZE}
+                  pageSize={pageSize}
                   search={search}
                   changePage={changePage}
+                  changePageSize={changePageSize}
                 ></Pagination>
               )}
               {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
@@ -1442,6 +1526,14 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                     : null,
                 ]}
               >
+                <Button
+                  variant="contained"
+                  sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
+                  onClick={() => isSearchOpen(true)}
+                >
+                  <ViewColumnIcon sx={mr(0.25)} />
+                  {t('common.button.columnDisplay')}
+                </Button>
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
@@ -1467,57 +1559,83 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             </Box>
             <CustomTable
               height={75}
-              headers={tableHeader}
+              headers={_.values(
+                Object.fromEntries(
+                  _.filter(
+                    Object.entries(tableHeader),
+                    ([_, value]) => value.option.display,
+                  ),
+                ),
+              )}
               isNoContent={noContent}
               bodies={_.map(bodies, (l) => {
                 return {
-                  no: l.no,
-                  name: l.name,
-                  site: l.siteName,
-                  email: l.email,
-                  status: l.statusName,
+                  no: new Body(String(l.no), tableHeader.no.option.display),
+                  name: new Body(l.name, tableHeader.name.option.display),
+                  email: new Body(l.email, tableHeader.email.option.display),
+                  site: new Body(l.siteName, tableHeader.site.option.display),
+                  status: new Body(
+                    l.statusName,
+                    tableHeader.status.option.display,
+                  ),
                   interviewerDate:
                     l.interviewerDate.getFullYear() < 2
-                      ? ''
-                      : formatDate2(l.interviewerDate),
-                  users: (
-                    <Box sx={DirectionColumnForTable}>
-                      {_.map(l.userNames, (user, index) => {
-                        return <Box key={index}>{user}</Box>
-                      })}
-                    </Box>
+                      ? new Body('', tableHeader.interviewerDate.option.display)
+                      : new Body(
+                          formatDate3(l.interviewerDate),
+                          tableHeader.interviewerDate.option.display,
+                        ),
+                  users: new Body(
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(l.userNames, (user, index) => {
+                          return <Box key={index}>{user}</Box>
+                        })}
+                      </Box>
+                    ),
+                    tableHeader.users.option.display,
                   ),
-                  resume: _.isEmpty(l.resume) ? (
-                    <>{t('features.applicant.documents.f')}</>
-                  ) : (
-                    <Button
-                      variant="text"
-                      sx={Resume(setting.color)}
-                      onClick={async () => {
-                        await download(l.hashKey, 'resume')
-                      }}
-                    >
-                      <UploadFileIcon sx={mr(0.25)} />
-                      {t('features.applicant.documents.t')}
-                    </Button>
+                  resume: new Body(
+                    _.isEmpty(l.resume) ? (
+                      <>{t('features.applicant.documents.f')}</>
+                    ) : (
+                      <Button
+                        variant="text"
+                        sx={Resume(setting.color)}
+                        onClick={async () => {
+                          await download(l.hashKey, 'resume')
+                        }}
+                      >
+                        <UploadFileIcon sx={mr(0.25)} />
+                        {t('features.applicant.documents.t')}
+                      </Button>
+                    ),
+                    tableHeader.resume.option.display,
                   ),
-                  curriculumVitae: _.isEmpty(l.curriculumVitae) ? (
-                    <>{t('features.applicant.documents.f')}</>
-                  ) : (
-                    <Button
-                      variant="text"
-                      sx={Resume(setting.color)}
-                      onClick={async () => {
-                        await download(l.hashKey, 'curriculum_vitae')
-                      }}
-                    >
-                      <UploadFileIcon sx={mr(0.25)} />
-                      {t('features.applicant.documents.t')}
-                    </Button>
+                  curriculumVitae: new Body(
+                    _.isEmpty(l.curriculumVitae) ? (
+                      <>{t('features.applicant.documents.f')}</>
+                    ) : (
+                      <Button
+                        variant="text"
+                        sx={Resume(setting.color)}
+                        onClick={async () => {
+                          await download(l.hashKey, 'curriculum_vitae')
+                        }}
+                      >
+                        <UploadFileIcon sx={mr(0.25)} />
+                        {t('features.applicant.documents.t')}
+                      </Button>
+                    ),
+                    tableHeader.curriculumVitae.option.display,
                   ),
-                  createdAt: formatDate3(l.createdAt),
+                  createdAt: new Body(
+                    formatDate(l.createdAt),
+                    tableHeader.createdAt.option.display,
+                  ),
                 }
               })}
+              pageSize={pageSize}
               checkbox={
                 {
                   checkedList: checkedList,

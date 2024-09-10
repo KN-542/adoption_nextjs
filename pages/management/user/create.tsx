@@ -355,52 +355,6 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
           )
         }
       })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
-        if (isServerError) {
-          router.push(routerPath)
-          return
-        }
-
-        if (code) {
-          toast(t('common.api.code.createUserDupl'), {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
-            },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
-          return
-        }
-
-        if (!_.isEmpty(toastMsg)) {
-          toast(t(toastMsg), {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
-            },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
-          return
-        }
-
-        if (!_.isEmpty(storeMsg)) {
-          const msg = t(storeMsg)
-          store.dispatch(
-            changeSetting({
-              errorMsg: _.isEmpty(msg) ? [] : [msg],
-            } as SettingModel),
-          )
-          router.push(
-            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
-          )
-        }
-      })
   }
 
   useEffect(() => {

@@ -43,6 +43,11 @@ export enum Operation {
   ManagementApplicantDownload = 'ManagementApplicantDownload',
   ManagementApplicantCreateMeetURL = 'ManagementApplicantCreateMeetURL',
   ManagementApplicantAssignUser = 'ManagementApplicantAssignUser',
+  ManagementManuscriptCreate = 'ManagementManuscriptCreate',
+  ManagementManuscriptRead = 'ManagementManuscriptRead',
+  ManagementManuscriptDetailRead = 'ManagementManuscriptDetailRead',
+  ManagementManuscriptEdit = 'ManagementManuscriptEdit',
+  ManagementManuscriptDelete = 'ManagementManuscriptDelete',
   ManagementSettingCompany = 'ManagementSettingCompany',
   ManagementSettingTeam = 'ManagementSettingTeam',
 }

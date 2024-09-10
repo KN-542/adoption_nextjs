@@ -47,7 +47,7 @@ import {
   GetOwnTeamResponse,
   InterviewEvents,
   ListStatusEventByTeamResponse,
-  ListStatusEventResponse,
+  StatusEventResponse,
 } from '@/api/model/response'
 import {
   ApplicantStatusListRequest,
@@ -87,7 +87,7 @@ import DragHandleIcon from '@mui/icons-material/DragHandle'
 type Props = {
   isError: boolean
   locale: string
-  eventsSSG: ListStatusEventResponse[]
+  eventsSSG: StatusEventResponse[]
 }
 
 const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
@@ -105,7 +105,7 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
   const [oldEvents, setOldEvents] = useState<ListStatusEventByTeamResponse[]>(
     [],
   )
-  const [events, setEvents] = useState<ListStatusEventResponse[]>(eventsSSG)
+  const [events, setEvents] = useState<StatusEventResponse[]>(eventsSSG)
 
   const [teamEvents, setTeamEvents] = useState<GetOwnTeamResponse>(null)
   const [oldTeamEvents, setOldTeamEvents] = useState<GetOwnTeamResponse>(null)
@@ -727,7 +727,7 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
                                         ),
                                         selectedStatus:
                                           newStatusList[Number(e.target.value)],
-                                      } as ListStatusEventResponse
+                                      } as StatusEventResponse
                                     }
 
                                     return s
@@ -828,7 +828,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError = false
 
   // API: ステータスイベントマスタ一覧
-  const eventsSSG: ListStatusEventResponse[] = []
+  const eventsSSG: StatusEventResponse[] = []
   await ListStatusEventSSG()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
