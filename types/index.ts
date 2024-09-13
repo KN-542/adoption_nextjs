@@ -96,6 +96,7 @@ export type TableHeader = {
   name: string
   option?: TableDisplayOption
   sort?: TableSort
+  minW?: number
 }
 
 // 検索 項目
@@ -103,6 +104,7 @@ export type SearchForm = {
   selectList?: SearchSelect[]
   textForm?: SearchText[]
   autoCompForm?: SearchAutoComplete[]
+  ranges?: SearchRanges[]
   dates?: SearchDates[]
 }
 // 検索 model
@@ -111,6 +113,7 @@ export type SearchModel = {
   selectedList?: SearchSelected[]
   textForm?: SearchText[]
   autoCompForm?: SearchAutoComplete[]
+  ranges?: SearchRanges[]
   dates?: SearchDates[]
   sort?: SearchSortModel
   option?: Record<string, TableDisplayOption>
@@ -136,6 +139,14 @@ export type SearchAutoComplete = {
   name: string
   items: SelectTitlesModel[]
   selectedItems: SelectTitlesModel[]
+}
+
+// 検索 range
+export type SearchRanges = {
+  id: number
+  name: string
+  min: number
+  max: number
 }
 
 // 検索 Date

@@ -1,6 +1,7 @@
 import {
   SearchAutoCompIndex,
   SearchDateIndex,
+  SearchRangeIndex,
   SearchTextIndex,
 } from '@/enum/applicant'
 import { SearchCompanyTextIndex } from '@/enum/company'
@@ -52,6 +53,16 @@ const state = {
           name: 'features.applicant.header.email',
           value: '',
         },
+        {
+          id: SearchTextIndex.OuterID,
+          name: 'features.applicant.header.outerID',
+          value: '',
+        },
+        {
+          id: SearchTextIndex.CommitID,
+          name: 'features.applicant.header.commitID',
+          value: '',
+        },
       ] as SearchText[],
       autoCompForm: [
         {
@@ -60,6 +71,14 @@ const state = {
           selectedItems: [] as SelectTitlesModel[],
         },
       ] as SearchAutoComplete[],
+      ranges: [
+        {
+          id: SearchRangeIndex.Age,
+          name: 'features.applicant.header.age',
+          min: null,
+          max: null,
+        },
+      ],
       dates: [
         {
           id: SearchDateIndex.CreatedAt,
@@ -83,9 +102,17 @@ const state = {
         isAsc: true,
       } as SearchSortModel,
       option: {
+        outerID: {
+          isChange: true,
+          display: false,
+        },
         site: {
           isChange: true,
           display: true,
+        },
+        age: {
+          isChange: true,
+          display: false,
         },
         status: {
           isChange: true,
@@ -116,6 +143,10 @@ const state = {
           display: false,
         },
         type: {
+          isChange: true,
+          display: false,
+        },
+        commitID: {
           isChange: true,
           display: false,
         },
@@ -190,6 +221,12 @@ export const slice = createSlice({
     applicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
       Object.assign(state.applicant.search.sort, action.payload)
     },
+    applicantSearchColumns: (
+      state,
+      action: PayloadAction<Record<string, TableDisplayOption>>,
+    ) => {
+      Object.assign(state.applicant.search.option, action.payload)
+    },
     // 企業
     companySearchPageSize: (state, action: PayloadAction<number>) => {
       state.company.search.pageSize = action.payload
@@ -222,6 +259,7 @@ export const {
   applicantSearchAutoComp,
   applicantSearchDates,
   applicantSearchSort,
+  applicantSearchColumns,
   companySearchPageSize,
   companySearchText,
   userSearchPageSize,

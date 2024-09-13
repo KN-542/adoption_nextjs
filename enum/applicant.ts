@@ -85,6 +85,10 @@ export enum SearchIndex {
   Resume,
   // 職務経歴書
   CurriculumVitae,
+  // 原稿
+  Manuscript,
+  // 種別
+  Type,
 }
 
 // 書類
@@ -101,6 +105,10 @@ export enum SearchTextIndex {
   Name = 0,
   // メールアドレス
   Email,
+  // 媒体側ID
+  OuterID,
+  // コミットID
+  CommitID,
 }
 
 // 検索項目 AutoComplete
@@ -109,6 +117,12 @@ export enum SearchAutoCompIndex {
   Interviewer = 0,
   // 面接官(サブ)
   SubInterviewer,
+}
+
+// 検索項目 range
+export enum SearchRangeIndex {
+  // 年齢
+  Age = 0,
 }
 
 // 検索項目 Date
@@ -127,6 +141,8 @@ export enum SearchSortKey {
   Email = 'email',
   // 媒体
   Site = 'site_id',
+  // 年齢
+  Age = 'age',
   // 選考状況
   Status = 'status',
   // 面接希望日時
@@ -134,7 +150,7 @@ export enum SearchSortKey {
   // 登録日時
   CreatedAt = 'created_at',
   // 原稿
-  Manuscript = 'manuscript',
+  Manuscript = 't_manuscript.id',
   // 種別
-  Type = 'type',
+  Type = 't_applicant_type.id',
 }

@@ -45,6 +45,7 @@ import {
   CreateManuscriptRequest,
   CreateApplicantTypeRequest,
   ListApplicantTypeRequest,
+  SearchManuscriptByTeamRequest,
 } from './model/request'
 
 /* 
@@ -251,6 +252,30 @@ export const CheckAssignableUserCSR = async (
 export const AssignUserCSR = async (req: AssignUserRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/assign_user`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 応募者種別一覧_同一チーム CSR
+export const ListApplicantTypeByTeamCSR = async (
+  req: ListApplicantTypeRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/types`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 原稿検索_同一チーム CSR
+export const SearchManuscriptByTeamCSR = async (
+  req: SearchManuscriptByTeamRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/search_by_team`,
     req,
     APICommonHeader,
   )

@@ -50,6 +50,8 @@ export type SearchApplicantResponse = {
   email: string
   // 媒体
   site: number
+  // 媒体側ID
+  outerID: string
   // 媒体(媒体名)
   siteName: string
   // 年齢
@@ -72,6 +74,14 @@ export type SearchApplicantResponse = {
   userNames: string[]
   // カレンダーハッシュキー
   calendarHashKey: string
+  // コミットID
+  commitID: string
+  // 原稿
+  content: string
+  // 種別
+  type: string
+  // 予定ハッシュ
+  scheduleHash: string
 }
 
 // API ユーザー検索
@@ -268,7 +278,7 @@ export type ListApplicantTypeResponse = {
   // 種別名
   name: string
   // 書類提出ルール
-  rule: string
+  rule?: string
   // 職種名
-  occupation: string
+  occupation?: string
 }

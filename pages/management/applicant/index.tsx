@@ -5,12 +5,17 @@ import CustomTable from '@/components/common/Table'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import ViewColumnIcon from '@mui/icons-material/ViewColumn'
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
+import FunctionsIcon from '@mui/icons-material/Functions'
+import FeedbackIcon from '@mui/icons-material/Feedback'
 import {
   Body,
   CheckboxPropsField,
   SearchAutoComplete,
   SearchDates,
   SearchForm,
+  SearchRanges,
   SearchSelect,
   SearchSelectTerm,
   SearchSelected,
@@ -20,17 +25,26 @@ import {
   SelectedCheckbox,
   SelectedMenuModel,
   SettingModel,
+  TableDisplayOption,
   TableHeader,
   TableSort,
 } from '@/types/index'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
-import { blue, common } from '@mui/material/colors'
+import {
+  blue,
+  brown,
+  common,
+  deepPurple,
+  green,
+  yellow,
+} from '@mui/material/colors'
 import {
   DocumentUploaded,
   SearchAutoCompIndex,
   SearchDateIndex,
   SearchIndex,
+  SearchRangeIndex,
   SearchSortKey,
   SearchTextIndex,
 } from '@/enum/applicant'
@@ -44,6 +58,8 @@ import {
   RolesRequest,
   SearchUserByCompanyRequest,
   AssignUserRequest,
+  ListApplicantTypeRequest,
+  SearchManuscriptByTeamRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
@@ -55,6 +71,8 @@ import {
   SearchApplicantCSR,
   RolesCSR,
   ApplicantStatusListCSR,
+  ListApplicantTypeByTeamCSR,
+  SearchManuscriptByTeamCSR,
 } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
@@ -78,8 +96,10 @@ import { RouterPath } from '@/enum/router'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
+import CoPresentIcon from '@mui/icons-material/CoPresent'
 import {
   applicantSearchAutoComp,
+  applicantSearchColumns,
   applicantSearchDates,
   applicantSearchPageSize,
   applicantSearchSort,
@@ -99,12 +119,15 @@ import {
   SearchApplicantResponse,
   SiteListResponse,
   SearchUserByCompanyResponse,
+  SearchManuscriptResponse,
+  ListApplicantTypeResponse,
 } from '@/api/model/response'
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
 import Spinner from '@/components/common/modal/Spinner'
 import { GetStaticProps } from 'next'
 import { Dayjs } from 'dayjs'
+import ColumnsModal from '@/components/common/modal/Columns'
 
 type Props = {
   isError: boolean
@@ -122,6 +145,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   )
   const applicantSearchTextList = _.cloneDeep(applicant.search.textForm)
   const applicantSearchAutoCompForm = _.cloneDeep(applicant.search.autoCompForm)
+  const applicantSearchRangesForm = _.cloneDeep(applicant.search.ranges)
   const applicantSearchDatesForm = _.cloneDeep(applicant.search.dates)
   const applicantSearchSortList = Object.assign({}, applicant.search.sort)
   const applicantSearchOption = Object.assign({}, applicant.search.option)
@@ -134,6 +158,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [usersBelongTeam, setUsersBelongTeam] = useState<
     SearchUserByCompanyResponse[]
   >([])
+  const [manuscripts, setManuscripts] = useState<SearchManuscriptResponse[]>([])
+  const [types, setTypes] = useState<ListApplicantTypeResponse[]>([])
+
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(applicant.search.pageSize)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
@@ -146,6 +173,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [open, isOpen] = useState<boolean>(false)
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
   const [userSelectOpen, isUserSelectOpen] = useState<boolean>(false)
+  const [columnsOpen, isColumnsOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [init, isInit] = useState<boolean>(true)
   const [spinner, isSpinner] = useState<boolean>(false)
@@ -200,6 +228,50 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         } as SearchUserByCompanyResponse)
       })
       setUsersBelongTeam(res3)
+
+      // API: 種別一覧_同一チーム
+      const tempList3 = await ListApplicantTypeByTeamCSR({
+        user_hash_key: user.hashKey,
+      } as ListApplicantTypeRequest)
+
+      if (_.isEqual(tempList3.data.code, HttpStatusCode.NoContent)) {
+        isNoContent(true)
+        return
+      }
+
+      const res4: ListApplicantTypeResponse[] = _.map(
+        tempList3.data.list,
+        (item, index) => {
+          return {
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            name: item.name,
+          } as ListApplicantTypeResponse
+        },
+      )
+      setTypes(res4)
+
+      // API: 種別一覧_同一チーム
+      const tempList4 = await SearchManuscriptByTeamCSR({
+        user_hash_key: user.hashKey,
+      } as SearchManuscriptByTeamRequest)
+
+      if (_.isEqual(tempList4.data.code, HttpStatusCode.NoContent)) {
+        isNoContent(true)
+        return
+      }
+
+      const res5: SearchManuscriptResponse[] = _.map(
+        tempList4.data.list,
+        (item, index) => {
+          return {
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            content: item.content,
+          } as SearchManuscriptResponse
+        },
+      )
+      setManuscripts(res5)
 
       setSearchObj({
         selectList: [
@@ -301,6 +373,44 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
               },
             ] as SearchSelectTerm[],
           },
+          {
+            name: t('features.applicant.header.manuscript'),
+            isRadio: false,
+            list: _.map(res5, (item) => {
+              return {
+                id: Number(item.no),
+                key: item.hashKey,
+                value: item.content,
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, Number(item.no)),
+                      _.isEqual(option.index, SearchIndex.Manuscript),
+                    ])
+                  }),
+                ),
+              }
+            }) as SearchSelectTerm[],
+          },
+          {
+            name: t('features.applicant.header.type'),
+            isRadio: false,
+            list: _.map(res4, (item) => {
+              return {
+                id: Number(item.no),
+                key: item.hashKey,
+                value: item.name,
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, Number(item.no)),
+                      _.isEqual(option.index, SearchIndex.Type),
+                    ])
+                  }),
+                ),
+              }
+            }) as SearchSelectTerm[],
+          },
         ] as SearchSelect[],
         textForm: [
           {
@@ -312,6 +422,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             id: applicantSearchTextList[SearchTextIndex.Email].id,
             name: t(applicantSearchTextList[SearchTextIndex.Email].name),
             value: applicantSearchTextList[SearchTextIndex.Email].value,
+          },
+          {
+            id: applicantSearchTextList[SearchTextIndex.OuterID].id,
+            name: t(applicantSearchTextList[SearchTextIndex.OuterID].name),
+            value: applicantSearchTextList[SearchTextIndex.OuterID].value,
+          },
+          {
+            id: applicantSearchTextList[SearchTextIndex.CommitID].id,
+            name: t(applicantSearchTextList[SearchTextIndex.CommitID].name),
+            value: applicantSearchTextList[SearchTextIndex.CommitID].value,
           },
         ] as SearchText[],
         autoCompForm: [
@@ -332,6 +452,14 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                 .selectedItems,
           },
         ] as SearchAutoComplete[],
+        ranges: [
+          {
+            id: applicantSearchRangesForm[SearchRangeIndex.Age].id,
+            name: t(applicantSearchRangesForm[SearchRangeIndex.Age].name),
+            min: applicantSearchRangesForm[SearchRangeIndex.Age].min,
+            max: applicantSearchRangesForm[SearchRangeIndex.Age].max,
+          },
+        ] as SearchRanges[],
         dates: [
           {
             id: applicantSearchDatesForm[SearchDateIndex.CreatedAt].id,
@@ -431,6 +559,24 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           return item2.hashKey
         },
       ),
+      // 原稿一覧
+      manuscripts: _.map(
+        _.filter(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, SearchIndex.Manuscript),
+        ),
+        (item2) => {
+          return item2.hashKey
+        },
+      ),
+      // 種別一覧
+      types: _.map(
+        _.filter(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, SearchIndex.Type),
+        ),
+        (item2) => {
+          return item2.hashKey
+        },
+      ),
       // 履歴書
       resume_flg: _.isEmpty(resume)
         ? null
@@ -447,6 +593,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       name: applicantSearchTextList[SearchTextIndex.Name].value.trim(),
       // メールアドレス
       email: applicantSearchTextList[SearchTextIndex.Email].value.trim(),
+      // 媒体側ID
+      outer_id: applicantSearchTextList[SearchTextIndex.OuterID].value.trim(),
+      // コミットID
+      commit_id: applicantSearchTextList[SearchTextIndex.CommitID].value.trim(),
       // 面接官
       users: _.map(
         applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
@@ -481,9 +631,11 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             no: currentSize * (currentPage - 1) + Number(index) + 1,
             hashKey: r.hash_key,
             name: r.name,
+            outerID: r.outer_id,
             site: Number(r.site_id),
             siteName: r.site_name,
             email: r.email,
+            age: Number(r.age),
             statusName: r.status_name,
             interviewerDate: new Date(r.start),
             google: r.google_meet_url,
@@ -497,6 +649,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
               return u.name
             }),
             calendarHashKey: r.calendar_hash_key,
+            commitID: r.commit_id,
+            content: r.content,
+            type: r.type,
+            scheduleHash: r.schedule_hash_key,
           } as SearchApplicantResponse)
         })
         setBodies(list)
@@ -723,11 +879,17 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       router.push(RouterPath.Error)
     }
 
+    const app = _.find(bodies, (b) => _.isEqual(b.hashKey, a.key))
+    if (_.isUndefined(app)) {
+      router.push(RouterPath.Error)
+    }
+
     // API: 面接官割り振り
     await AssignUserCSR({
       user_hash_key: user.hashKey,
       hash_key: a.key,
       hash_keys: hashKeys,
+      remove_schedule_hash_keys: [app.scheduleHash],
     } as AssignUserRequest)
       .then(async () => {
         toast(t('features.applicant.menu.user') + t('common.toast.create'), {
@@ -797,7 +959,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     // Google Meet
     {
       name: t('features.applicant.menu.googleMeet'),
-      icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
+      icon: <MeetingRoomIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: blue[300],
       condition: _.every([
         _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
@@ -882,8 +1044,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     // 面接官割振り
     {
       name: t('features.applicant.menu.user'),
-      icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
-      color: common.black,
+      icon: <CoPresentIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: setting.color,
       condition: _.every([
         _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
         _.findIndex(bodies, (item) =>
@@ -917,6 +1079,38 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       onClick: async () => {
         isUserSelectOpen(true)
       },
+    },
+    // ステータス変更
+    {
+      name: t('features.applicant.menu.status'),
+      icon: <EmojiEmotionsIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: yellow[800],
+      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+      onClick: async () => {},
+    },
+    // 原稿設定
+    {
+      name: t('features.applicant.menu.manuscript'),
+      icon: <ReceiptLongIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: brown[500],
+      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+      onClick: async () => {},
+    },
+    // 種別設定
+    {
+      name: t('features.applicant.menu.type'),
+      icon: <FunctionsIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: deepPurple[500],
+      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+      onClick: async () => {},
+    },
+    // 面接結果入力
+    {
+      name: t('features.applicant.menu.result'),
+      icon: <FeedbackIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: green[500],
+      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+      onClick: async () => {},
     },
   ]
 
@@ -1224,6 +1418,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [tableHeader, setTableHeader] = useState<Record<string, TableHeader>>({
     no: {
       name: 'No',
+      minW: 30,
       option: {
         isChange: false,
         display: true,
@@ -1258,6 +1453,13 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : false,
       },
     },
+    outerID: {
+      name: t('features.applicant.header.outerID'),
+      option: {
+        isChange: applicantSearchOption['outerID'].isChange,
+        display: applicantSearchOption['outerID'].display,
+      },
+    },
     site: {
       name: t('features.applicant.header.site'),
       option: {
@@ -1268,6 +1470,21 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         key: SearchSortKey.Site,
         target: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key),
         isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : false,
+      },
+    },
+    age: {
+      name: t('features.applicant.header.age'),
+      minW: 100,
+      option: {
+        isChange: applicantSearchOption['age'].isChange,
+        display: applicantSearchOption['age'].display,
+      },
+      sort: {
+        key: SearchSortKey.Age,
+        target: _.isEqual(SearchSortKey.Age, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Age, applicantSearchSortList.key)
           ? applicantSearchSortList.isAsc
           : false,
       },
@@ -1375,7 +1592,34 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : true,
       },
     },
+    commitID: {
+      name: t('features.applicant.header.commitID'),
+      option: {
+        isChange: applicantSearchOption['commitID'].isChange,
+        display: applicantSearchOption['commitID'].display,
+      },
+    },
   })
+
+  const changeColumns = (h: Record<string, TableHeader>) => {
+    isLoading(true)
+    isSpinner(true)
+
+    const header: Record<string, TableDisplayOption> = {}
+    for (const key of _.keys(h)) {
+      header[key] = {
+        isChange: h[key].option?.isChange || false,
+        display: h[key].option?.display || false,
+      }
+    }
+
+    store.dispatch(applicantSearchColumns(header))
+    setTableHeader(h)
+
+    isLoading(false)
+    isSpinner(false)
+    isColumnsOpen(false)
+  }
 
   const changeTarget = (sort: TableSort) => {
     const newObj = Object.assign({}, searchObj)
@@ -1498,6 +1742,12 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       ]) && (
         <>
           {spinner && <Spinner />}
+          {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
+            <SelectedMenu
+              menu={dispMenu}
+              size={_.size(_.filter(checkedList, (c) => c.checked))}
+            ></SelectedMenu>
+          )}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
               {_.every([pageDisp, !_.isEqual(size, 0)]) && (
@@ -1511,25 +1761,11 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                   changePageSize={changePageSize}
                 ></Pagination>
               )}
-              {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
-                <SelectedMenu
-                  menu={dispMenu}
-                  size={_.size(_.filter(checkedList, (c) => c.checked))}
-                ></SelectedMenu>
-              )}
-              <Box
-                sx={[
-                  TableMenuButtons,
-                  mb(3),
-                  _.size(_.filter(checkedList, (c) => c.checked)) > 0
-                    ? maxW(300)
-                    : null,
-                ]}
-              >
+              <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
-                  onClick={() => isSearchOpen(true)}
+                  onClick={() => isColumnsOpen(true)}
                 >
                   <ViewColumnIcon sx={mr(0.25)} />
                   {t('common.button.columnDisplay')}
@@ -1573,11 +1809,21 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                   no: new Body(String(l.no), tableHeader.no.option.display),
                   name: new Body(l.name, tableHeader.name.option.display),
                   email: new Body(l.email, tableHeader.email.option.display),
+                  outerID: new Body(
+                    l.outerID,
+                    tableHeader.outerID.option.display,
+                  ),
                   site: new Body(l.siteName, tableHeader.site.option.display),
+                  age: new Body(l.age, tableHeader.age.option.display),
                   status: new Body(
                     l.statusName,
                     tableHeader.status.option.display,
                   ),
+                  manuscript: new Body(
+                    l.content,
+                    tableHeader.manuscript.option.display,
+                  ),
+                  type: new Body(l.type, tableHeader.type.option.display),
                   interviewerDate:
                     l.interviewerDate.getFullYear() < 2
                       ? new Body('', tableHeader.interviewerDate.option.display)
@@ -1632,6 +1878,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                   createdAt: new Body(
                     formatDate(l.createdAt),
                     tableHeader.createdAt.option.display,
+                  ),
+                  commitID: new Body(
+                    l.commitID,
+                    tableHeader.commitID.option.display,
                   ),
                 }
               })}
@@ -1704,6 +1954,12 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             submit={submitUsers}
             close={() => isUserSelectOpen(false)}
           ></ItemsSelectModal>
+          <ColumnsModal
+            open={columnsOpen}
+            close={() => isColumnsOpen(false)}
+            headers={tableHeader}
+            submit={changeColumns}
+          ></ColumnsModal>
         </>
       )}
     </>

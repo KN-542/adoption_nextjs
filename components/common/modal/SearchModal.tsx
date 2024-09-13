@@ -88,64 +88,79 @@ const SearchModal = (props: Props) => {
           <DialogContent>
             <Box>
               <Box sx={FormModalMenu}>
-                {_.map(props.searchObj.selectList, (item, index) => {
-                  return (
-                    <Box key={index}>
-                      <Box sx={SpaceBetween}>
-                        <Box
-                          component="span"
-                          sx={[ml(4), mr(4), mt(0.5), Bold]}
-                        >
-                          {item.name}
-                        </Box>
-                        <Button
-                          variant="text"
-                          sx={[
-                            ml(4),
-                            mr(4),
-                            ButtonColor(setting.color, common.white),
-                          ]}
-                          onClick={() => {
-                            props.selectInit(index)
-                          }}
-                        >
-                          {t('common.search.initSelected')}
-                        </Button>
-                      </Box>
-                      <Box sx={SearchModalSelect}>
-                        {_.map(item.list, (option, index2) => (
-                          <Box key={index2}>
-                            <Button
-                              fullWidth
-                              sx={SearchModalSelectButtonColor(
-                                option.isSelected,
-                                setting.color,
-                                common.white,
-                              )}
-                              onClick={() => {
-                                props.changeSearchObjBySelect(
-                                  index,
-                                  index2,
-                                  option.id,
-                                  item.isRadio,
-                                  option.key,
-                                )
-                              }}
-                            >
-                              {option.value}
-                            </Button>
+                {_.map(
+                  _.filter(
+                    props.searchObj.selectList,
+                    (s) => !_.isEmpty(s.list),
+                  ),
+                  (item, index) => {
+                    return (
+                      <Box key={index}>
+                        <Box sx={SpaceBetween}>
+                          <Box
+                            component="span"
+                            sx={[ml(4), mr(4), mt(0.5), Bold]}
+                          >
+                            {item.name}
                           </Box>
-                        ))}
+                          <Button
+                            variant="text"
+                            sx={[
+                              ml(4),
+                              mr(4),
+                              ButtonColor(setting.color, common.white),
+                            ]}
+                            onClick={() => {
+                              props.selectInit(index)
+                            }}
+                          >
+                            {t('common.search.initSelected')}
+                          </Button>
+                        </Box>
+                        <Box sx={SearchModalSelect}>
+                          {_.map(item.list, (option, index2) => (
+                            <Box key={index2}>
+                              <Button
+                                fullWidth
+                                sx={SearchModalSelectButtonColor(
+                                  option.isSelected,
+                                  setting.color,
+                                  common.white,
+                                )}
+                                onClick={() => {
+                                  props.changeSearchObjBySelect(
+                                    index,
+                                    index2,
+                                    option.id,
+                                    item.isRadio,
+                                    option.key,
+                                  )
+                                }}
+                              >
+                                {option.value}
+                              </Button>
+                            </Box>
+                          ))}
+                        </Box>
                       </Box>
-                    </Box>
-                  )
-                })}
+                    )
+                  },
+                )}
               </Box>
 
               <Box
                 sx={[
                   FormModalMenu,
-                  mt(_.size(props.searchObj.selectList) > 0 ? 4 : 0),
+                  mt(
+                    _.size(
+                      _.filter(
+                        props.searchObj.selectList,
+                        (s) => !_.isEmpty(s.list),
+                      ),
+                    ) > 0
+                      ? 4
+                      : 0,
+                  ),
                 ]}
               >
                 {_.map(props.searchObj.textForm, (item, index) => {

@@ -65,7 +65,7 @@ const CustomTable = (props: Props) => {
       {_.size(props.bodies) > 0 && (
         <Box sx={[w(90), M0Auto]}>
           <Paper sx={[mb(2)]}>
-            <TableContainer sx={CustomTableContainer(props.height)}>
+            <TableContainer sx={[CustomTableContainer(props.height)]}>
               <Table sx={minW(750)} aria-labelledby="tableTitle" size="medium">
                 <TableHead sx={TableHeaderSX}>
                   <TableRow>
@@ -109,6 +109,7 @@ const CustomTable = (props: Props) => {
                         sx={[
                           Color(common.white),
                           BackGroundColor(setting.color),
+                          minW(header.minW ?? 20 * _.size(props.headers)),
                         ]}
                       >
                         {!_.isEmpty(header.sort) && (

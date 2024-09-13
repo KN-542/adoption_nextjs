@@ -12,6 +12,7 @@ import {
   ColumnMt4,
   DialogContentSetting,
   M0Auto,
+  mb,
   minW,
   ml,
   mr,
@@ -27,11 +28,16 @@ import { ListApplicantTypeCSR, RolesCSR } from '@/api/repository'
 import { ListApplicantTypeRequest, RolesRequest } from '@/api/model/request'
 import _ from 'lodash'
 import { changeSetting } from '@/hooks/store'
-import { SettingModel } from '@/types/index'
+import { Body, Icons, SettingModel, TableHeader } from '@/types/index'
 import { RouterPath } from '@/enum/router'
 import { Operation } from '@/enum/common'
 import ClearIcon from '@mui/icons-material/Clear'
 import { HttpStatusCode } from 'axios'
+import CustomTable from '@/components/common/Table'
+import EditNoteIcon from '@mui/icons-material/EditNote'
+import DeleteIcon from '@mui/icons-material/Delete'
+
+const PAGE_SIZE = 25
 
 type Props = {
   locale: string
@@ -57,6 +63,7 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
 
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [types, setTypes] = useState<ListApplicantTypeResponse[]>([])
+  const [icons, setIcons] = useState<Icons[]>([])
 
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
@@ -78,6 +85,21 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
         router.push(RouterPath.Error)
         return
       }
+
+      setIcons([
+        {
+          color: setting.toastSuccessColor,
+          element: <EditNoteIcon />,
+          role: res.data.map[Operation.ManagementTeamEdit],
+          onClick: (i: number) => {},
+        },
+        {
+          color: setting.toastErrorColor,
+          element: <DeleteIcon />,
+          role: res.data.map[Operation.ManagementTeamDelete],
+          onClick: (i: number) => {},
+        },
+      ])
 
       // API: 応募者種別一覧
       const res2 = await ListApplicantTypeCSR({
@@ -127,6 +149,21 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
       isInit(false)
     }
   }
+
+  const tableHeader: TableHeader[] = [
+    {
+      name: 'No',
+    },
+    {
+      name: t('features.setting.team.sub.type.header.name'),
+    },
+    {
+      name: t('features.setting.team.sub.type.header.documentRule'),
+    },
+    {
+      name: t('features.setting.team.sub.type.header.occupation'),
+    },
+  ]
 
   useEffect(() => {
     // トースト
@@ -197,11 +234,11 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
           <SettingMenu />
           {_.every([!loading, roles[Operation.ManagementSettingTeam]]) && (
             <DialogContent sx={[DialogContentSetting, w(90), ml(3)]}>
-              <Box sx={[TableMenuButtons, mt(1)]}>
+              <Box sx={[TableMenuButtons, w(90), mt(1)]}>
                 <Button
                   variant="contained"
                   sx={[
-                    mr(10),
+                    mb(2),
                     minW(100),
                     ButtonColorInverse(common.white, setting.color),
                   ]}
@@ -217,7 +254,21 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
                 </Button>
               </Box>
 
-              <Box sx={ColumnMt4}></Box>
+              <CustomTable
+                height={75}
+                headers={tableHeader}
+                isNoContent={false}
+                icons={icons}
+                pageSize={PAGE_SIZE}
+                bodies={_.map(types, (u) => {
+                  return {
+                    no: new Body(u.no),
+                    name: new Body(u.name),
+                    documentRule: new Body(u.rule),
+                    occupation: new Body(u.occupation),
+                  }
+                })}
+              />
             </DialogContent>
           )}
         </Box>

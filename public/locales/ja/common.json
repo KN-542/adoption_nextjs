@@ -40,6 +40,7 @@
         "createUser": "ログイン情報",
         "search": "検索条件指定",
         "delete": "データの削除",
+        "columns": "表示列指定",
         "schedule": {
           "create": "カレンダーの登録",
           "edit": "カレンダーの編集",
@@ -204,8 +205,9 @@
       },
       "header": {
         "name": "氏名",
-        "site": "媒体",
         "email": "メールアドレス",
+        "site": "媒体",
+        "outerID": "媒体側ID",
         "age": "年齢",
         "status": "選考状況",
         "interviewerDate": "面接予定日",
@@ -214,7 +216,8 @@
         "users": "担当面接官",
         "createdAt": "登録日時",
         "manuscript": "原稿",
-        "type": "種別"
+        "type": "種別",
+        "commitID": "コミットID"
       },
       "assign": {
         "subTitle": "ユーザー"
@@ -225,7 +228,11 @@
       },
       "menu": {
         "googleMeet": "Google Meet",
-        "user": "面接官割振り"
+        "user": "面接官割振り",
+        "status": "ステータス変更",
+        "manuscript": "原稿設定",
+        "type": "種別設定",
+        "result": "面接結果入力"
       }
     },
     "user": {
