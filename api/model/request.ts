@@ -188,6 +188,30 @@ export class CreateApplicantTypeRequest extends AbstractRequest2 {
 export class ListApplicantTypeRequest extends AbstractRequest2 {
   user_hash_key: string
 }
+// ステータス更新
+export class UpdateSelectStatusRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // ステータスハッシュ
+  status_hash: string
+  // 応募者ハッシュ
+  applicants: string[]
+}
+// 原稿紐づけ登録
+export class CreateApplicantManuscriptAssociationRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 原稿ハッシュ
+  manuscript_hash: string
+  // 応募者ハッシュ
+  applicants: string[]
+}
+// 種別紐づけ登録
+export class CreateApplicantTypeAssociationRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 種別ハッシュ
+  type_hash: string
+  // 応募者ハッシュ
+  applicants: string[]
+}
 
 /* 
   ユーザー

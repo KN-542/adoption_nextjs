@@ -46,6 +46,9 @@ import {
   CreateApplicantTypeRequest,
   ListApplicantTypeRequest,
   SearchManuscriptByTeamRequest,
+  UpdateSelectStatusRequest,
+  CreateApplicantManuscriptAssociationRequest,
+  CreateApplicantTypeAssociationRequest,
 } from './model/request'
 
 /* 
@@ -270,12 +273,22 @@ export const ListApplicantTypeByTeamCSR = async (
   return res
 }
 
-// 原稿検索_同一チーム CSR
-export const SearchManuscriptByTeamCSR = async (
-  req: SearchManuscriptByTeamRequest,
+// ステータス更新 CSR
+export const UpdateSelectStatusCSR = async (req: UpdateSelectStatusRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/update_status`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 種別紐づけ登録 CSR
+export const CreateApplicantTypeAssociationCSR = async (
+  req: CreateApplicantTypeAssociationRequest,
 ) => {
   const res = await axios1.post(
-    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/search_by_team`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/update_type`,
     req,
     APICommonHeader,
   )
@@ -506,6 +519,30 @@ export const SearchManuscriptCSR = async (req: SearchManuscriptRequest) => {
 export const CreateManuscriptCSR = async (req: CreateManuscriptRequest) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/create`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 原稿検索_同一チーム CSR
+export const SearchManuscriptByTeamCSR = async (
+  req: SearchManuscriptByTeamRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/search_by_team`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 原稿紐づけ登録 CSR
+export const CreateApplicantAssociationCSR = async (
+  req: CreateApplicantManuscriptAssociationRequest,
+) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/assign_applicant`,
     req,
     APICommonHeader,
   )

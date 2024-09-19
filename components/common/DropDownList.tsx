@@ -18,6 +18,7 @@ type Props = {
   list: SelectTitlesModel[]
   initList: SelectTitlesModel[]
   sx?: any
+  icon?: JSX.Element
   onChange(value: SelectTitlesModel[]): void
 }
 
@@ -39,9 +40,12 @@ const DropDownList = (props: Props) => {
           ),
       )}
       getOptionLabel={(option) => option.title}
-      renderOption={(props, option) => (
-        <ListItem {...props} sx={[w(100)]}>
-          <AccountCircleIcon fontSize="large" sx={mr(2)} />
+      renderOption={(propositions, option) => (
+        <ListItem {...propositions} sx={[w(100)]}>
+          {!_.isEmpty(props.icon) && <>{props.icon}</>}
+          {_.isEmpty(props.icon) && (
+            <AccountCircleIcon fontSize="large" sx={mr(2)} />
+          )}
           <Box sx={[Column, w(100)]}>
             <Box sx={w(100)}>{option.title}</Box>
             {!_.isEmpty(option.subTitle) && (

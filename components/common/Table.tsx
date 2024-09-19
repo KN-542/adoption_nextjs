@@ -45,12 +45,13 @@ import { Button } from '@mui/material'
 
 type Props = {
   height: number
-  isNoContent: boolean
+  isNoContent?: boolean
   headers: TableHeader[]
   bodies: Record<string, Body>[]
   pageSize: number
   icons?: Icons[]
   checkbox?: CheckboxPropsField
+  w?: number
   changeTarget?: (s: TableSort) => void
   search?: (i: number, i2: number) => void
   changePage?: (i: number) => void
@@ -63,7 +64,7 @@ const CustomTable = (props: Props) => {
   return (
     <>
       {_.size(props.bodies) > 0 && (
-        <Box sx={[w(90), M0Auto]}>
+        <Box sx={[w(props.w ?? 90), M0Auto]}>
           <Paper sx={[mb(2)]}>
             <TableContainer sx={[CustomTableContainer(props.height)]}>
               <Table sx={minW(750)} aria-labelledby="tableTitle" size="medium">

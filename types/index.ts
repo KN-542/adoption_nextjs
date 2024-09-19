@@ -216,7 +216,7 @@ export type SelectedMenuModel = {
   icon: JSX.Element
   color: string
   condition: boolean
-  onClick?
+  onClick?: () => void
 }
 
 /* 

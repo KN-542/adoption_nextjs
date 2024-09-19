@@ -60,6 +60,9 @@ import {
   AssignUserRequest,
   ListApplicantTypeRequest,
   SearchManuscriptByTeamRequest,
+  UpdateSelectStatusRequest,
+  CreateApplicantManuscriptAssociationRequest,
+  CreateApplicantTypeAssociationRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
@@ -73,6 +76,9 @@ import {
   ApplicantStatusListCSR,
   ListApplicantTypeByTeamCSR,
   SearchManuscriptByTeamCSR,
+  UpdateSelectStatusCSR,
+  CreateApplicantAssociationCSR,
+  CreateApplicantTypeAssociationCSR,
 } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
@@ -82,7 +88,6 @@ import {
   DirectionColumnForTable,
   FontSize,
   M0Auto,
-  maxW,
   mb,
   ml,
   mr,
@@ -173,6 +178,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [open, isOpen] = useState<boolean>(false)
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
   const [userSelectOpen, isUserSelectOpen] = useState<boolean>(false)
+  const [statusSelectOpen, isStatusSelectOpen] = useState<boolean>(false)
+  const [manuscriptSelectOpen, isManuscriptSelectOpen] =
+    useState<boolean>(false)
+  const [typeSelectOpen, isTypeSelectOpen] = useState<boolean>(false)
   const [columnsOpen, isColumnsOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [init, isInit] = useState<boolean>(true)
@@ -954,6 +963,237 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       })
   }
 
+  const selectStatus = async (hashKey: string) => {
+    const hashKeys: string[] = _.map(
+      _.filter(
+        bodies,
+        (b) =>
+          !_.isEmpty(
+            _.compact(
+              _.map(
+                _.filter(checkedList, (c) => c.checked),
+                (cc) => {
+                  return _.isEqual(cc.key, b.hashKey)
+                },
+              ),
+            ),
+          ),
+      ),
+      (item) => {
+        return item.hashKey
+      },
+    )
+
+    // API: ステータス更新
+    await UpdateSelectStatusCSR({
+      user_hash_key: user.hashKey,
+      status_hash: hashKey,
+      applicants: hashKeys,
+    } as UpdateSelectStatusRequest)
+      .then(async () => {
+        toast(t('features.applicant.menu.status') + t('common.toast.edit'), {
+          style: {
+            backgroundColor: setting.toastSuccessColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        await search(1, pageSize)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          throw error
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
+  const selectManuscript = async (hashKey: string) => {
+    const hashKeys: string[] = _.map(
+      _.filter(
+        bodies,
+        (b) =>
+          !_.isEmpty(
+            _.compact(
+              _.map(
+                _.filter(checkedList, (c) => c.checked),
+                (cc) => {
+                  return _.isEqual(cc.key, b.hashKey)
+                },
+              ),
+            ),
+          ),
+      ),
+      (item) => {
+        return item.hashKey
+      },
+    )
+
+    // API: 原稿紐づけ登録
+    await CreateApplicantAssociationCSR({
+      user_hash_key: user.hashKey,
+      manuscript_hash: hashKey,
+      applicants: hashKeys,
+    } as CreateApplicantManuscriptAssociationRequest)
+      .then(async () => {
+        toast(
+          t('features.applicant.menu.manuscript') + t('common.toast.create'),
+          {
+            style: {
+              backgroundColor: setting.toastSuccessColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
+
+        await search(1, pageSize)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          throw error
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
+  const selectType = async (hashKey: string) => {
+    const hashKeys: string[] = _.map(
+      _.filter(
+        bodies,
+        (b) =>
+          !_.isEmpty(
+            _.compact(
+              _.map(
+                _.filter(checkedList, (c) => c.checked),
+                (cc) => {
+                  return _.isEqual(cc.key, b.hashKey)
+                },
+              ),
+            ),
+          ),
+      ),
+      (item) => {
+        return item.hashKey
+      },
+    )
+
+    // API: 種別紐づけ登録
+    await CreateApplicantTypeAssociationCSR({
+      user_hash_key: user.hashKey,
+      type_hash: hashKey,
+      applicants: hashKeys,
+    } as CreateApplicantTypeAssociationRequest)
+      .then(async () => {
+        toast(t('features.applicant.menu.type') + t('common.toast.create'), {
+          style: {
+            backgroundColor: setting.toastSuccessColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        await search(1, pageSize)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          throw error
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
   // 選択済みメニュー表示
   const dispMenu: SelectedMenuModel[] = [
     // Google Meet
@@ -1076,7 +1316,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         ),
         roles[Operation.ManagementApplicantAssignUser],
       ]),
-      onClick: async () => {
+      onClick: () => {
         isUserSelectOpen(true)
       },
     },
@@ -1085,24 +1325,33 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       name: t('features.applicant.menu.status'),
       icon: <EmojiEmotionsIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: yellow[800],
-      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
-      onClick: async () => {},
+      condition: _.every([
+        !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+        roles[Operation.ManagementApplicantAssignStatus],
+      ]),
+      onClick: () => isStatusSelectOpen(true),
     },
     // 原稿設定
     {
       name: t('features.applicant.menu.manuscript'),
       icon: <ReceiptLongIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: brown[500],
-      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
-      onClick: async () => {},
+      condition: _.every([
+        !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+        roles[Operation.ManagementApplicantAssignManuscript],
+      ]),
+      onClick: () => isManuscriptSelectOpen(true),
     },
     // 種別設定
     {
       name: t('features.applicant.menu.type'),
       icon: <FunctionsIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: deepPurple[500],
-      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
-      onClick: async () => {},
+      condition: _.every([
+        !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+        roles[Operation.ManagementApplicantAssignType],
+      ]),
+      onClick: () => isTypeSelectOpen(true),
     },
     // 面接結果入力
     {
@@ -1110,7 +1359,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       icon: <FeedbackIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: green[500],
       condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
-      onClick: async () => {},
+      onClick: () => {},
     },
   ]
 
@@ -1746,7 +1995,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             <SelectedMenu
               menu={dispMenu}
               size={_.size(_.filter(checkedList, (c) => c.checked))}
-            ></SelectedMenu>
+            />
           )}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
@@ -1759,7 +2008,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                   search={search}
                   changePage={changePage}
                   changePageSize={changePageSize}
-                ></Pagination>
+                />
               )}
               <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
@@ -1912,7 +2161,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             open={open}
             closeModal={() => isOpen(false)}
             afterFuncAsync={readFile}
-          ></UploadModal>
+          />
           <SearchModal
             open={searchOpen}
             closeModal={() => isSearchOpen(false)}
@@ -1928,7 +2177,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             changeSearchObjByAutoComp={changeSearchObjByAutoComp}
             changeSearchObjByFromDates={changeSearchObjByFromDates}
             changeSearchObjByToDates={changeSearchObjByToDates}
-          ></SearchModal>
+          />
           <ItemsSelectModal
             open={userSelectOpen}
             items={_.map(usersBelongTeam, (u) => {
@@ -1948,18 +2197,235 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                     ),
                   )[0].users
             }
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'users'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(bodies, (b) =>
+                    _.isEqual(
+                      b.hashKey,
+                      _.find(checkedList, (c) => c.checked).key,
+                    ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  users: new Body(
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(l.userNames, (user, index) => {
+                          return <Box key={index}>{user}</Box>
+                        })}
+                      </Box>
+                    ),
+                  ),
+                }
+              },
+            )}
             title={t('features.applicant.menu.user')}
-            subTitle={t('features.applicant.assign.subTitle')}
+            subTitle={t('features.applicant.assign.user.subTitle')}
             buttonTitle={t('features.applicant.menu.user')}
+            msg={t('features.applicant.assign.user.msg')}
+            icon={<CoPresentIcon fontSize="large" sx={mr(2)} />}
             submit={submitUsers}
             close={() => isUserSelectOpen(false)}
-          ></ItemsSelectModal>
+          />
+          <ItemsSelectModal
+            open={statusSelectOpen}
+            single={true}
+            items={_.map(statusList, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.name,
+                subTitle: '',
+              } as SelectTitlesModel
+            })}
+            selectedItems={[]}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'status'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  status: new Body(l.statusName),
+                }
+              },
+            )}
+            title={t('features.applicant.menu.status')}
+            subTitle={t('features.applicant.menu.status')}
+            buttonTitle={t('features.applicant.menu.status')}
+            msg={t('features.applicant.assign.status.msg')}
+            icon={<EmojiEmotionsIcon fontSize="large" sx={mr(2)} />}
+            w={80}
+            m={15}
+            submit={selectStatus}
+            close={() => isStatusSelectOpen(false)}
+          />
+          <ItemsSelectModal
+            open={manuscriptSelectOpen}
+            single={true}
+            items={_.map(manuscripts, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.content,
+                subTitle: '',
+              } as SelectTitlesModel
+            })}
+            selectedItems={[]}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'manuscript'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  manuscript: new Body(l.content),
+                }
+              },
+            )}
+            title={t('features.applicant.menu.manuscript')}
+            subTitle={t('features.applicant.menu.manuscript')}
+            buttonTitle={t('features.applicant.menu.manuscript')}
+            msg={t('features.applicant.assign.manuscript.msg')}
+            icon={<ReceiptLongIcon fontSize="large" sx={mr(2)} />}
+            w={80}
+            m={15}
+            submit={selectManuscript}
+            close={() => isManuscriptSelectOpen(false)}
+          />
+          <ItemsSelectModal
+            open={typeSelectOpen}
+            single={true}
+            items={_.map(types, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.name,
+                subTitle: '',
+              } as SelectTitlesModel
+            })}
+            selectedItems={[]}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'type'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  type: new Body(l.type),
+                }
+              },
+            )}
+            title={t('features.applicant.menu.type')}
+            subTitle={t('features.applicant.menu.type')}
+            buttonTitle={t('features.applicant.menu.type')}
+            msg={t('features.applicant.assign.type.msg')}
+            icon={<FunctionsIcon fontSize="large" sx={mr(2)} />}
+            w={80}
+            m={15}
+            submit={selectType}
+            close={() => isTypeSelectOpen(false)}
+          />
           <ColumnsModal
             open={columnsOpen}
             close={() => isColumnsOpen(false)}
             headers={tableHeader}
             submit={changeColumns}
-          ></ColumnsModal>
+          />
         </>
       )}
     </>
