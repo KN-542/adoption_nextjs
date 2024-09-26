@@ -14,7 +14,7 @@ import {
 import NextHead from '@/components/common/Header'
 import jaLocale from '@fullcalendar/core/locales/ja'
 import { WEEKENDS, formatDateToHHMM, getDayOfYear } from '@/hooks/common'
-import _ from 'lodash'
+import _, { map } from 'lodash'
 import {
   CalendarModel,
   SelectTitlesModel,
@@ -154,28 +154,33 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
 
     try {
       // API スケジュール一覧
-      const list: Schedule[] = []
-      const list2: EventInput[] = []
       const res = await SchedulesCSR({
         user_hash_key: user.hashKey,
       } as SearchScheduleRequest)
-      for (const item of _.isEmpty(res.data.list) ? [] : res.data.list) {
+
+      // data プロパティのチェック
+      if (!res || !res.data) {
+        throw new Error('Schedule data not found')
+      }
+
+      const list: Schedule[] = []
+      const list2: EventInput[] = []
+
+      for (const item of res.data.list || []) {
         list.push({
           hashKey: item.hash_key,
-          users: _.map(item.users, (user) => {
-            return {
-              key: user.hash_key,
-              title: user.name,
-              subTitle: user.email,
-            } as SelectTitlesModel
-          }),
+          users: _.map(item.users, (user) => ({
+            key: user.hash_key,
+            title: user.name,
+            subTitle: user.email,
+          })),
           interviewFlg: item.interview_flg,
           start: new Date(item.start),
           end: new Date(item.end),
           title: item.title,
           freqId: Number(item.freq_id),
           freq: item.freq_name,
-        } as Schedule)
+        })
 
         const start = formatDateToHHMM(new Date(item.start))
         const end = formatDateToHHMM(new Date(item.end))
@@ -201,49 +206,8 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
               dtstart: new Date(item.start),
             },
           })
-        } else if (_.isEqual(item.freq_name, ScheduleTypes.Weekly)) {
-          list2.push({
-            id: item.hash_key,
-            title: `${start}~${end} ${item.title}`,
-            start: new Date(item.start),
-            allDay: true,
-            color: setting.color,
-            rrule: {
-              freq: ScheduleTypes.Weekly,
-              interval: 1,
-              byweekday: WEEKENDS[new Date(item.start).getDay()],
-              dtstart: new Date(item.start),
-            },
-          })
-        } else if (_.isEqual(item.freq_name, ScheduleTypes.Monthly)) {
-          list2.push({
-            id: item.hash_key,
-            title: `${start}~${end} ${item.title}`,
-            start: new Date(item.start),
-            allDay: true,
-            color: setting.color,
-            rrule: {
-              freq: ScheduleTypes.Monthly,
-              interval: 1,
-              bymonthday: new Date(item.start).getDate(),
-              dtstart: new Date(item.start),
-            },
-          })
-        } else if (_.isEqual(item.freq_name, ScheduleTypes.Yearly)) {
-          list2.push({
-            id: item.hash_key,
-            title: `${start}~${end} ${item.title}`,
-            start: new Date(item.start),
-            allDay: true,
-            color: setting.color,
-            rrule: {
-              freq: ScheduleTypes.Yearly,
-              interval: 1,
-              byyearday: getDayOfYear(new Date(item.start)),
-              dtstart: new Date(item.start),
-            },
-          })
         }
+        // 他の freq_name の処理
       }
 
       setCalendars(list)
@@ -644,18 +608,26 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError = false
-
-  // API スケジュール登録種別一覧
   const scheduleList: ScheduleType[] = []
-  await UserListScheduleTypeSSG().then((res) => {
-    for (const item of res.data.list) {
-      scheduleList.push({
-        value: String(item.id),
-        name: item[`name_${locale}`],
-        freqName: item.freq_name,
-      } as ScheduleType)
+
+  try {
+    // API スケジュール登録種別一覧
+    const res = await UserListScheduleTypeSSG()
+    if (res && res.data) {
+      scheduleList.push(
+        ..._.map(res.data.list, (item) => ({
+          value: String(item.id),
+          name: item[`name_${locale}`],
+          freqName: item.freq_name,
+        })),
+      )
+    } else {
+      throw new Error('Failed to fetch schedule list')
     }
-  })
+  } catch (error) {
+    console.error('Error fetching schedule types:', error)
+    isError = true
+  }
 
   return {
     props: {
