@@ -86,8 +86,9 @@ type APIProps = {
   autoAssignRules: AutoAssignRuleMasterResponse[]
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async () => {
   let isError = false
+  const locale = 'ja'
 
   // API: アサイン関連マスタ取得
   const assignRules: AssignRuleMasterResponse[] = []
@@ -125,9 +126,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
         assignRules,
         autoAssignRules,
       },
-      messages: (
-        await import(`../../../../public/locales/${locale}/common.json`)
-      ).default,
+      messages: (await import(`../../../../public/locales/ja/common.json`))
+        .default,
     },
   }
 }

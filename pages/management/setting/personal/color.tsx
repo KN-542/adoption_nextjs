@@ -39,12 +39,11 @@ import SettingMenu from '@/components/common/SettingMenu'
 import _ from 'lodash'
 import { changeSetting } from '@/hooks/store'
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      messages: (
-        await import(`../../../../public/locales/${locale}/common.json`)
-      ).default,
+      messages: (await import(`../../../../public/locales/ja/common.json`))
+        .default,
     },
   }
 }

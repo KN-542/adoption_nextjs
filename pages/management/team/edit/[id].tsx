@@ -436,17 +436,16 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   let isError: boolean = false
 
   return {
     props: {
       isError,
-      locale,
+      locale: 'ja',
       id: params?.id,
-      messages: (
-        await import(`../../../../public/locales/${locale}/common.json`)
-      ).default,
+      messages: (await import(`../../../../public/locales/ja/common.json`))
+        .default,
     },
   }
 }
