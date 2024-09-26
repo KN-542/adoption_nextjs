@@ -35,6 +35,7 @@ import Diversity2Icon from '@mui/icons-material/Diversity2'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import SubscriptIcon from '@mui/icons-material/Subscript'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import { changeSetting } from '@/hooks/store'
 
 type Props = {
@@ -83,6 +84,9 @@ const Sidebar = (props: Props) => {
       // 応募者
       case RouterPath.Management + RouterPath.Applicant:
         return <PersonIcon sx={Color(setting.color)} />
+      // 原稿
+      case RouterPath.Management + RouterPath.Manuscript:
+        return <ReceiptLongIcon sx={Color(setting.color)} />
       // メールテンプレート
       case RouterPath.Management + RouterPath.Email:
         return <MailIcon sx={Color(setting.color)} />

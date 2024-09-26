@@ -1,6 +1,7 @@
 import {
   SearchAutoCompIndex,
   SearchDateIndex,
+  SearchRangeIndex,
   SearchTextIndex,
 } from '@/enum/applicant'
 import { SearchCompanyTextIndex } from '@/enum/company'
@@ -10,6 +11,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit'
 import _ from 'lodash'
 import {
   ApplicantModel,
+  ManuscriptModel,
   SearchAutoComplete,
   SearchDates,
   SearchModel,
@@ -18,12 +20,15 @@ import {
   SearchText,
   SelectTitlesModel,
   SettingModel,
+  TableDisplayOption,
+  TeamModel,
   UserModel,
 } from 'types/index'
 
 const state = {
   company: {
     search: {
+      pageSize: 25,
       textForm: [
         {
           id: SearchCompanyTextIndex.Name,
@@ -35,6 +40,7 @@ const state = {
   },
   applicant: {
     search: {
+      pageSize: 25,
       selectedList: [] as SearchSelected[],
       textForm: [
         {
@@ -47,6 +53,16 @@ const state = {
           name: 'features.applicant.header.email',
           value: '',
         },
+        {
+          id: SearchTextIndex.OuterID,
+          name: 'features.applicant.header.outerID',
+          value: '',
+        },
+        {
+          id: SearchTextIndex.CommitID,
+          name: 'features.applicant.header.commitID',
+          value: '',
+        },
       ] as SearchText[],
       autoCompForm: [
         {
@@ -55,6 +71,14 @@ const state = {
           selectedItems: [] as SelectTitlesModel[],
         },
       ] as SearchAutoComplete[],
+      ranges: [
+        {
+          id: SearchRangeIndex.Age,
+          name: 'features.applicant.header.age',
+          min: null,
+          max: null,
+        },
+      ],
       dates: [
         {
           id: SearchDateIndex.CreatedAt,
@@ -77,14 +101,77 @@ const state = {
         key: '',
         isAsc: true,
       } as SearchSortModel,
+      option: {
+        outerID: {
+          isChange: true,
+          display: false,
+        },
+        site: {
+          isChange: true,
+          display: true,
+        },
+        age: {
+          isChange: true,
+          display: false,
+        },
+        status: {
+          isChange: true,
+          display: true,
+        },
+        interviewerDate: {
+          isChange: true,
+          display: true,
+        },
+        users: {
+          isChange: true,
+          display: true,
+        },
+        resume: {
+          isChange: true,
+          display: true,
+        },
+        curriculumVitae: {
+          isChange: true,
+          display: true,
+        },
+        createdAt: {
+          isChange: true,
+          display: true,
+        },
+        manuscript: {
+          isChange: true,
+          display: false,
+        },
+        type: {
+          isChange: true,
+          display: false,
+        },
+        commitID: {
+          isChange: true,
+          display: false,
+        },
+      } as Record<string, TableDisplayOption>,
     } as SearchModel,
   } as ApplicantModel,
   user: {
+    search: {
+      pageSize: 25,
+    },
     hashKey: '',
     name: '',
     email: '',
     path: '',
   } as UserModel,
+  team: {
+    search: {
+      pageSize: 25,
+    } as SearchModel,
+  } as TeamModel,
+  manuscript: {
+    search: {
+      pageSize: 25,
+    } as SearchModel,
+  } as ManuscriptModel,
   setting: {
     lang: Lang.JA,
     color: indigo[500],
@@ -102,6 +189,7 @@ export const slice = createSlice({
   initialState: state,
   // Action
   reducers: {
+    // ログイン・ログアウト・設定
     userModel: (state, action: PayloadAction<UserModel>) => {
       Object.assign(state.user, action.payload)
     },
@@ -110,6 +198,10 @@ export const slice = createSlice({
     },
     signOut: (state) => {
       Object.assign(state.user, initState.user)
+    },
+    // 応募者
+    applicantSearchPageSize: (state, action: PayloadAction<number>) => {
+      state.applicant.search.pageSize = action.payload
     },
     applicantSearchTerm: (state, action: PayloadAction<SearchSelected[]>) => {
       state.applicant.search.selectedList = _.cloneDeep(action.payload)
@@ -129,8 +221,30 @@ export const slice = createSlice({
     applicantSearchSort: (state, action: PayloadAction<SearchSortModel>) => {
       Object.assign(state.applicant.search.sort, action.payload)
     },
+    applicantSearchColumns: (
+      state,
+      action: PayloadAction<Record<string, TableDisplayOption>>,
+    ) => {
+      Object.assign(state.applicant.search.option, action.payload)
+    },
+    // 企業
+    companySearchPageSize: (state, action: PayloadAction<number>) => {
+      state.company.search.pageSize = action.payload
+    },
     companySearchText: (state, action: PayloadAction<SearchText[]>) => {
       state.company.search.textForm = _.cloneDeep(action.payload)
+    },
+    // ユーザー
+    userSearchPageSize: (state, action: PayloadAction<number>) => {
+      state.user.search.pageSize = action.payload
+    },
+    // チーム
+    teamSearchPageSize: (state, action: PayloadAction<number>) => {
+      state.team.search.pageSize = action.payload
+    },
+    // 原稿
+    manuscriptSearchPageSize: (state, action: PayloadAction<number>) => {
+      state.manuscript.search.pageSize = action.payload
     },
   },
 })
@@ -139,10 +253,16 @@ export const {
   userModel,
   changeSetting,
   signOut,
+  applicantSearchPageSize,
   applicantSearchTerm,
   applicantSearchText,
   applicantSearchAutoComp,
   applicantSearchDates,
   applicantSearchSort,
+  applicantSearchColumns,
+  companySearchPageSize,
   companySearchText,
+  userSearchPageSize,
+  teamSearchPageSize,
+  manuscriptSearchPageSize,
 } = slice.actions

@@ -15,7 +15,13 @@ import {
   mt,
   w,
 } from '@/styles/index'
-import { TableHeader, TeamTableBody, SettingModel, Icons } from '@/types/index'
+import {
+  TableHeader,
+  TeamTableBody,
+  SettingModel,
+  Icons,
+  Body,
+} from '@/types/index'
 import { Box, Button } from '@mui/material'
 import { common } from '@mui/material/colors'
 import _ from 'lodash'
@@ -33,7 +39,7 @@ import {
   SearchTeamRequest,
 } from '@/api/model/request'
 import { Operation } from '@/enum/common'
-import { changeSetting } from '@/hooks/store'
+import { changeSetting, teamSearchPageSize } from '@/hooks/store'
 import { HttpStatusCode } from 'axios'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import { GetStaticProps } from 'next'
@@ -46,13 +52,12 @@ type Props = {
   locale: string
 }
 
-const TEAM_PAGE_SIZE = 30
-
 const Team: FC<Props> = ({ isError, locale: _locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
   const user = useSelector((state: RootState) => state.user)
+  const team = useSelector((state: RootState) => state.team)
   const setting = useSelector((state: RootState) => state.setting)
 
   const [bodies, setBodies] = useState<TeamTableBody[]>([])
@@ -61,12 +66,14 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [icons, setIcons] = useState<Icons[]>([])
   const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(team.search.pageSize)
 
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
   const [deleteOpen, isDeleteOpen] = useState<boolean>(false)
+  const [pageDisp, isPageDisp] = useState<boolean>(false)
 
   const inits = async () => {
     // API 使用可能ロール一覧
@@ -149,7 +156,8 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
       })
   }
 
-  const search = async () => {
+  const search = async (currentPage: number, currentSize: number) => {
+    isPageDisp(false)
     isLoading(true)
 
     // API チーム一覧
@@ -175,7 +183,11 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
           } as TeamTableBody)
         })
         setBodies(teams)
-        isLoading(false)
+
+        if (currentSize) {
+          setPageSize(currentSize)
+          store.dispatch(teamSearchPageSize(currentSize))
+        }
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -209,19 +221,20 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
           )
         }
       })
+      .finally(() => {
+        isLoading(false)
+        isPageDisp(true)
+      })
   }
 
   const tableHeader: TableHeader[] = [
     {
-      id: 1,
       name: 'No',
     },
     {
-      id: 2,
       name: t('features.team.header.name'),
     },
     {
-      id: 3,
       name: t('features.team.header.users'),
     },
   ]
@@ -312,6 +325,10 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
       })
   }
 
+  const changePageSize = (i: number) => {
+    setPageSize(i)
+  }
+
   useEffect(() => {
     // トースト
     if (loading) {
@@ -371,7 +388,7 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
 
         if (init) await inits()
 
-        await search()
+        await search(1, pageSize)
       } finally {
         isLoading(false)
       }
@@ -387,14 +404,17 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
         <>
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              <Pagination
-                show={_.size(bodies) > TEAM_PAGE_SIZE}
-                currentPage={page}
-                listSize={_.size(bodies)}
-                pageSize={TEAM_PAGE_SIZE}
-                search={search}
-                changePage={changePage}
-              ></Pagination>
+              {_.every([pageDisp, !_.isEmpty(bodies)]) && (
+                <Pagination
+                  show={_.size(bodies) > pageSize}
+                  currentPage={page}
+                  listSize={_.size(bodies)}
+                  pageSize={pageSize}
+                  search={search}
+                  changePage={changePage}
+                  changePageSize={changePageSize}
+                ></Pagination>
+              )}
               <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
                   variant="contained"
@@ -426,19 +446,22 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
               headers={tableHeader}
               isNoContent={noContent}
               icons={icons}
+              pageSize={pageSize}
               bodies={_.map(bodies, (u) => {
                 return {
-                  no: u.no,
-                  name: u.name,
-                  users: (
-                    <Box sx={DirectionColumnForTable}>
-                      {_.map(u.users, (user, index) => {
-                        return <Box key={index}>{user}</Box>
-                      })}
-                    </Box>
+                  no: new Body(u.no),
+                  name: new Body(u.name),
+                  users: new Body(
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(u.users, (user, index) => {
+                          return <Box key={index}>{user}</Box>
+                        })}
+                      </Box>
+                    ),
                   ),
                 }
-              }).slice(TEAM_PAGE_SIZE * (page - 1), TEAM_PAGE_SIZE * page)}
+              }).slice(pageSize * (page - 1), pageSize * page)}
             />
           </Box>
 
@@ -447,20 +470,21 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
               open={deleteOpen}
               headers={_.map(tableHeader, (table) => {
                 return {
-                  id: table.id,
                   name: table.name,
                 } as TableHeader
               })}
               bodies={_.map(deleteList, (u) => {
                 return {
-                  no: u.no,
-                  name: u.name,
-                  users: (
-                    <Box sx={DirectionColumnForTable}>
-                      {_.map(u.users, (user, index) => {
-                        return <Box key={index}>{user}</Box>
-                      })}
-                    </Box>
+                  no: new Body(u.no),
+                  name: new Body(u.name),
+                  users: new Body(
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(u.users, (user, index) => {
+                          return <Box key={index}>{user}</Box>
+                        })}
+                      </Box>
+                    ),
                   ),
                 }
               })}

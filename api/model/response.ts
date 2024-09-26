@@ -50,6 +50,8 @@ export type SearchApplicantResponse = {
   email: string
   // 媒体
   site: number
+  // 媒体側ID
+  outerID: string
   // 媒体(媒体名)
   siteName: string
   // 年齢
@@ -72,6 +74,14 @@ export type SearchApplicantResponse = {
   userNames: string[]
   // カレンダーハッシュキー
   calendarHashKey: string
+  // コミットID
+  commitID: string
+  // 原稿
+  content: string
+  // 種別
+  type: string
+  // 予定ハッシュ
+  scheduleHash: string
 }
 
 // API ユーザー検索
@@ -172,7 +182,7 @@ export type SearchRoleByCompanyResponse = {
 }
 
 // API: ステータスイベントマスタ一覧
-export type ListStatusEventResponse = {
+export type StatusEventResponse = {
   // No
   no: number
   // ハッシュキー
@@ -189,6 +199,8 @@ export type ListStatusEventResponse = {
 export type ListStatusEventByTeamResponse = {
   // No
   no: number
+  // ハッシュキー
+  hashKey: string
   // 説明
   desc: string
   // ステータス名
@@ -225,4 +237,50 @@ export type AutoAssignRuleMasterResponse = {
   selected: boolean
   // 選択済みハッシュ
   selectedHash?: string
+}
+
+// API: 原稿検索
+export type SearchManuscriptResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 内容
+  content: string
+  // サイト
+  sites: SiteListResponse[]
+}
+
+// API: 書類提出ルールマスタ一覧
+export type DocumentRuleResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // ルール
+  rule: string
+}
+
+// API: 職種マスタ一覧
+export type OccupationResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 職種名
+  name: string
+}
+
+// API: 応募者種別一覧
+export type ListApplicantTypeResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 種別名
+  name: string
+  // 書類提出ルール
+  rule?: string
+  // 職種名
+  occupation?: string
 }

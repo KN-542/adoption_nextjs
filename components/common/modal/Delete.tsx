@@ -10,7 +10,7 @@ import {
   mr,
   mt,
 } from '@/styles/index'
-import { TableHeader } from '@/types/index'
+import { Body, TableHeader } from '@/types/index'
 import {
   Box,
   Button,
@@ -27,11 +27,12 @@ import { FC } from 'react'
 import { useSelector } from 'react-redux'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CustomTable from '../Table'
+import _ from 'lodash'
 
 type Props = {
   open: boolean
   headers: TableHeader[]
-  bodies: Record<string, any>[]
+  bodies: Record<string, Body>[]
   close: () => void
   delete: () => void
 }
@@ -60,6 +61,7 @@ const DeleteModal: FC<Props> = (props: Props) => {
           height={50}
           isNoContent={false}
           headers={props.headers}
+          pageSize={2}
           bodies={props.bodies}
         />
       </DialogContent>

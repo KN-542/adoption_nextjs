@@ -3,7 +3,20 @@
 */
 
 import { DateOrTimeView } from '@mui/x-date-pickers'
-import dayjs from 'dayjs'
+import _ from 'lodash'
+
+// Body
+export class Body {
+  public body: any
+  display: boolean = true
+
+  constructor(body: any, display?: boolean) {
+    this.body = body
+    if (!_.isUndefined(display)) {
+      this.display = display
+    }
+  }
+}
 
 // レフトメニュー model
 export type SidebarModel = {
@@ -46,8 +59,9 @@ export type Color = {
   toastErrorColor: string
 }
 
-// ログインユーザー model
+// ユーザー model
 export type UserModel = {
+  search: SearchModel
   hashKey: string
   name: string
   email: string
@@ -71,11 +85,18 @@ export type TableSort = {
   isAsc: boolean
 }
 
+// table display option
+export type TableDisplayOption = {
+  isChange: boolean
+  display: boolean
+}
+
 // table head
 export type TableHeader = {
-  id: number
   name: string
+  option?: TableDisplayOption
   sort?: TableSort
+  minW?: number
 }
 
 // 検索 項目
@@ -83,15 +104,19 @@ export type SearchForm = {
   selectList?: SearchSelect[]
   textForm?: SearchText[]
   autoCompForm?: SearchAutoComplete[]
+  ranges?: SearchRanges[]
   dates?: SearchDates[]
 }
 // 検索 model
 export type SearchModel = {
-  selectedList: SearchSelected[]
-  textForm: SearchText[]
-  autoCompForm: SearchAutoComplete[]
-  dates: SearchDates[]
-  sort: SearchSortModel
+  pageSize: number
+  selectedList?: SearchSelected[]
+  textForm?: SearchText[]
+  autoCompForm?: SearchAutoComplete[]
+  ranges?: SearchRanges[]
+  dates?: SearchDates[]
+  sort?: SearchSortModel
+  option?: Record<string, TableDisplayOption>
 }
 
 // 検索 選択
@@ -114,6 +139,14 @@ export type SearchAutoComplete = {
   name: string
   items: SelectTitlesModel[]
   selectedItems: SelectTitlesModel[]
+}
+
+// 検索 range
+export type SearchRanges = {
+  id: number
+  name: string
+  min: number
+  max: number
 }
 
 // 検索 Date
@@ -183,7 +216,7 @@ export type SelectedMenuModel = {
   icon: JSX.Element
   color: string
   condition: boolean
-  onClick?
+  onClick?: () => void
 }
 
 /* 
@@ -198,6 +231,10 @@ export type ApplicantModel = {
 /* 
   ユーザー
 */
+
+export type TeamModel = {
+  search: SearchModel
+}
 
 // ユーザー一覧 table body
 export type UsersTableBody = {
@@ -267,4 +304,12 @@ export type SelectTitlesModel = {
   key: string
   title: string
   subTitle: string
+}
+
+/* 
+  原稿
+*/
+
+export type ManuscriptModel = {
+  search: SearchModel
 }

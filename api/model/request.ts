@@ -82,10 +82,16 @@ export class SearchApplicantRequest extends AbstractRequest2 {
   user_hash_key: string
   // ページ
   page: number
+  // ページサイズ
+  page_size: number
   // サイト一覧
   sites: string[]
   // 応募者ステータス
   applicant_status_list: string[]
+  // 原稿一覧
+  manuscripts: string[]
+  // 種別一覧
+  types: string[]
   // 履歴書
   resume_flg: number
   // 職務経歴書
@@ -94,6 +100,10 @@ export class SearchApplicantRequest extends AbstractRequest2 {
   name: string
   // メールアドレス
   email: string
+  // 媒体側ID
+  outer_id: string
+  // コミットID
+  commit_id: string
   // 面接官
   users: string[]
   // 面接日時_From
@@ -162,6 +172,45 @@ export class AssignUserRequest extends AbstractRequest3 {
   user_hash_key: string
   hash_key: string
   hash_keys: string[]
+  remove_schedule_hash_keys: string[]
+}
+// 種別登録
+export class CreateApplicantTypeRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 種別名
+  name: string
+  // 書類提出ルールハッシュ
+  rule_hash: string
+  // 職種ハッシュ
+  occupation_hash: string
+}
+// 種別一覧
+export class ListApplicantTypeRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
+// ステータス更新
+export class UpdateSelectStatusRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // ステータスハッシュ
+  status_hash: string
+  // 応募者ハッシュ
+  applicants: string[]
+}
+// 原稿紐づけ登録
+export class CreateApplicantManuscriptAssociationRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 原稿ハッシュ
+  manuscript_hash: string
+  // 応募者ハッシュ
+  applicants: string[]
+}
+// 種別紐づけ登録
+export class CreateApplicantTypeAssociationRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 種別ハッシュ
+  type_hash: string
+  // 応募者ハッシュ
+  applicants: string[]
 }
 
 /* 
@@ -341,5 +390,34 @@ export class DeleteScheduleRequest extends AbstractRequest3 {
 */
 // ロール検索_同一企業
 export class SearchRoleByCompanyRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
+
+/* 
+  原稿
+*/
+// 原稿検索
+export class SearchManuscriptRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // ページ
+  page: number
+  // ページサイズ
+  page_size: number
+  // サイト一覧
+  sites: string[]
+}
+// 原稿登録
+export class CreateManuscriptRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 内容
+  content: string
+  // 使用可能チーム
+  teams: string[]
+  // 使用可能サイト
+  sites: string[]
+}
+
+// 原稿検索_同一チーム
+export class SearchManuscriptByTeamRequest extends AbstractRequest2 {
   user_hash_key: string
 }

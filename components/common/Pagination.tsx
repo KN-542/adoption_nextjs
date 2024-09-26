@@ -1,6 +1,6 @@
 import { RouterPath } from '@/enum/router'
 import { RootState } from '@/hooks/store/store'
-import { Box, Button } from '@mui/material'
+import { Box, Button, MenuItem, Select } from '@mui/material'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
@@ -16,6 +16,9 @@ import {
   TextCenter,
   BorderRadius,
   w,
+  mr,
+  SelectWithoutBox,
+  mt,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'
@@ -25,8 +28,9 @@ type Props = {
   currentPage: number
   listSize: number
   pageSize: number
-  search: (i?: number) => void
+  search: (i: number, i2: number) => void
   changePage: (i: number) => void
+  changePageSize: (i: number) => void
 }
 
 type Option = {
@@ -38,6 +42,8 @@ type Option = {
 const NOT_SKIP_PAGE_SIZE_MAX = 5
 const SKIP_PAGE_SIZE = 3
 const MIN_EL_SIZE = 284
+
+const PAGE_SIZE_LIST = [25, 50, 100, 200]
 
 const Pagination = (props: Props) => {
   const router = useRouter()
@@ -159,10 +165,30 @@ const Pagination = (props: Props) => {
 
   useEffect(() => {
     displayPagination()
-  }, [props.currentPage])
+  }, [])
 
   return (
     <>
+      <Select
+        value={String(props.pageSize)}
+        sx={[SelectWithoutBox, mr(3), mb(0.5)]}
+        onChange={async (e) => {
+          try {
+            props.changePage(1)
+            props.changePageSize(Number(e.target.value))
+            await props.search(1, Number(e.target.value))
+          } catch {
+            router.push(RouterPath.Error)
+            return
+          }
+        }}
+      >
+        {_.map(PAGE_SIZE_LIST, (item, index) => (
+          <MenuItem key={index} value={item}>
+            {item}
+          </MenuItem>
+        ))}
+      </Select>
       {props.show ? (
         <Box
           sx={[
@@ -192,7 +218,7 @@ const Pagination = (props: Props) => {
                   ]}
                   onClick={async () => {
                     props.changePage(item.value)
-                    await props.search(item.value)
+                    await props.search(item.value, props.pageSize)
                   }}
                 >
                   {item.disp}

@@ -8,19 +8,12 @@ import {
   Button,
   Divider,
   Box,
-  Autocomplete,
-  ListItem,
-  TextField,
-  Chip,
-  createFilterOptions,
 } from '@mui/material'
 import { useTranslations } from 'next-intl'
 import _ from 'lodash'
 import {
   Bold,
   ButtonColor,
-  Color,
-  Column,
   DisplayFlex,
   FormModalMenu,
   FormTwoButtons,
@@ -33,19 +26,29 @@ import {
   w,
 } from '@/styles/index'
 import { useSelector } from 'react-redux'
-import { common, grey } from '@mui/material/colors'
-import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import { common } from '@mui/material/colors'
 import { RootState } from '@/hooks/store/store'
-import { SelectTitlesModel } from '@/types/index'
+import { Body, SelectTitlesModel, TableHeader } from '@/types/index'
+import DropDownList from '../DropDownList'
+import CustomTable from '../Table'
+import { toast } from 'react-toastify'
+import ClearIcon from '@mui/icons-material/Clear'
 
 type Props = {
   open: boolean
+  single?: boolean
   items: SelectTitlesModel[]
+  headers?: TableHeader[]
+  bodies?: Record<string, Body>[]
   selectedItems: string[]
   title: string
   subTitle: string
   buttonTitle: string
-  submit: (s: string[]) => void
+  msg: string
+  icon?: JSX.Element
+  w?: number
+  m?: number
+  submit: (s: string[] | string) => void
   close: () => void
 }
 
@@ -62,18 +65,44 @@ const ItemsSelectModal = (props: Props) => {
   )
 
   const submit = async () => {
-    try {
-      await props.submit(
-        _.map(selectedOptions, (s) => {
-          return s.key
-        }),
-      )
-
-      setSelectedOptions([])
-
-      props.close()
-    } catch (_) {
+    if (_.isEmpty(selectedOptions)) {
+      toast(props.subTitle + t('common.validate.requiredList'), {
+        style: {
+          backgroundColor: setting.toastErrorColor,
+          color: common.white,
+          width: 500,
+        },
+        position: 'bottom-left',
+        hideProgressBar: true,
+        closeButton: () => <ClearIcon />,
+      })
       return
+    }
+
+    if (!_.isEqual(_.size(selectedOptions), 1)) {
+      try {
+        await props.submit(
+          _.map(selectedOptions, (s) => {
+            return s.key
+          }),
+        )
+
+        setSelectedOptions([])
+
+        props.close()
+      } catch (_) {
+        return
+      }
+    } else {
+      try {
+        await props.submit(selectedOptions[0].key)
+
+        setSelectedOptions([])
+
+        props.close()
+      } catch (_) {
+        return
+      }
     }
   }
 
@@ -91,7 +120,7 @@ const ItemsSelectModal = (props: Props) => {
   return (
     <>
       {!loading && (
-        <Dialog open={props.open} fullScreen sx={m(30)}>
+        <Dialog open={props.open} fullScreen sx={[m(props.m ?? 20)]}>
           <DialogTitle component="div">
             <Typography variant="h4" sx={Bold}>
               {props.title}
@@ -102,70 +131,44 @@ const ItemsSelectModal = (props: Props) => {
 
           <DialogContent>
             <Box>
+              <Box sx={[mt(2), mb(4)]}>
+                <Box component="span" sx={[ml(4), mr(4), mt(0.5)]}>
+                  {props.msg}
+                </Box>
+              </Box>
+
+              {_.every([
+                !_.isEmpty(props.headers),
+                !_.isEmpty(props.bodies),
+              ]) && (
+                <CustomTable
+                  height={25}
+                  w={props.w}
+                  headers={props.headers}
+                  bodies={props.bodies}
+                  pageSize={_.size(props.bodies)}
+                />
+              )}
+
               <Box sx={FormModalMenu}>
                 <Box sx={[DisplayFlex, w(90)]}>
                   <Box>
-                    <Box sx={[mb(1)]}>
+                    <Box sx={[mt(8), mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(4), mt(0.5), Bold]}>
                         {props.subTitle}
                       </Box>
                     </Box>
-                    <Autocomplete
-                      multiple
+
+                    <DropDownList
+                      list={selectedOptions}
+                      initList={options}
                       sx={[ml(4), mr(4), w(100)]}
-                      options={_.filter(
-                        options,
-                        (option) =>
-                          !_.includes(
-                            _.map(selectedOptions, (item) => {
-                              return item.key
-                            }),
-                            option.key,
-                          ),
-                      )}
-                      getOptionLabel={(option) => option.title}
-                      renderOption={(props, option) => (
-                        <ListItem {...props} sx={[w(100)]}>
-                          <AccountCircleIcon fontSize="large" sx={mr(2)} />
-                          <Box sx={[Column, w(100)]}>
-                            <Box sx={w(100)}>{option.title}</Box>
-                            {!_.isEmpty(option.subTitle) && (
-                              <Box
-                                sx={[
-                                  w(100),
-                                  ml(0.25),
-                                  Color(grey[500]),
-                                  { fontSize: 12 },
-                                ]}
-                              >
-                                {option.subTitle}
-                              </Box>
-                            )}
-                          </Box>
-                        </ListItem>
-                      )}
-                      filterOptions={createFilterOptions({
-                        matchFrom: 'any',
-                        stringify: (option) =>
-                          `${option.title} ${option.subTitle}`,
-                      })}
-                      value={selectedOptions}
-                      onChange={(_e, value) => setSelectedOptions(value)}
-                      renderTags={(value, getTagProps) =>
-                        _.map(value, (option, index) => (
-                          <Chip
-                            variant="outlined"
-                            label={option.title}
-                            {...getTagProps({ index })}
-                          />
-                        ))
+                      icon={props.icon}
+                      onChange={(value) =>
+                        setSelectedOptions(
+                          props.single ? [value.at(-1)] : value,
+                        )
                       }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          sx={[mr(4), w(100), minW(500), Color(setting.color)]}
-                        />
-                      )}
                     />
                   </Box>
                 </Box>

@@ -26,6 +26,10 @@
       "schedule": {
         "list": "予定一覧"
       },
+      "manuscript": {
+        "list": "原稿一覧",
+        "create": "原稿作成"
+      },
       "setting": {
         "index": "設定"
       },
@@ -36,6 +40,7 @@
         "createUser": "ログイン情報",
         "search": "検索条件指定",
         "delete": "データの削除",
+        "columns": "表示列指定",
         "schedule": {
           "create": "カレンダーの登録",
           "edit": "カレンダーの編集",
@@ -62,6 +67,7 @@
     },
     "button": {
       "cancel": "キャンセル",
+      "create": "新規登録",
       "back": "戻る",
       "add": "追加",
       "change": "変更",
@@ -71,6 +77,7 @@
       "search": "検索",
       "delete": "削除",
       "condSearch": "条件検索",
+      "columnDisplay": "列指定",
       "init": "入力状態を初期化"
     },
     "pagination": {
@@ -112,6 +119,10 @@
         "passwordChange1": "現在のパスワードが違います",
         "userDelete": "応募者と紐づけられてるユーザーは削除できません",
         "createUserDupl": "メールアドレスが重複しています",
+        "companyCreate": {
+          "1": "既に使用されている企業名です",
+          "2": "既に使用されているメールアドレスです"
+        },
         "teamDelete": {
           "index": "チームは削除できません",
           "1": "応募者と紐づけられてる",
@@ -119,6 +130,7 @@
           "3": "原稿と紐づけられてる",
           "4": "選択中の"
         },
+        "createManuscriptDupl": "原稿内容が重複しています",
         "assign": {
           "1": "応募者が選択されていません。モーダルを閉じてください",
           "2": "割り振り可能なユーザーが面接最低人数を下回っています"
@@ -193,18 +205,34 @@
       },
       "header": {
         "name": "氏名",
-        "site": "媒体",
         "email": "メールアドレス",
+        "site": "媒体",
+        "outerID": "媒体側ID",
         "age": "年齢",
         "status": "選考状況",
         "interviewerDate": "面接予定日",
         "resume": "履歴書",
         "curriculumVitae": "職務経歴書",
         "users": "担当面接官",
-        "createdAt": "登録日時"
+        "createdAt": "登録日時",
+        "manuscript": "原稿",
+        "type": "種別",
+        "commitID": "コミットID"
       },
       "assign": {
-        "subTitle": "ユーザー"
+        "user": {
+          "subTitle": "担当面接官",
+          "msg": "以下の応募者の担当面接官の割り振りを行ってください"
+        },
+        "status": {
+          "msg": "以下の応募者のステータス変更を行ってください"
+        },
+        "manuscript": {
+          "msg": "以下の応募者の原稿の変更を行ってください"
+        },
+        "type": {
+          "msg": "以下の応募者の種別の変更を行ってください"
+        }
       },
       "documents": {
         "t": "あり",
@@ -212,7 +240,11 @@
       },
       "menu": {
         "googleMeet": "Google Meet",
-        "user": "面接官割振り"
+        "user": "面接官割振り",
+        "status": "ステータス変更",
+        "manuscript": "原稿設定",
+        "type": "種別設定",
+        "result": "面接結果入力"
       }
     },
     "user": {
@@ -254,6 +286,15 @@
         "selectedUsers": "所属済みユーザー"
       }
     },
+    "manuscript": {
+      "index": "原稿",
+      "create": "原稿作成",
+      "header": {
+        "content": "内容",
+        "site": "使用可能サイト",
+        "team": "使用可能チーム"
+      }
+    },
     "setting": {
       "attention": "※リロードやページ遷移を行うと入力内容が失われます",
       "company": {
@@ -284,8 +325,8 @@
           },
           "assign": {
             "index": "面接官割り振り方法",
-            "num": "面接に参加する最低人数",
-            "possibleTransaction": "次面接までの参加可能者",
+            "num": "各面接に参加する最低人数",
+            "possibleTransaction": "各面接への参加可能者",
             "possibleTransactionContent": "次面接",
             "possibleTransactionContentValidation": "の参加者が指定されていません",
             "possibleTransactionContentValidation2": "の参加者が最低人数を下回っています",
@@ -293,6 +334,14 @@
             "auto": "自動割り当ての方法",
             "priority": "優先順位",
             "attention": "※項目を掴んでドラッグして優先順位を入れ替え可能です"
+          },
+          "type": {
+            "index": "応募者種別",
+            "header": {
+              "name": "種別名",
+              "documentRule": "書類提出ルール",
+              "occupation": "職種"
+            }
           }
         }
       },

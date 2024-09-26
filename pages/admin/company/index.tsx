@@ -2,7 +2,6 @@ import { SearchCompanyRequest, RolesRequest } from '@/api/model/request'
 import { SearchCompanyResponse } from '@/api/model/response'
 import { SearchCompanyCSR, RolesCSR } from '@/api/repository'
 import NextHead from '@/components/common/Header'
-import { APICommonCode } from '@/enum/apiError'
 import { SearchCompanyTextIndex } from '@/enum/company'
 import { RouterPath } from '@/enum/router'
 import store, { RootState } from '@/hooks/store/store'
@@ -11,12 +10,13 @@ import { HttpStatusCode } from 'axios'
 import _ from 'lodash'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import { Operation } from '@/enum/common'
 import {
+  Body,
   CheckboxPropsField,
   SelectedCheckbox,
   SelectedMenuModel,
@@ -41,15 +41,14 @@ import Pagination from '@/components/common/Pagination'
 import SelectedMenu from '@/components/common/SelectedMenu'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
-import { changeSetting } from '@/hooks/store'
+import { changeSetting, companySearchPageSize } from '@/hooks/store'
 import { GetStaticProps } from 'next'
+import { DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
   locale: string
 }
-
-const COMPANY_PAGE_SIZE = 50
 
 const Company: React.FC<Props> = ({ isError, locale }) => {
   const router = useRouter()
@@ -61,11 +60,17 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
 
   const [bodies, setBodies] = useState<SearchCompanyResponse[]>([])
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
+  const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
+
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
   const [noContent, isNoContent] = useState<boolean>(false)
+  const [pageDisp, isPageDisp] = useState<boolean>(false)
+
+  const processing = useRef<boolean>(false)
+
   const [page, setPage] = useState<number>(1)
-  const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
+  const [pageSize, setPageSize] = useState<number>(company.search.pageSize)
 
   const searchTextList = _.cloneDeep(company.search.textForm)
 
@@ -115,7 +120,8 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
   }
 
   // 検索
-  const search = async (currentPage?: number) => {
+  const search = async (currentPage: number, currentSize: number) => {
+    isPageDisp(false)
     if (init) isLoading(true)
 
     // API: 企業検索
@@ -138,7 +144,11 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
           } as SearchCompanyResponse)
         })
         setBodies(list)
-        isLoading(false)
+
+        if (currentSize) {
+          setPageSize(currentSize)
+          store.dispatch(companySearchPageSize(currentSize))
+        }
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -172,24 +182,30 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
           )
         }
       })
+      .finally(() => {
+        isLoading(false)
+        isPageDisp(true)
+      })
   }
 
   const changePage = (i: number) => {
     setPage(i)
   }
 
-  const [tableHeader, setTableHeader] = useState<TableHeader[]>([
+  const changePageSize = (i: number) => {
+    setPageSize(i)
+  }
+
+  const tableHeader: TableHeader[] = [
     {
-      id: 1,
       name: 'No',
       sort: null,
     },
     {
-      id: 2,
       name: t('features.company.header.name'),
       sort: null,
     },
-  ])
+  ]
 
   // 選択済みメニュー表示
   const dispMenu: SelectedMenuModel[] = []
@@ -253,7 +269,7 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
 
         if (init) await inits()
 
-        await search(1)
+        await search(1, pageSize)
       } finally {
         isLoading(false)
       }
@@ -270,12 +286,13 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
               <Pagination
-                show={_.size(bodies) > COMPANY_PAGE_SIZE}
+                show={_.size(bodies) > pageSize}
                 currentPage={page}
                 listSize={_.size(bodies)}
-                pageSize={COMPANY_PAGE_SIZE}
+                pageSize={pageSize}
                 search={search}
                 changePage={changePage}
+                changePageSize={changePageSize}
               ></Pagination>
               {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
                 <SelectedMenu
@@ -295,7 +312,14 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
-                  onClick={() => {}}
+                  onClick={() => {
+                    if (processing.current) return
+                    processing.current = true
+
+                    setTimeout(() => {
+                      processing.current = false
+                    }, DURING)
+                  }}
                 >
                   <ManageSearchIcon sx={mr(0.25)} />
                   {t('common.button.condSearch')}
@@ -307,9 +331,12 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
                       ml(1),
                       ButtonColorInverse(common.white, setting.color),
                     ]}
-                    onClick={() =>
+                    onClick={() => {
+                      if (processing.current) return
+                      processing.current = true
+
                       router.push(RouterPath.Admin + RouterPath.CompanyCreate)
-                    }
+                    }}
                   >
                     <AddCircleOutlineIcon sx={mr(0.25)} />
                     {t('features.company.create')}
@@ -321,15 +348,13 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
               height={75}
               headers={tableHeader}
               isNoContent={noContent}
+              pageSize={pageSize}
               bodies={_.map(bodies, (l) => {
                 return {
-                  no: l.no,
-                  name: l.name,
+                  no: new Body(l.no),
+                  name: new Body(l.name),
                 }
-              }).slice(
-                COMPANY_PAGE_SIZE * (page - 1),
-                COMPANY_PAGE_SIZE * page,
-              )}
+              }).slice(pageSize * (page - 1), pageSize * page)}
               checkbox={
                 {
                   checkedList: checkedList,

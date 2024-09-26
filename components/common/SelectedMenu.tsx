@@ -12,6 +12,11 @@ import {
   M0Auto,
   mr,
   TextBottom,
+  minW,
+  Color,
+  TextTransformNone,
+  WhiteSpaceNoWrap,
+  TextLeft,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
 import { SelectedMenuModel } from '@/types/index'
@@ -30,10 +35,9 @@ const SelectedMenu = (props: Props) => {
     <Box
       sx={[
         SpaceBetween,
-        w(100),
+        w(40),
         M0Auto,
         BackGroundColor(common.white),
-        mb(3),
         BorderRadius(4),
         SelectMenu,
       ]}
@@ -47,20 +51,23 @@ const SelectedMenu = (props: Props) => {
                 key={index}
                 variant="text"
                 onClick={menu.onClick}
-                sx={[
-                  MenuDisp(menu.color),
-                  index > 0 ? null : ml(1),
-                  FontSize(20),
-                ]}
+                sx={[TextTransformNone, ml(1), FontSize(20)]}
               >
-                {menu.icon}
-                {menu.name}
+                <Box component="span" sx={MenuDisp(menu.color)}>
+                  {menu.icon}
+                </Box>
+                <Box
+                  component="span"
+                  sx={[minW(250), TextLeft, Color(common.black)]}
+                >
+                  {menu.name}
+                </Box>
               </Button>
             )
           },
         )}
       </Box>
-      <Box sx={[TextBottom, mr(1)]}>{`${props.size}${t(
+      <Box sx={[TextBottom, WhiteSpaceNoWrap, ml(3), mr(1)]}>{`${props.size}${t(
         'common.menu.size',
       )}`}</Box>
     </Box>

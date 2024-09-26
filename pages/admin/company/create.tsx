@@ -1,14 +1,13 @@
 import { CreateCompanyRequest, RolesRequest } from '@/api/model/request'
 import { CreateCompanyCSR, RolesCSR } from '@/api/repository'
 import NextHead from '@/components/common/Header'
-import { APICommonCode } from '@/enum/apiError'
 import { RouterPath } from '@/enum/router'
 import store, { RootState } from '@/hooks/store/store'
 import { common } from '@mui/material/colors'
 import _ from 'lodash'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -60,6 +59,8 @@ const CompanyCreate: FC<Props> = ({ isError, locale }) => {
 
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     // API 使用可能ロール一覧
@@ -171,6 +172,9 @@ const CompanyCreate: FC<Props> = ({ isError, locale }) => {
   } = useForm<Inputs>()
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
+    if (processing.current) return
+    processing.current = true
+
     if (!roles[Operation.AdminCompanyCreate]) {
       store.dispatch(
         changeSetting({
@@ -198,9 +202,25 @@ const CompanyCreate: FC<Props> = ({ isError, locale }) => {
 
         router.push(RouterPath.Admin + RouterPath.Company)
       })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
           router.push(routerPath)
+          return
+        }
+
+        if (code) {
+          toast(t(`common.api.code.companyCreate.${String(code)}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+
+          processing.current = false
           return
         }
 
@@ -215,6 +235,8 @@ const CompanyCreate: FC<Props> = ({ isError, locale }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          processing.current = false
           return
         }
 
@@ -302,9 +324,12 @@ const CompanyCreate: FC<Props> = ({ isError, locale }) => {
                 variant="outlined"
                 color="inherit"
                 sx={minW(180)}
-                onClick={() =>
+                onClick={() => {
+                  if (processing.current) return
+                  processing.current = true
+
                   router.push(RouterPath.Admin + RouterPath.Company)
-                }
+                }}
               >
                 {t('common.button.cancel')}
               </Button>

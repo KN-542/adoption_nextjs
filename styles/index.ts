@@ -69,6 +69,9 @@ export const CursorPointer = {
 export const TextCenter = {
   textAlign: 'center',
 }
+export const TextLeft = {
+  textAlign: 'left',
+}
 
 export const FlexGrow = { flexGrow: 1 }
 
@@ -169,6 +172,12 @@ export const FormRadio = {
   flexDirection: 'row',
 }
 
+export const FormCheckbox = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  flexDirection: 'row',
+}
+
 export const FormButtons = {
   display: 'flex',
   justifyContent: 'space-between',
@@ -183,6 +192,17 @@ export const FormButtons = {
     width: '33%',
     justifyContent: 'space-between',
   },
+}
+
+export const FormButtonsNoMedia = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  width: '90%',
+  m: '0 auto',
+  alignItems: 'center',
+  gap: '16px',
+  mt: 8,
+  flexWrap: 'wrap',
 }
 
 export const FormThreeButtons = {
@@ -372,7 +392,7 @@ export const PaginationMenu = {
 }
 
 export const CustomTableContainer = (h: number) => {
-  return { maxHeight: `${h}vh`, overflowY: 'auto' }
+  return { maxHeight: `${h}vh`, overflowX: 'auto', overflowY: 'auto' }
 }
 
 export const CustomTableIcon = {
@@ -383,8 +403,15 @@ export const CustomTableIcon = {
 }
 
 export const SelectMenu = {
+  position: 'fixed',
+  top: '8%',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  display: 'flex',
   border: '2px solid',
   borderColor: grey[300],
+  backgroundColor: common.white,
+  zIndex: 1000,
 }
 
 export const MenuDisp = (color: string) => {
@@ -404,6 +431,10 @@ export const TextBottom = {
   justifyContent: 'flex-end',
 }
 
+export const WhiteSpaceNoWrap = {
+  whiteSpace: 'nowrap',
+}
+
 export const SpinnerSx = {
   position: 'fixed',
   top: 0,
@@ -415,4 +446,25 @@ export const SpinnerSx = {
   justifyContent: 'center',
   alignItems: 'center',
   zIndex: 9999,
+}
+
+export const SelectWithoutBox = {
+  border: 'none',
+  backgroundColor: 'transparent',
+  '&:hover': {
+    backgroundColor: 'transparent',
+  },
+  '&:focus': {
+    backgroundColor: 'transparent',
+  },
+  '& fieldset': {
+    border: 'none',
+  },
+  '& .MuiSelect-select': {
+    padding: '16.5px 32px 0 8px',
+  },
+  '& .MuiSelect-icon': {
+    right: 4,
+    top: 24,
+  },
 }

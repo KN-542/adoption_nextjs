@@ -27,6 +27,7 @@ import {
   FontSize,
   mb,
   Padding,
+  h,
 } from '@/styles/index'
 import { RolesCSR } from '@/api/repository'
 import { RolesRequest } from '@/api/model/request'
@@ -101,6 +102,15 @@ const SettingMenu: FC<Props> = () => {
                       RouterPath.SettingTeamAssign,
                   ),
               },
+              {
+                name: t('features.setting.team.sub.type.index'),
+                onClick: () =>
+                  router.push(
+                    RouterPath.Management +
+                      RouterPath.Setting +
+                      RouterPath.SettingTeamApplicantType,
+                  ),
+              },
             ] as ButtonContentsSub[],
           },
           {
@@ -170,7 +180,7 @@ const SettingMenu: FC<Props> = () => {
   }, [router.pathname])
 
   return (
-    <DialogContent sx={[DialogContentSetting, w(20)]}>
+    <DialogContent sx={[DialogContentSetting, w(20), h(100)]}>
       <Box sx={[w(90), M0Auto]}>
         {_.map(
           _.filter(menus, (m) => m.role),

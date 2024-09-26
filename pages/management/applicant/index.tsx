@@ -4,11 +4,18 @@ import store, { RootState } from '@/hooks/store/store'
 import CustomTable from '@/components/common/Table'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
+import ViewColumnIcon from '@mui/icons-material/ViewColumn'
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
+import FunctionsIcon from '@mui/icons-material/Functions'
+import FeedbackIcon from '@mui/icons-material/Feedback'
 import {
+  Body,
   CheckboxPropsField,
   SearchAutoComplete,
   SearchDates,
   SearchForm,
+  SearchRanges,
   SearchSelect,
   SearchSelectTerm,
   SearchSelected,
@@ -18,17 +25,26 @@ import {
   SelectedCheckbox,
   SelectedMenuModel,
   SettingModel,
+  TableDisplayOption,
   TableHeader,
   TableSort,
 } from '@/types/index'
 import { useTranslations } from 'next-intl'
 import { Box, Button } from '@mui/material'
-import { blue, common } from '@mui/material/colors'
+import {
+  blue,
+  brown,
+  common,
+  deepPurple,
+  green,
+  yellow,
+} from '@mui/material/colors'
 import {
   DocumentUploaded,
   SearchAutoCompIndex,
   SearchDateIndex,
   SearchIndex,
+  SearchRangeIndex,
   SearchSortKey,
   SearchTextIndex,
 } from '@/enum/applicant'
@@ -39,14 +55,17 @@ import {
   ApplicantStatusListRequest,
   DownloadApplicantRequest,
   GoogleAuthRequest,
-  GetApplicantRequest,
   RolesRequest,
   SearchUserByCompanyRequest,
   AssignUserRequest,
+  ListApplicantTypeRequest,
+  SearchManuscriptByTeamRequest,
+  UpdateSelectStatusRequest,
+  CreateApplicantManuscriptAssociationRequest,
+  CreateApplicantTypeAssociationRequest,
 } from '@/api/model/request'
 import {
   ApplicantSitesSSG,
-  GetApplicantCSR,
   GoogleAuthCSR,
   AssignUserCSR,
   SearchUserByCompanyCSR,
@@ -55,6 +74,11 @@ import {
   SearchApplicantCSR,
   RolesCSR,
   ApplicantStatusListCSR,
+  ListApplicantTypeByTeamCSR,
+  SearchManuscriptByTeamCSR,
+  UpdateSelectStatusCSR,
+  CreateApplicantAssociationCSR,
+  CreateApplicantTypeAssociationCSR,
 } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
@@ -64,7 +88,6 @@ import {
   DirectionColumnForTable,
   FontSize,
   M0Auto,
-  maxW,
   mb,
   ml,
   mr,
@@ -78,16 +101,19 @@ import { RouterPath } from '@/enum/router'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom'
+import CoPresentIcon from '@mui/icons-material/CoPresent'
 import {
   applicantSearchAutoComp,
+  applicantSearchColumns,
   applicantSearchDates,
+  applicantSearchPageSize,
   applicantSearchSort,
   applicantSearchTerm,
   applicantSearchText,
   changeSetting,
 } from '@/hooks/store'
 import Pagination from '@/components/common/Pagination'
-import { formatDate2, formatDate3 } from '@/hooks/common'
+import { formatDate, formatDate3 } from '@/hooks/common'
 import SelectedMenu from '@/components/common/SelectedMenu'
 import ItemsSelectModal from '@/components/common/modal/ItemsSelectModal'
 import UploadModal from '@/components/management/modal/UploadModal'
@@ -98,20 +124,21 @@ import {
   SearchApplicantResponse,
   SiteListResponse,
   SearchUserByCompanyResponse,
+  SearchManuscriptResponse,
+  ListApplicantTypeResponse,
 } from '@/api/model/response'
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
 import Spinner from '@/components/common/modal/Spinner'
 import { GetStaticProps } from 'next'
 import { Dayjs } from 'dayjs'
+import ColumnsModal from '@/components/common/modal/Columns'
 
 type Props = {
   isError: boolean
   locale: string
   sites: SiteListResponse[]
 }
-
-const APPLICANT_PAGE_SIZE = 30
 
 const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const router = useRouter()
@@ -123,8 +150,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   )
   const applicantSearchTextList = _.cloneDeep(applicant.search.textForm)
   const applicantSearchAutoCompForm = _.cloneDeep(applicant.search.autoCompForm)
+  const applicantSearchRangesForm = _.cloneDeep(applicant.search.ranges)
   const applicantSearchDatesForm = _.cloneDeep(applicant.search.dates)
   const applicantSearchSortList = Object.assign({}, applicant.search.sort)
+  const applicantSearchOption = Object.assign({}, applicant.search.option)
 
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
@@ -134,7 +163,11 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [usersBelongTeam, setUsersBelongTeam] = useState<
     SearchUserByCompanyResponse[]
   >([])
+  const [manuscripts, setManuscripts] = useState<SearchManuscriptResponse[]>([])
+  const [types, setTypes] = useState<ListApplicantTypeResponse[]>([])
+
   const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(applicant.search.pageSize)
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [searchObj, setSearchObj] = useState<SearchForm>({})
@@ -145,6 +178,11 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [open, isOpen] = useState<boolean>(false)
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
   const [userSelectOpen, isUserSelectOpen] = useState<boolean>(false)
+  const [statusSelectOpen, isStatusSelectOpen] = useState<boolean>(false)
+  const [manuscriptSelectOpen, isManuscriptSelectOpen] =
+    useState<boolean>(false)
+  const [typeSelectOpen, isTypeSelectOpen] = useState<boolean>(false)
+  const [columnsOpen, isColumnsOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [init, isInit] = useState<boolean>(true)
   const [spinner, isSpinner] = useState<boolean>(false)
@@ -199,6 +237,50 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         } as SearchUserByCompanyResponse)
       })
       setUsersBelongTeam(res3)
+
+      // API: 種別一覧_同一チーム
+      const tempList3 = await ListApplicantTypeByTeamCSR({
+        user_hash_key: user.hashKey,
+      } as ListApplicantTypeRequest)
+
+      if (_.isEqual(tempList3.data.code, HttpStatusCode.NoContent)) {
+        isNoContent(true)
+        return
+      }
+
+      const res4: ListApplicantTypeResponse[] = _.map(
+        tempList3.data.list,
+        (item, index) => {
+          return {
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            name: item.name,
+          } as ListApplicantTypeResponse
+        },
+      )
+      setTypes(res4)
+
+      // API: 種別一覧_同一チーム
+      const tempList4 = await SearchManuscriptByTeamCSR({
+        user_hash_key: user.hashKey,
+      } as SearchManuscriptByTeamRequest)
+
+      if (_.isEqual(tempList4.data.code, HttpStatusCode.NoContent)) {
+        isNoContent(true)
+        return
+      }
+
+      const res5: SearchManuscriptResponse[] = _.map(
+        tempList4.data.list,
+        (item, index) => {
+          return {
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            content: item.content,
+          } as SearchManuscriptResponse
+        },
+      )
+      setManuscripts(res5)
 
       setSearchObj({
         selectList: [
@@ -300,6 +382,44 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
               },
             ] as SearchSelectTerm[],
           },
+          {
+            name: t('features.applicant.header.manuscript'),
+            isRadio: false,
+            list: _.map(res5, (item) => {
+              return {
+                id: Number(item.no),
+                key: item.hashKey,
+                value: item.content,
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, Number(item.no)),
+                      _.isEqual(option.index, SearchIndex.Manuscript),
+                    ])
+                  }),
+                ),
+              }
+            }) as SearchSelectTerm[],
+          },
+          {
+            name: t('features.applicant.header.type'),
+            isRadio: false,
+            list: _.map(res4, (item) => {
+              return {
+                id: Number(item.no),
+                key: item.hashKey,
+                value: item.name,
+                isSelected: !_.isEmpty(
+                  _.find(applicantSearchTermList, (option) => {
+                    return _.every([
+                      _.isEqual(option.id, Number(item.no)),
+                      _.isEqual(option.index, SearchIndex.Type),
+                    ])
+                  }),
+                ),
+              }
+            }) as SearchSelectTerm[],
+          },
         ] as SearchSelect[],
         textForm: [
           {
@@ -311,6 +431,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             id: applicantSearchTextList[SearchTextIndex.Email].id,
             name: t(applicantSearchTextList[SearchTextIndex.Email].name),
             value: applicantSearchTextList[SearchTextIndex.Email].value,
+          },
+          {
+            id: applicantSearchTextList[SearchTextIndex.OuterID].id,
+            name: t(applicantSearchTextList[SearchTextIndex.OuterID].name),
+            value: applicantSearchTextList[SearchTextIndex.OuterID].value,
+          },
+          {
+            id: applicantSearchTextList[SearchTextIndex.CommitID].id,
+            name: t(applicantSearchTextList[SearchTextIndex.CommitID].name),
+            value: applicantSearchTextList[SearchTextIndex.CommitID].value,
           },
         ] as SearchText[],
         autoCompForm: [
@@ -331,6 +461,14 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                 .selectedItems,
           },
         ] as SearchAutoComplete[],
+        ranges: [
+          {
+            id: applicantSearchRangesForm[SearchRangeIndex.Age].id,
+            name: t(applicantSearchRangesForm[SearchRangeIndex.Age].name),
+            min: applicantSearchRangesForm[SearchRangeIndex.Age].min,
+            max: applicantSearchRangesForm[SearchRangeIndex.Age].max,
+          },
+        ] as SearchRanges[],
         dates: [
           {
             id: applicantSearchDatesForm[SearchDateIndex.CreatedAt].id,
@@ -389,7 +527,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     }
   }
 
-  const search = async (currentPage: number) => {
+  const search = async (currentPage: number, currentSize: number) => {
+    isSpinner(true)
+    isPageDisp(false)
     if (init) isLoading(true)
 
     // API 応募者検索
@@ -408,6 +548,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       user_hash_key: user.hashKey,
       // ページ
       page: currentPage,
+      // ページサイズ
+      page_size: currentSize,
       // サイト一覧
       sites: _.map(
         _.filter(applicantSearchTermList, (item) =>
@@ -421,6 +563,24 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       applicant_status_list: _.map(
         _.filter(applicantSearchTermList, (item) =>
           _.isEqual(item.index, SearchIndex.Status),
+        ),
+        (item2) => {
+          return item2.hashKey
+        },
+      ),
+      // 原稿一覧
+      manuscripts: _.map(
+        _.filter(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, SearchIndex.Manuscript),
+        ),
+        (item2) => {
+          return item2.hashKey
+        },
+      ),
+      // 種別一覧
+      types: _.map(
+        _.filter(applicantSearchTermList, (item) =>
+          _.isEqual(item.index, SearchIndex.Type),
         ),
         (item2) => {
           return item2.hashKey
@@ -442,6 +602,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       name: applicantSearchTextList[SearchTextIndex.Name].value.trim(),
       // メールアドレス
       email: applicantSearchTextList[SearchTextIndex.Email].value.trim(),
+      // 媒体側ID
+      outer_id: applicantSearchTextList[SearchTextIndex.OuterID].value.trim(),
+      // コミットID
+      commit_id: applicantSearchTextList[SearchTextIndex.CommitID].value.trim(),
       // 面接官
       users: _.map(
         applicantSearchAutoCompForm[SearchAutoCompIndex.Interviewer]
@@ -473,12 +637,14 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
         _.forEach(_.isEmpty(res.data.list) ? [] : res.data.list, (r, index) => {
           list.push({
-            no: APPLICANT_PAGE_SIZE * (currentPage - 1) + Number(index) + 1,
+            no: currentSize * (currentPage - 1) + Number(index) + 1,
             hashKey: r.hash_key,
             name: r.name,
+            outerID: r.outer_id,
             site: Number(r.site_id),
             siteName: r.site_name,
             email: r.email,
+            age: Number(r.age),
             statusName: r.status_name,
             interviewerDate: new Date(r.start),
             google: r.google_meet_url,
@@ -492,6 +658,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
               return u.name
             }),
             calendarHashKey: r.calendar_hash_key,
+            commitID: r.commit_id,
+            content: r.content,
+            type: r.type,
+            scheduleHash: r.schedule_hash_key,
           } as SearchApplicantResponse)
         })
         setBodies(list)
@@ -505,6 +675,11 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             } as SelectedCheckbox)
           })
           setCheckedList(list2)
+        }
+
+        if (currentSize) {
+          setPageSize(currentSize)
+          store.dispatch(applicantSearchPageSize(currentSize))
         }
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
@@ -540,6 +715,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         }
       })
       .finally(() => {
+        isSpinner(false)
         isLoading(false)
         isPageDisp(true)
       })
@@ -712,11 +888,17 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       router.push(RouterPath.Error)
     }
 
+    const app = _.find(bodies, (b) => _.isEqual(b.hashKey, a.key))
+    if (_.isUndefined(app)) {
+      router.push(RouterPath.Error)
+    }
+
     // API: 面接官割り振り
     await AssignUserCSR({
       user_hash_key: user.hashKey,
       hash_key: a.key,
       hash_keys: hashKeys,
+      remove_schedule_hash_keys: [app.scheduleHash],
     } as AssignUserRequest)
       .then(async () => {
         toast(t('features.applicant.menu.user') + t('common.toast.create'), {
@@ -730,7 +912,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           closeButton: () => <ClearIcon />,
         })
 
-        await search(1)
+        await search(1, pageSize)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         const error = { isServerError, routerPath, toastMsg, storeMsg, code }
@@ -781,12 +963,243 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       })
   }
 
+  const selectStatus = async (hashKey: string) => {
+    const hashKeys: string[] = _.map(
+      _.filter(
+        bodies,
+        (b) =>
+          !_.isEmpty(
+            _.compact(
+              _.map(
+                _.filter(checkedList, (c) => c.checked),
+                (cc) => {
+                  return _.isEqual(cc.key, b.hashKey)
+                },
+              ),
+            ),
+          ),
+      ),
+      (item) => {
+        return item.hashKey
+      },
+    )
+
+    // API: ステータス更新
+    await UpdateSelectStatusCSR({
+      user_hash_key: user.hashKey,
+      status_hash: hashKey,
+      applicants: hashKeys,
+    } as UpdateSelectStatusRequest)
+      .then(async () => {
+        toast(t('features.applicant.menu.status') + t('common.toast.edit'), {
+          style: {
+            backgroundColor: setting.toastSuccessColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        await search(1, pageSize)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          throw error
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
+  const selectManuscript = async (hashKey: string) => {
+    const hashKeys: string[] = _.map(
+      _.filter(
+        bodies,
+        (b) =>
+          !_.isEmpty(
+            _.compact(
+              _.map(
+                _.filter(checkedList, (c) => c.checked),
+                (cc) => {
+                  return _.isEqual(cc.key, b.hashKey)
+                },
+              ),
+            ),
+          ),
+      ),
+      (item) => {
+        return item.hashKey
+      },
+    )
+
+    // API: 原稿紐づけ登録
+    await CreateApplicantAssociationCSR({
+      user_hash_key: user.hashKey,
+      manuscript_hash: hashKey,
+      applicants: hashKeys,
+    } as CreateApplicantManuscriptAssociationRequest)
+      .then(async () => {
+        toast(
+          t('features.applicant.menu.manuscript') + t('common.toast.create'),
+          {
+            style: {
+              backgroundColor: setting.toastSuccessColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          },
+        )
+
+        await search(1, pageSize)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          throw error
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
+  const selectType = async (hashKey: string) => {
+    const hashKeys: string[] = _.map(
+      _.filter(
+        bodies,
+        (b) =>
+          !_.isEmpty(
+            _.compact(
+              _.map(
+                _.filter(checkedList, (c) => c.checked),
+                (cc) => {
+                  return _.isEqual(cc.key, b.hashKey)
+                },
+              ),
+            ),
+          ),
+      ),
+      (item) => {
+        return item.hashKey
+      },
+    )
+
+    // API: 種別紐づけ登録
+    await CreateApplicantTypeAssociationCSR({
+      user_hash_key: user.hashKey,
+      type_hash: hashKey,
+      applicants: hashKeys,
+    } as CreateApplicantTypeAssociationRequest)
+      .then(async () => {
+        toast(t('features.applicant.menu.type') + t('common.toast.create'), {
+          style: {
+            backgroundColor: setting.toastSuccessColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        await search(1, pageSize)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+          throw error
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
   // 選択済みメニュー表示
   const dispMenu: SelectedMenuModel[] = [
     // Google Meet
     {
       name: t('features.applicant.menu.googleMeet'),
-      icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
+      icon: <MeetingRoomIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: blue[300],
       condition: _.every([
         _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
@@ -871,8 +1284,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     // 面接官割振り
     {
       name: t('features.applicant.menu.user'),
-      icon: <MeetingRoomIcon sx={[mr(0.25), mb(0.5), FontSize(26)]} />,
-      color: common.black,
+      icon: <CoPresentIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: setting.color,
       condition: _.every([
         _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
         _.findIndex(bodies, (item) =>
@@ -903,9 +1316,50 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         ),
         roles[Operation.ManagementApplicantAssignUser],
       ]),
-      onClick: async () => {
+      onClick: () => {
         isUserSelectOpen(true)
       },
+    },
+    // ステータス変更
+    {
+      name: t('features.applicant.menu.status'),
+      icon: <EmojiEmotionsIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: yellow[800],
+      condition: _.every([
+        !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+        roles[Operation.ManagementApplicantAssignStatus],
+      ]),
+      onClick: () => isStatusSelectOpen(true),
+    },
+    // 原稿設定
+    {
+      name: t('features.applicant.menu.manuscript'),
+      icon: <ReceiptLongIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: brown[500],
+      condition: _.every([
+        !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+        roles[Operation.ManagementApplicantAssignManuscript],
+      ]),
+      onClick: () => isManuscriptSelectOpen(true),
+    },
+    // 種別設定
+    {
+      name: t('features.applicant.menu.type'),
+      icon: <FunctionsIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: deepPurple[500],
+      condition: _.every([
+        !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+        roles[Operation.ManagementApplicantAssignType],
+      ]),
+      onClick: () => isTypeSelectOpen(true),
+    },
+    // 面接結果入力
+    {
+      name: t('features.applicant.menu.result'),
+      icon: <FeedbackIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: green[500],
+      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
+      onClick: () => {},
     },
   ]
 
@@ -1127,7 +1581,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         }
       }
 
-      await search(1)
+      await search(1, pageSize)
 
       isOpen(false)
       isSpinner(false)
@@ -1210,15 +1664,22 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       })
   }
 
-  const [tableHeader, setTableHeader] = useState<TableHeader[]>([
-    {
-      id: 1,
+  const [tableHeader, setTableHeader] = useState<Record<string, TableHeader>>({
+    no: {
       name: 'No',
+      minW: 30,
+      option: {
+        isChange: false,
+        display: true,
+      },
       sort: null,
     },
-    {
-      id: 2,
+    name: {
       name: t('features.applicant.header.name'),
+      option: {
+        isChange: false,
+        display: true,
+      },
       sort: {
         key: SearchSortKey.Name,
         target: _.isEqual(SearchSortKey.Name, applicantSearchSortList.key),
@@ -1227,20 +1688,12 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : false,
       },
     },
-    {
-      id: 3,
-      name: t('features.applicant.header.site'),
-      sort: {
-        key: SearchSortKey.Site,
-        target: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key),
-        isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key)
-          ? applicantSearchSortList.isAsc
-          : false,
-      },
-    },
-    {
-      id: 4,
+    email: {
       name: t('features.applicant.header.email'),
+      option: {
+        isChange: false,
+        display: true,
+      },
       sort: {
         key: SearchSortKey.Email,
         target: _.isEqual(SearchSortKey.Email, applicantSearchSortList.key),
@@ -1249,9 +1702,48 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : false,
       },
     },
-    {
-      id: 5,
+    outerID: {
+      name: t('features.applicant.header.outerID'),
+      option: {
+        isChange: applicantSearchOption['outerID'].isChange,
+        display: applicantSearchOption['outerID'].display,
+      },
+    },
+    site: {
+      name: t('features.applicant.header.site'),
+      option: {
+        isChange: applicantSearchOption['site'].isChange,
+        display: applicantSearchOption['site'].display,
+      },
+      sort: {
+        key: SearchSortKey.Site,
+        target: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Site, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : false,
+      },
+    },
+    age: {
+      name: t('features.applicant.header.age'),
+      minW: 100,
+      option: {
+        isChange: applicantSearchOption['age'].isChange,
+        display: applicantSearchOption['age'].display,
+      },
+      sort: {
+        key: SearchSortKey.Age,
+        target: _.isEqual(SearchSortKey.Age, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Age, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : false,
+      },
+    },
+    status: {
       name: t('features.applicant.header.status'),
+      option: {
+        isChange: applicantSearchOption['status'].isChange,
+        display: applicantSearchOption['status'].display,
+      },
       sort: {
         key: SearchSortKey.Status,
         target: _.isEqual(SearchSortKey.Status, applicantSearchSortList.key),
@@ -1260,9 +1752,43 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : true,
       },
     },
-    {
-      id: 6,
+    manuscript: {
+      name: t('features.applicant.header.manuscript'),
+      option: {
+        isChange: applicantSearchOption['manuscript'].isChange,
+        display: applicantSearchOption['manuscript'].display,
+      },
+      sort: {
+        key: SearchSortKey.Manuscript,
+        target: _.isEqual(
+          SearchSortKey.Manuscript,
+          applicantSearchSortList.key,
+        ),
+        isAsc: _.isEqual(SearchSortKey.Manuscript, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : true,
+      },
+    },
+    type: {
+      name: t('features.applicant.header.type'),
+      option: {
+        isChange: applicantSearchOption['type'].isChange,
+        display: applicantSearchOption['type'].display,
+      },
+      sort: {
+        key: SearchSortKey.Type,
+        target: _.isEqual(SearchSortKey.Type, applicantSearchSortList.key),
+        isAsc: _.isEqual(SearchSortKey.Type, applicantSearchSortList.key)
+          ? applicantSearchSortList.isAsc
+          : true,
+      },
+    },
+    interviewerDate: {
       name: t('features.applicant.header.interviewerDate'),
+      option: {
+        isChange: applicantSearchOption['interviewerDate'].isChange,
+        display: applicantSearchOption['interviewerDate'].display,
+      },
       sort: {
         key: SearchSortKey.InterviewerDate,
         target: _.isEqual(
@@ -1277,24 +1803,36 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : true,
       },
     },
-    {
-      id: 7,
+    users: {
       name: t('features.applicant.header.users'),
+      option: {
+        isChange: applicantSearchOption['users'].isChange,
+        display: applicantSearchOption['users'].display,
+      },
       sort: null,
     },
-    {
-      id: 8,
+    resume: {
       name: t('features.applicant.header.resume'),
+      option: {
+        isChange: applicantSearchOption['resume'].isChange,
+        display: applicantSearchOption['resume'].display,
+      },
       sort: null,
     },
-    {
-      id: 9,
+    curriculumVitae: {
       name: t('features.applicant.header.curriculumVitae'),
+      option: {
+        isChange: applicantSearchOption['curriculumVitae'].isChange,
+        display: applicantSearchOption['curriculumVitae'].display,
+      },
       sort: null,
     },
-    {
-      id: 10,
+    createdAt: {
       name: t('features.applicant.header.createdAt'),
+      option: {
+        isChange: applicantSearchOption['createdAt'].isChange,
+        display: applicantSearchOption['createdAt'].display,
+      },
       sort: {
         key: SearchSortKey.CreatedAt,
         target: _.isEqual(SearchSortKey.CreatedAt, applicantSearchSortList.key),
@@ -1303,17 +1841,47 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           : true,
       },
     },
-  ])
+    commitID: {
+      name: t('features.applicant.header.commitID'),
+      option: {
+        isChange: applicantSearchOption['commitID'].isChange,
+        display: applicantSearchOption['commitID'].display,
+      },
+    },
+  })
+
+  const changeColumns = (h: Record<string, TableHeader>) => {
+    isLoading(true)
+    isSpinner(true)
+
+    const header: Record<string, TableDisplayOption> = {}
+    for (const key of _.keys(h)) {
+      header[key] = {
+        isChange: h[key].option?.isChange || false,
+        display: h[key].option?.display || false,
+      }
+    }
+
+    store.dispatch(applicantSearchColumns(header))
+    setTableHeader(h)
+
+    isLoading(false)
+    isSpinner(false)
+    isColumnsOpen(false)
+  }
 
   const changeTarget = (sort: TableSort) => {
     const newObj = Object.assign({}, searchObj)
-    const list = _.cloneDeep(tableHeader)
+    const obj = Object.assign({}, tableHeader)
+    const list = _.values(obj)
 
     const index = _.findIndex(list, (item) =>
       _.every([!_.isNull(item.sort), _.isEqual(item.sort?.key, sort.key)]),
     )
 
-    for (const item of _.filter(list, (el) => !_.isEmpty(el.sort))) {
+    for (const item of _.filter(list, (el, i) =>
+      _.every([!_.isEmpty(el.sort), !_.isEqual(i, index)]),
+    )) {
       item.sort.target = false
       item.sort.isAsc = true
     }
@@ -1323,11 +1891,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
     const newSort = {
       key: sort.key,
-      isAsc: !sort.isAsc,
+      isAsc: list[index].sort.isAsc,
     } as SearchSortModel
 
     Object.assign(applicantSearchSortList, newSort)
-    setTableHeader(list)
+
+    const header: Record<string, TableHeader> = {}
+    for (let i = 0; i < _.size(list); i++) {
+      header[_.keys(obj)[i]] = list[i]
+    }
+    setTableHeader(header)
     setSearchObj(newObj)
 
     store.dispatch(applicantSearchSort(newSort))
@@ -1335,6 +1908,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
   const changePage = (i: number) => {
     setPage(i)
+  }
+  const changePageSize = (i: number) => {
+    setPageSize(i)
   }
 
   useEffect(() => {
@@ -1396,7 +1972,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
 
         if (init) await inits()
 
-        await search(1)
+        await search(1, pageSize)
       } finally {
         isLoading(false)
       }
@@ -1414,34 +1990,35 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         roles[Operation.ManagementApplicantRead],
       ]) && (
         <>
-          {spinner && <Spinner></Spinner>}
+          {spinner && <Spinner />}
+          {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
+            <SelectedMenu
+              menu={dispMenu}
+              size={_.size(_.filter(checkedList, (c) => c.checked))}
+            />
+          )}
           <Box sx={mt(12)}>
             <Box sx={[SpaceBetween, w(90), M0Auto]}>
-              {pageDisp && (
+              {_.every([pageDisp, !_.isEqual(size, 0)]) && (
                 <Pagination
-                  show={size > APPLICANT_PAGE_SIZE}
+                  show={size > pageSize}
                   currentPage={page}
                   listSize={size}
-                  pageSize={APPLICANT_PAGE_SIZE}
+                  pageSize={pageSize}
                   search={search}
                   changePage={changePage}
-                ></Pagination>
+                  changePageSize={changePageSize}
+                />
               )}
-              {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
-                <SelectedMenu
-                  menu={dispMenu}
-                  size={_.size(_.filter(checkedList, (c) => c.checked))}
-                ></SelectedMenu>
-              )}
-              <Box
-                sx={[
-                  TableMenuButtons,
-                  mb(3),
-                  _.size(_.filter(checkedList, (c) => c.checked)) > 0
-                    ? maxW(300)
-                    : null,
-                ]}
-              >
+              <Box sx={[TableMenuButtons, mb(3)]}>
+                <Button
+                  variant="contained"
+                  sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
+                  onClick={() => isColumnsOpen(true)}
+                >
+                  <ViewColumnIcon sx={mr(0.25)} />
+                  {t('common.button.columnDisplay')}
+                </Button>
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
@@ -1467,57 +2044,97 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             </Box>
             <CustomTable
               height={75}
-              headers={tableHeader}
+              headers={_.values(
+                Object.fromEntries(
+                  _.filter(
+                    Object.entries(tableHeader),
+                    ([_, value]) => value.option.display,
+                  ),
+                ),
+              )}
               isNoContent={noContent}
               bodies={_.map(bodies, (l) => {
                 return {
-                  no: l.no,
-                  name: l.name,
-                  site: l.siteName,
-                  email: l.email,
-                  status: l.statusName,
+                  no: new Body(String(l.no), tableHeader.no.option.display),
+                  name: new Body(l.name, tableHeader.name.option.display),
+                  email: new Body(l.email, tableHeader.email.option.display),
+                  outerID: new Body(
+                    l.outerID,
+                    tableHeader.outerID.option.display,
+                  ),
+                  site: new Body(l.siteName, tableHeader.site.option.display),
+                  age: new Body(l.age, tableHeader.age.option.display),
+                  status: new Body(
+                    l.statusName,
+                    tableHeader.status.option.display,
+                  ),
+                  manuscript: new Body(
+                    l.content,
+                    tableHeader.manuscript.option.display,
+                  ),
+                  type: new Body(l.type, tableHeader.type.option.display),
                   interviewerDate:
                     l.interviewerDate.getFullYear() < 2
-                      ? ''
-                      : formatDate2(l.interviewerDate),
-                  users: (
-                    <Box sx={DirectionColumnForTable}>
-                      {_.map(l.userNames, (user, index) => {
-                        return <Box key={index}>{user}</Box>
-                      })}
-                    </Box>
+                      ? new Body('', tableHeader.interviewerDate.option.display)
+                      : new Body(
+                          formatDate3(l.interviewerDate),
+                          tableHeader.interviewerDate.option.display,
+                        ),
+                  users: new Body(
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(l.userNames, (user, index) => {
+                          return <Box key={index}>{user}</Box>
+                        })}
+                      </Box>
+                    ),
+                    tableHeader.users.option.display,
                   ),
-                  resume: _.isEmpty(l.resume) ? (
-                    <>{t('features.applicant.documents.f')}</>
-                  ) : (
-                    <Button
-                      variant="text"
-                      sx={Resume(setting.color)}
-                      onClick={async () => {
-                        await download(l.hashKey, 'resume')
-                      }}
-                    >
-                      <UploadFileIcon sx={mr(0.25)} />
-                      {t('features.applicant.documents.t')}
-                    </Button>
+                  resume: new Body(
+                    _.isEmpty(l.resume) ? (
+                      <>{t('features.applicant.documents.f')}</>
+                    ) : (
+                      <Button
+                        variant="text"
+                        sx={Resume(setting.color)}
+                        onClick={async () => {
+                          await download(l.hashKey, 'resume')
+                        }}
+                      >
+                        <UploadFileIcon sx={mr(0.25)} />
+                        {t('features.applicant.documents.t')}
+                      </Button>
+                    ),
+                    tableHeader.resume.option.display,
                   ),
-                  curriculumVitae: _.isEmpty(l.curriculumVitae) ? (
-                    <>{t('features.applicant.documents.f')}</>
-                  ) : (
-                    <Button
-                      variant="text"
-                      sx={Resume(setting.color)}
-                      onClick={async () => {
-                        await download(l.hashKey, 'curriculum_vitae')
-                      }}
-                    >
-                      <UploadFileIcon sx={mr(0.25)} />
-                      {t('features.applicant.documents.t')}
-                    </Button>
+                  curriculumVitae: new Body(
+                    _.isEmpty(l.curriculumVitae) ? (
+                      <>{t('features.applicant.documents.f')}</>
+                    ) : (
+                      <Button
+                        variant="text"
+                        sx={Resume(setting.color)}
+                        onClick={async () => {
+                          await download(l.hashKey, 'curriculum_vitae')
+                        }}
+                      >
+                        <UploadFileIcon sx={mr(0.25)} />
+                        {t('features.applicant.documents.t')}
+                      </Button>
+                    ),
+                    tableHeader.curriculumVitae.option.display,
                   ),
-                  createdAt: formatDate3(l.createdAt),
+                  createdAt: new Body(
+                    formatDate(l.createdAt),
+                    tableHeader.createdAt.option.display,
+                  ),
+                  commitID: new Body(
+                    l.commitID,
+                    tableHeader.commitID.option.display,
+                  ),
                 }
               })}
+              pageSize={pageSize}
               checkbox={
                 {
                   checkedList: checkedList,
@@ -1544,7 +2161,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             open={open}
             closeModal={() => isOpen(false)}
             afterFuncAsync={readFile}
-          ></UploadModal>
+          />
           <SearchModal
             open={searchOpen}
             closeModal={() => isSearchOpen(false)}
@@ -1560,7 +2177,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             changeSearchObjByAutoComp={changeSearchObjByAutoComp}
             changeSearchObjByFromDates={changeSearchObjByFromDates}
             changeSearchObjByToDates={changeSearchObjByToDates}
-          ></SearchModal>
+          />
           <ItemsSelectModal
             open={userSelectOpen}
             items={_.map(usersBelongTeam, (u) => {
@@ -1580,12 +2197,235 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                     ),
                   )[0].users
             }
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'users'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(bodies, (b) =>
+                    _.isEqual(
+                      b.hashKey,
+                      _.find(checkedList, (c) => c.checked).key,
+                    ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  users: new Body(
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(l.userNames, (user, index) => {
+                          return <Box key={index}>{user}</Box>
+                        })}
+                      </Box>
+                    ),
+                  ),
+                }
+              },
+            )}
             title={t('features.applicant.menu.user')}
-            subTitle={t('features.applicant.assign.subTitle')}
+            subTitle={t('features.applicant.assign.user.subTitle')}
             buttonTitle={t('features.applicant.menu.user')}
+            msg={t('features.applicant.assign.user.msg')}
+            icon={<CoPresentIcon fontSize="large" sx={mr(2)} />}
             submit={submitUsers}
             close={() => isUserSelectOpen(false)}
-          ></ItemsSelectModal>
+          />
+          <ItemsSelectModal
+            open={statusSelectOpen}
+            single={true}
+            items={_.map(statusList, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.name,
+                subTitle: '',
+              } as SelectTitlesModel
+            })}
+            selectedItems={[]}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'status'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  status: new Body(l.statusName),
+                }
+              },
+            )}
+            title={t('features.applicant.menu.status')}
+            subTitle={t('features.applicant.menu.status')}
+            buttonTitle={t('features.applicant.menu.status')}
+            msg={t('features.applicant.assign.status.msg')}
+            icon={<EmojiEmotionsIcon fontSize="large" sx={mr(2)} />}
+            w={80}
+            m={15}
+            submit={selectStatus}
+            close={() => isStatusSelectOpen(false)}
+          />
+          <ItemsSelectModal
+            open={manuscriptSelectOpen}
+            single={true}
+            items={_.map(manuscripts, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.content,
+                subTitle: '',
+              } as SelectTitlesModel
+            })}
+            selectedItems={[]}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'manuscript'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  manuscript: new Body(l.content),
+                }
+              },
+            )}
+            title={t('features.applicant.menu.manuscript')}
+            subTitle={t('features.applicant.menu.manuscript')}
+            buttonTitle={t('features.applicant.menu.manuscript')}
+            msg={t('features.applicant.assign.manuscript.msg')}
+            icon={<ReceiptLongIcon fontSize="large" sx={mr(2)} />}
+            w={80}
+            m={15}
+            submit={selectManuscript}
+            close={() => isManuscriptSelectOpen(false)}
+          />
+          <ItemsSelectModal
+            open={typeSelectOpen}
+            single={true}
+            items={_.map(types, (u) => {
+              return {
+                key: u.hashKey,
+                title: u.name,
+                subTitle: '',
+              } as SelectTitlesModel
+            })}
+            selectedItems={[]}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'type'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  type: new Body(l.type),
+                }
+              },
+            )}
+            title={t('features.applicant.menu.type')}
+            subTitle={t('features.applicant.menu.type')}
+            buttonTitle={t('features.applicant.menu.type')}
+            msg={t('features.applicant.assign.type.msg')}
+            icon={<FunctionsIcon fontSize="large" sx={mr(2)} />}
+            w={80}
+            m={15}
+            submit={selectType}
+            close={() => isTypeSelectOpen(false)}
+          />
+          <ColumnsModal
+            open={columnsOpen}
+            close={() => isColumnsOpen(false)}
+            headers={tableHeader}
+            submit={changeColumns}
+          />
         </>
       )}
     </>
