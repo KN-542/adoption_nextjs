@@ -89,24 +89,32 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
         hash_key: user.hashKey,
       } as RolesRequest)
 
-      setRoles(res.data.map as { [key: string]: boolean })
+      if (res && res.data) {
+        setRoles(res.data.map as { [key: string]: boolean })
+      } else {
+        throw new Error('Roles data not found')
+      }
 
       // API: チーム取得
       const res2 = await GetOwnTeamCSR({
         user_hash_key: user.hashKey,
       } as GetOwnTeamRequest)
 
-      setTeam({
-        hashKey: res2.data.team.hash_key,
-        name: res2.data.team.name,
-        users: _.map(res2.data.team.users, (user) => {
-          return {
-            hashKey: user.hash_key,
-            name: user.name,
-            email: user.email,
-          } as SearchUserByCompanyResponse
-        }),
-      } as GetTeamResponse)
+      if (res2 && res2.data && res2.data.team) {
+        setTeam({
+          hashKey: res2.data.team.hash_key,
+          name: res2.data.team.name,
+          users: _.map(res2.data.team.users, (user) => {
+            return {
+              hashKey: user.hash_key,
+              name: user.name,
+              email: user.email,
+            } as SearchUserByCompanyResponse
+          }),
+        } as GetTeamResponse)
+      } else {
+        throw new Error('Team data not found')
+      }
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
