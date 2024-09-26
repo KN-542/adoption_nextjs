@@ -350,14 +350,14 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {
     props: {
       isError,
-      locale: 'ja',
-      messages: (await import(`../../../public/locales/ja/common.json`))
+      locale,
+      messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },
   }

@@ -606,7 +606,7 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError = false
   const scheduleList: ScheduleType[] = []
 
@@ -617,7 +617,7 @@ export const getStaticProps: GetStaticProps = async () => {
       scheduleList.push(
         ..._.map(res.data.list, (item) => ({
           value: String(item.id),
-          name: item[`name_ja`],
+          name: item[`name_${locale}`],
           freqName: item.freq_name,
         })),
       )
@@ -633,7 +633,7 @@ export const getStaticProps: GetStaticProps = async () => {
     props: {
       scheduleList,
       isError,
-      messages: (await import(`../../../public/locales/ja/common.json`))
+      messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },
   }

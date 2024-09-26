@@ -862,7 +862,7 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError = false
 
   // API: ステータスイベントマスタ一覧
@@ -873,7 +873,7 @@ export const getStaticProps: GetStaticProps = async () => {
         eventsSSG.push({
           no: Number(index) + 1,
           hashKey: item.hash_key,
-          desc: item[`desc_ja`],
+          desc: item[`desc_${locale}`],
         })
       })
     })
@@ -884,10 +884,11 @@ export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       isError,
-      locale: 'ja',
+      locale,
       eventsSSG,
-      messages: (await import(`../../../../public/locales/ja/common.json`))
-        .default,
+      messages: (
+        await import(`../../../../public/locales/${locale}/common.json`)
+      ).default,
     },
   }
 }

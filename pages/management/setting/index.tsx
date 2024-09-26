@@ -40,10 +40,10 @@ const Setting: FC<Props> = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   return {
     props: {
-      messages: (await import(`../../../public/locales/ja/common.json`))
+      messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },
   }

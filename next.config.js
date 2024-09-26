@@ -2,7 +2,10 @@
 
 const nextConfig = {
   reactStrictMode: false,
-  output: 'export',
+  i18n: {
+    locales: ['ja'],
+    defaultLocale: 'ja',
+  },
 }
 
 module.exports = nextConfig

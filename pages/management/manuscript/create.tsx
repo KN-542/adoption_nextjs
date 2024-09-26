@@ -62,7 +62,7 @@ type Inputs = {
   content: string
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   let isError: boolean = false
 
   // API サイト一覧
@@ -84,9 +84,9 @@ export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       isError,
-      locale: 'ja',
+      locale,
       sitesSSG: sites,
-      messages: (await import(`../../../public/locales/ja/common.json`))
+      messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },
   }

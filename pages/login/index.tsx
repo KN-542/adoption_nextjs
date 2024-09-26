@@ -522,10 +522,11 @@ const Login = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   return {
     props: {
-      messages: (await import(`../../public/locales/ja/common.json`)).default,
+      messages: (await import(`../../public/locales/${locale}/common.json`))
+        .default,
     },
   }
 }
