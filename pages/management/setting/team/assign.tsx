@@ -538,9 +538,7 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
 
               <Box sx={ColumnMt4}>
                 <FormLabel sx={[mt(2), mb(1)]}>
-                  {`${team.numOfInterview}${t(
-                    'features.setting.team.sub.assign.num',
-                  )}`}
+                  {t('features.setting.team.sub.assign.num')}
                 </FormLabel>
                 <List>
                   {_.map(selectedPossibleList, (c, index) => {
@@ -596,9 +594,7 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
                 </List>
 
                 <FormLabel sx={[mt(6), mb(1)]}>
-                  {`${team.numOfInterview}${t(
-                    'features.setting.team.sub.assign.possibleTransaction',
-                  )}`}
+                  {t('features.setting.team.sub.assign.possibleTransaction')}
                 </FormLabel>
                 <List>
                   {_.map(possibleList, (c, index) => {

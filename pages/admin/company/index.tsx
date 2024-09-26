@@ -10,7 +10,7 @@ import { HttpStatusCode } from 'axios'
 import _ from 'lodash'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -43,6 +43,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import { changeSetting, companySearchPageSize } from '@/hooks/store'
 import { GetStaticProps } from 'next'
+import { DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
@@ -65,6 +66,8 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
   const [init, isInit] = useState<boolean>(true)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [pageDisp, isPageDisp] = useState<boolean>(false)
+
+  const processing = useRef<boolean>(false)
 
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(company.search.pageSize)
@@ -309,7 +312,14 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
                 <Button
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
-                  onClick={() => {}}
+                  onClick={() => {
+                    if (processing.current) return
+                    processing.current = true
+
+                    setTimeout(() => {
+                      processing.current = false
+                    }, DURING)
+                  }}
                 >
                   <ManageSearchIcon sx={mr(0.25)} />
                   {t('common.button.condSearch')}
@@ -321,9 +331,12 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
                       ml(1),
                       ButtonColorInverse(common.white, setting.color),
                     ]}
-                    onClick={() =>
+                    onClick={() => {
+                      if (processing.current) return
+                      processing.current = true
+
                       router.push(RouterPath.Admin + RouterPath.CompanyCreate)
-                    }
+                    }}
                   >
                     <AddCircleOutlineIcon sx={mr(0.25)} />
                     {t('features.company.create')}

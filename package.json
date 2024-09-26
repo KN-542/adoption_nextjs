@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "yarn test && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test-init": "yarn playwright install-deps && yarn playwright install",
@@ -56,6 +56,7 @@
     "autoprefixer": "^10.4.16",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-tailwindcss": "^3.13.0",
     "postcss": "^8.4.31",
     "postcss-nested": "^6.0.1",

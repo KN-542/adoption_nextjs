@@ -199,6 +199,8 @@ export type StatusEventResponse = {
 export type ListStatusEventByTeamResponse = {
   // No
   no: number
+  // ハッシュキー
+  hashKey: string
   // 説明
   desc: string
   // ステータス名

@@ -76,3 +76,6 @@ export const formatDateToHHMM = (date: Date): string => {
 }
 
 export const WEEKENDS = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa']
+
+// 二重クリック防止_再クリック可能時間
+export const DURING = 3000
