@@ -19,6 +19,8 @@ const App = ({ Component, pageProps }) => {
 
   if (
     _.some([
+      _.isEqual(router.pathname, ''),
+      _.isEqual(router.pathname, '/'),
       _.isEqual(router.pathname, RouterPath.Login),
       _.isEqual(router.pathname, RouterPath.Error),
       _.isEqual(
