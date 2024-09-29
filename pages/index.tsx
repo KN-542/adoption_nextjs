@@ -1,6 +1,5 @@
 const Index = () => {
-  return <>ああああ</>
+  return <>あああ</>
 }
 
 export default Index
-
