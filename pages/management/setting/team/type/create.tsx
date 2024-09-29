@@ -63,8 +63,9 @@ type Inputs = {
   name: string
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async () => {
   let isError: boolean = false
+  const locale = 'ja'
 
   // API: ステータスイベントマスタ一覧
   const documentRulesSSG: DocumentRuleResponse[] = []
@@ -103,9 +104,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
       isError,
       documentRules: documentRulesSSG,
       occupations: occupationsSSG,
-      messages: (
-        await import(`../../../../../public/locales/${locale}/common.json`)
-      ).default,
+      messages: (await import(`../../../../../public/locales/ja/common.json`))
+        .default,
     },
   }
 }

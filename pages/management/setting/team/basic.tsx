@@ -225,12 +225,11 @@ const SettingTeam: FC<Props> = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      messages: (
-        await import(`../../../../public/locales/${locale}/common.json`)
-      ).default,
+      messages: (await import(`../../../../public/locales/ja/common.json`))
+        .default,
     },
   }
 }

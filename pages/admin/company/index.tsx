@@ -383,14 +383,14 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async () => {
   let isError: boolean = false
 
   return {
     props: {
       isError,
-      locale,
-      messages: (await import(`../../../public/locales/${locale}/common.json`))
+      locale: 'ja',
+      messages: (await import(`../../../public/locales/ja/common.json`))
         .default,
     },
   }

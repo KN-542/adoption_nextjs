@@ -2432,7 +2432,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getStaticProps: GetStaticProps = async () => {
   let isError: boolean = false
 
   // API サイト一覧
@@ -2462,9 +2462,9 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
   return {
     props: {
       isError,
-      locale,
+      locale: 'ja',
       sites: sites,
-      messages: (await import(`../../../public/locales/${locale}/common.json`))
+      messages: (await import(`../../../public/locales/ja/common.json`))
         .default,
     },
   }
