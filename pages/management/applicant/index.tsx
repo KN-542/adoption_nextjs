@@ -130,7 +130,7 @@ import {
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
 import Spinner from '@/components/common/modal/Spinner'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps, GetStaticProps } from 'next'
 import { Dayjs } from 'dayjs'
 import ColumnsModal from '@/components/common/modal/Columns'
 
@@ -2432,7 +2432,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   // API サイト一覧
