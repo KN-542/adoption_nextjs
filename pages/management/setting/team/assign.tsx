@@ -47,7 +47,7 @@ import {
   Possible,
 } from '@/api/model/response'
 import {
-  AssignMasterSSG,
+  AssignMasterSSR,
   GetOwnTeamCSR,
   RolesCSR,
   UpdateAssignMethodCSR,

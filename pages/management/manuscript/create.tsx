@@ -5,7 +5,7 @@ import {
 } from '@/api/model/request'
 import { SearchTeamByCompanyResponse } from '@/api/model/response'
 import {
-  ApplicantSitesSSG,
+  ApplicantSitesSSR,
   CreateManuscriptCSR,
   RolesCSR,
   SearchTeamByCompanyCSR,
@@ -55,7 +55,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 type Props = {
   isError: boolean
   locale: string
-  sitesSSG: SelectTitlesModel[]
+  sitesSSR: SelectTitlesModel[]
 }
 
 type Inputs = {
@@ -85,7 +85,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
     props: {
       isError,
       locale,
-      sitesSSG: sites,
+      sitesSSR: sites,
       messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },
@@ -95,7 +95,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
 const ManuscriptCreate: FC<Props> = ({
   isError,
   locale: _locale,
-  sitesSSG,
+  sitesSSR,
 }) => {
   const router = useRouter()
   const t = useTranslations()
@@ -108,7 +108,7 @@ const ManuscriptCreate: FC<Props> = ({
 
   const [initTeams, setInitTeams] = useState<SearchTeamByCompanyResponse[]>([])
   const [teams, setTeams] = useState<SearchTeamByCompanyResponse[]>([])
-  const [initSites, setInitSites] = useState<SelectTitlesModel[]>(sitesSSG)
+  const [initSites, setInitSites] = useState<SelectTitlesModel[]>(sitesSSR)
   const [sites, setSites] = useState<SelectTitlesModel[]>([])
 
   const inits = async () => {

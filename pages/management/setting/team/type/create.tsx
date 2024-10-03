@@ -37,8 +37,8 @@ import { common } from '@mui/material/colors'
 import { DocumentRuleResponse, OccupationResponse } from '@/api/model/response'
 import {
   CreateApplicantTypeCSR,
-  DocumentRulesSSG,
-  OccupationsSSG,
+  DocumentRulesSSR,
+  OccupationsSSR,
   RolesCSR,
 } from '@/api/repository'
 import { CreateApplicantTypeRequest, RolesRequest } from '@/api/model/request'
@@ -67,11 +67,11 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   // API: ステータスイベントマスタ一覧
-  const documentRulesSSG: DocumentRuleResponse[] = []
+  const documentRulesSSR: DocumentRuleResponse[] = []
   await DocumentRulesSSR()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
-        documentRulesSSG.push({
+        documentRulesSSR.push({
           no: Number(index) + 1,
           hashKey: item.hash_key,
           rule: item[`rule_${locale}`],
@@ -83,11 +83,11 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
     })
 
   // API: 職種マスタ一覧
-  const occupationsSSG: OccupationResponse[] = []
+  const occupationsSSR: OccupationResponse[] = []
   await OccupationsSSR()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
-        occupationsSSG.push({
+        occupationsSSR.push({
           no: Number(index) + 1,
           hashKey: item.hash_key,
           name: item[`name_${locale}`],
@@ -101,8 +101,8 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       isError,
-      documentRules: documentRulesSSG,
-      occupations: occupationsSSG,
+      documentRules: documentRulesSSR,
+      occupations: occupationsSSR,
       messages: (
         await import(`../../../../../public/locales/${locale}/common.json`)
       ).default,

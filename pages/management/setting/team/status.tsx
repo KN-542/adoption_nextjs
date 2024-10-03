@@ -59,7 +59,7 @@ import {
 import {
   ApplicantStatusListCSR,
   GetOwnTeamCSR,
-  ListStatusEventSSG,
+  ListStatusEventSSR,
   RolesCSR,
   StatusEventsByTeamCSR,
   UpdateStatusCSR,
@@ -87,10 +87,10 @@ import DragHandleIcon from '@mui/icons-material/DragHandle'
 type Props = {
   isError: boolean
   locale: string
-  eventsSSG: StatusEventResponse[]
+  eventsSSR: StatusEventResponse[]
 }
 
-const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
+const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSR }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -105,7 +105,7 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
   const [oldEvents, setOldEvents] = useState<ListStatusEventByTeamResponse[]>(
     [],
   )
-  const [events, setEvents] = useState<StatusEventResponse[]>(eventsSSG)
+  const [events, setEvents] = useState<StatusEventResponse[]>(eventsSSR)
 
   const [teamEvents, setTeamEvents] = useState<GetOwnTeamResponse>(null)
   const [oldTeamEvents, setOldTeamEvents] = useState<GetOwnTeamResponse>(null)
@@ -866,11 +866,11 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError = false
 
   // API: ステータスイベントマスタ一覧
-  const eventsSSG: StatusEventResponse[] = []
+  const eventsSSR: StatusEventResponse[] = []
   await ListStatusEventSSR()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
-        eventsSSG.push({
+        eventsSSR.push({
           no: Number(index) + 1,
           hashKey: item.hash_key,
           desc: item[`desc_${locale}`],
@@ -885,7 +885,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
     props: {
       isError,
       locale,
-      eventsSSG,
+      eventsSSR,
       messages: (
         await import(`../../../../public/locales/${locale}/common.json`)
       ).default,

@@ -29,7 +29,7 @@ import {
   RolesCSR,
   SchedulesCSR,
   UpdateScheduleCSR,
-  UserListScheduleTypeSSG,
+  UserListScheduleTypeSSR,
 } from '@/api/repository'
 import { useRouter } from 'next/router'
 import { useTranslations } from 'next-intl'

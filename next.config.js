@@ -6,7 +6,7 @@ const nextConfig = {
     locales: ['ja'],
     defaultLocale: 'ja',
   },
-  staticPageGenerationTimeout: 300,
+  staticPageGenerationTimeout: 600,
 }
 
 module.exports = nextConfig
