@@ -9,7 +9,7 @@ import {
 } from '@/styles/index'
 import { Box, DialogContent } from '@mui/material'
 import _ from 'lodash'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { FC } from 'react'
@@ -40,7 +40,7 @@ const Setting: FC<Props> = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       messages: (await import(`../../../public/locales/${locale}/common.json`))

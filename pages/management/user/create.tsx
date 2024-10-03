@@ -55,7 +55,7 @@ import {
 import { FC, useEffect, useState } from 'react'
 import { Contents, SelectTitlesModel, SettingModel } from '@/types/index'
 import Content from '@/components/common/Content'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { Operation } from '@/enum/common'
 import { changeSetting } from '@/hooks/store'
 import {
@@ -562,7 +562,7 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

@@ -49,7 +49,7 @@ import ErrorHandler from '@/components/common/ErrorHandler'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import { SearchUserByCompanyResponse } from '@/api/model/response'
 import DropDownList from '@/components/common/DropDownList'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 
 type Props = {
   isError: boolean
@@ -350,7 +350,7 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

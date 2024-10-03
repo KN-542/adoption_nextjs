@@ -36,7 +36,7 @@ import Pagination from '@/components/common/Pagination'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
 import { changeSetting, userSearchPageSize } from '@/hooks/store'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import {
   DeleteUserRequest,
   RolesRequest,
@@ -468,7 +468,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError = false
 
   return {

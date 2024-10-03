@@ -8,7 +8,7 @@ import { GetOwnTeamCSR, RolesCSR, UpdateBasicTeamCSR } from '@/api/repository'
 import store, { RootState } from '@/hooks/store/store'
 import { common } from '@mui/material/colors'
 import _ from 'lodash'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
@@ -225,7 +225,7 @@ const SettingTeam: FC<Props> = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       messages: (

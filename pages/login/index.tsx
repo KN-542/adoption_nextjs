@@ -55,7 +55,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import PasswordChange from '@/components/common/modal/PasswordChange'
 import { Inputs as InputsPassword } from '@/components/common/modal/PasswordChange'
 import MFA from '@/components/common/modal/MFA'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 
 type Inputs = {
   email: string
@@ -522,7 +522,7 @@ const Login = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       messages: (await import(`../../public/locales/${locale}/common.json`))
