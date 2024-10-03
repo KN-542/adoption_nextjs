@@ -436,7 +436,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ params, locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({
+  params,
+  locale,
+}) => {
   let isError: boolean = false
 
   return {

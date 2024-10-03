@@ -65,7 +65,6 @@ import {
   CreateApplicantTypeAssociationRequest,
 } from '@/api/model/request'
 import {
-  ApplicantSitesSSG,
   GoogleAuthCSR,
   AssignUserCSR,
   SearchUserByCompanyCSR,
@@ -79,6 +78,7 @@ import {
   UpdateSelectStatusCSR,
   CreateApplicantAssociationCSR,
   CreateApplicantTypeAssociationCSR,
+  ApplicantSitesSSR,
 } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
