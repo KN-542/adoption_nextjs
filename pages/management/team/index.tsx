@@ -42,7 +42,7 @@ import { Operation } from '@/enum/common'
 import { changeSetting, teamSearchPageSize } from '@/hooks/store'
 import { HttpStatusCode } from 'axios'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DeleteModal from '@/components/common/modal/Delete'
@@ -498,7 +498,7 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError = false
 
   return {

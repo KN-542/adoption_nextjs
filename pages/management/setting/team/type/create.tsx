@@ -1,4 +1,4 @@
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
@@ -63,12 +63,12 @@ type Inputs = {
   name: string
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   // API: ステータスイベントマスタ一覧
   const documentRulesSSG: DocumentRuleResponse[] = []
-  await DocumentRulesSSG()
+  await DocumentRulesSSR()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
         documentRulesSSG.push({
@@ -84,7 +84,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
 
   // API: 職種マスタ一覧
   const occupationsSSG: OccupationResponse[] = []
-  await OccupationsSSG()
+  await OccupationsSSR()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
         occupationsSSG.push({

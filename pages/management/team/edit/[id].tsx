@@ -22,7 +22,7 @@ import store, { RootState } from '@/hooks/store/store'
 import { SelectTitlesModel, SettingModel } from '@/types/index'
 import { common } from '@mui/material/colors'
 import _ from 'lodash'
-import { GetStaticPaths, GetStaticProps } from 'next'
+import { GetStaticPaths, GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
@@ -436,7 +436,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ params, locale }) => {
   let isError: boolean = false
 
   return {

@@ -1,5 +1,5 @@
 import store, { RootState } from '@/hooks/store/store'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { useSelector } from 'react-redux'
@@ -39,7 +39,7 @@ import SettingMenu from '@/components/common/SettingMenu'
 import _ from 'lodash'
 import { changeSetting } from '@/hooks/store'
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       messages: (

@@ -1,4 +1,4 @@
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
@@ -86,13 +86,13 @@ type APIProps = {
   autoAssignRules: AutoAssignRuleMasterResponse[]
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError = false
 
   // API: アサイン関連マスタ取得
   const assignRules: AssignRuleMasterResponse[] = []
   const autoAssignRules: AutoAssignRuleMasterResponse[] = []
-  await AssignMasterSSG()
+  await AssignMasterSSR()
     .then((res) => {
       _.forEach(res.data.rule, (item, index) => {
         assignRules.push({

@@ -50,7 +50,7 @@ import {
 } from '@/api/model/request'
 import CalendarModal from '@/components/management/modal/CalendarModal'
 import { changeSetting } from '@/hooks/store'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { EventInput } from '@fullcalendar/core/index.js'
 import { Operation } from '@/enum/common'
 import {
@@ -606,13 +606,13 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError = false
   const scheduleList: ScheduleType[] = []
 
   try {
     // API スケジュール登録種別一覧
-    const res = await UserListScheduleTypeSSG()
+    const res = await UserListScheduleTypeSSR()
     if (res && res.data) {
       scheduleList.push(
         ..._.map(res.data.list, (item) => ({

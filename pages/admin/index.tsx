@@ -1,5 +1,5 @@
 import { Box } from '@mui/material'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 
 const HomeAdmin = () => {
   return (
@@ -16,7 +16,7 @@ const HomeAdmin = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

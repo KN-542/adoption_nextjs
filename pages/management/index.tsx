@@ -1,5 +1,5 @@
 import NextHead from '@/components/common/Header'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 
 const Home = () => {
   return (
@@ -9,7 +9,7 @@ const Home = () => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

@@ -38,7 +38,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import { Operation } from '@/enum/common'
 import { changeSetting } from '@/hooks/store'
 import { SettingModel } from '@/types/index'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 
 type Props = {
   isError: boolean
@@ -350,7 +350,7 @@ const CompanyCreate: FC<Props> = ({ isError, locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

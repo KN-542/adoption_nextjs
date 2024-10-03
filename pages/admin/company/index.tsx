@@ -42,7 +42,7 @@ import SelectedMenu from '@/components/common/SelectedMenu'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import { changeSetting, companySearchPageSize } from '@/hooks/store'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { DURING } from '@/hooks/common'
 
 type Props = {
@@ -383,7 +383,7 @@ const Company: React.FC<Props> = ({ isError, locale }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   return {

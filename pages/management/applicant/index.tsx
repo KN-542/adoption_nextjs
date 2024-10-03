@@ -130,7 +130,7 @@ import {
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
 import Spinner from '@/components/common/modal/Spinner'
-import { GetServerSideProps, GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { Dayjs } from 'dayjs'
 import ColumnsModal from '@/components/common/modal/Columns'
 
@@ -2437,7 +2437,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
 
   // API サイト一覧
   const sites: SiteListResponse[] = []
-  await ApplicantSitesSSG()
+  await ApplicantSitesSSR()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
         sites.push({

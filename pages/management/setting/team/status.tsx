@@ -35,7 +35,7 @@ import {
   TextField,
 } from '@mui/material'
 import _ from 'lodash'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
@@ -862,12 +862,12 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSG }) => {
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError = false
 
   // API: ステータスイベントマスタ一覧
   const eventsSSG: StatusEventResponse[] = []
-  await ListStatusEventSSG()
+  await ListStatusEventSSR()
     .then((res) => {
       _.forEach(res.data.list, (item, index) => {
         eventsSSG.push({

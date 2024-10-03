@@ -17,7 +17,7 @@ import store, { RootState } from '@/hooks/store/store'
 import { SelectTitlesModel, SettingModel } from '@/types/index'
 import { common } from '@mui/material/colors'
 import _ from 'lodash'
-import { GetStaticProps } from 'next'
+import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
 import { FC, useEffect, useState } from 'react'
@@ -62,12 +62,12 @@ type Inputs = {
   content: string
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   let isError: boolean = false
 
   // API サイト一覧
   const sites: SelectTitlesModel[] = []
-  await ApplicantSitesSSG()
+  await ApplicantSitesSSR()
     .then((res) => {
       _.forEach(res.data.list, (item) => {
         sites.push({
