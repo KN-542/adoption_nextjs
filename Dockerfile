@@ -18,6 +18,9 @@ COPY package.json yarn.lock ./
 # 依存関係をインストール
 RUN yarn install --production
 
+# ESLintやTypeScriptなどの依存関係を追加
+RUN yarn add --dev eslint typescript @types/react @types/node
+
 # ソースコードをコピー
 COPY . .
 
