@@ -146,7 +146,7 @@
   },
   "features": {
     "login": {
-      "top": "Nexulon2",
+      "top": "Nexulon",
       "email": "ユーザーID",
       "mfa": "認証コード",
       "password": "パスワード",
