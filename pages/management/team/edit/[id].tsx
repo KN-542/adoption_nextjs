@@ -429,13 +429,6 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
   )
 }
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  return {
-    paths: [], // 空配列を返す。全てのパスは初回アクセス時に生成される。
-    fallback: 'blocking',
-  }
-}
-
 export const getServerSideProps: GetServerSideProps = async ({
   params,
   locale,
