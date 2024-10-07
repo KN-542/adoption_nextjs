@@ -212,7 +212,7 @@ export const DownloadApplicantDocumentCSR = async (
 // サイト一覧 SSR
 export const ApplicantSitesSSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/applicant/sites`,
+    `${process.env.NEXT_SSG_URL}/applicant/sites`,
     {},
     APICommonHeader,
   )
@@ -454,7 +454,7 @@ export const SchedulesCSR = async (req: SearchScheduleRequest) => {
 // 予定登録種別一覧 SSR
 export const UserListScheduleTypeSSR = async () => {
   const res = await axios1.post(
-    `${process.env.NEXT_SSR_URL}/schedule/type`,
+    `${process.env.NEXT_SSG_URL}/schedule/type`,
     {},
     APICommonHeader,
   )
@@ -606,7 +606,7 @@ export const UpdateAssignMethodCSR = async (req: UpdateAssignMethodRequest) => {
 // ステータスイベントマスタ一覧 SSR
 export const ListStatusEventSSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/status_events`,
+    `${process.env.NEXT_SSG_URL}/setting/status_events`,
     {},
     APICommonHeader,
   )
@@ -616,7 +616,7 @@ export const ListStatusEventSSR = async () => {
 // ステータスイベントマスタ一覧 SSR
 export const AssignMasterSSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/assign_masters`,
+    `${process.env.NEXT_SSG_URL}/setting/assign_masters`,
     {},
     APICommonHeader,
   )
@@ -626,7 +626,7 @@ export const AssignMasterSSR = async () => {
 // 書類提出ルールマスタ一覧 SSR
 export const DocumentRulesSSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/document_rules`,
+    `${process.env.NEXT_SSG_URL}/setting/document_rules`,
     {},
     APICommonHeader,
   )
@@ -636,7 +636,7 @@ export const DocumentRulesSSR = async () => {
 // 職種マスタ一覧 SSR
 export const OccupationsSSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/occupations`,
+    `${process.env.NEXT_SSG_URL}/setting/occupations`,
     {},
     APICommonHeader,
   )
@@ -664,3 +664,4 @@ export const ListApplicantTypeCSR = async (req: ListApplicantTypeRequest) => {
   )
   return res
 }
+
