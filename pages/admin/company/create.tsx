@@ -42,7 +42,6 @@ import { GetServerSideProps } from 'next'
 
 type Props = {
   isError: boolean
-  locale: string
 }
 
 type Inputs = {
@@ -50,7 +49,7 @@ type Inputs = {
   email: string
 }
 
-const CompanyCreate: FC<Props> = ({ isError, locale }) => {
+const CompanyCreate: FC<Props> = ({ isError }) => {
   const router = useRouter()
   const t = useTranslations()
 

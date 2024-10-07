@@ -11,7 +11,7 @@ import _ from 'lodash'
 import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -38,6 +38,7 @@ import {
 } from '@/styles/index'
 import SettingMenu from '@/components/common/SettingMenu'
 import { Operation } from '@/enum/common'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {}
 
@@ -53,6 +54,8 @@ const SettingTeam: FC<Props> = () => {
 
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -104,6 +107,9 @@ const SettingTeam: FC<Props> = () => {
   }
 
   const update = async () => {
+    if (processing.current) return
+    processing.current = true
+
     // API: チーム基本情報更新
     await UpdateBasicTeamCSR({
       user_hash_key: user.hashKey,
@@ -120,6 +126,10 @@ const SettingTeam: FC<Props> = () => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -138,6 +148,10 @@ const SettingTeam: FC<Props> = () => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 

@@ -50,11 +50,6 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
 }
 
 const PersonalColor = () => {
-  const router = useRouter()
-  const t = useTranslations()
-
-  const setting = useSelector((state: RootState) => state.setting)
-
   const colorSet: Color[] = [
     {
       color: indigo[300],

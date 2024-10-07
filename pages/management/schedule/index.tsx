@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import rrulePlugin from '@fullcalendar/rrule'
@@ -13,8 +13,8 @@ import {
 } from '@/styles/index'
 import NextHead from '@/components/common/Header'
 import jaLocale from '@fullcalendar/core/locales/ja'
-import { WEEKENDS, formatDateToHHMM, getDayOfYear } from '@/hooks/common'
-import _, { map } from 'lodash'
+import { formatDateToHHMM, LITTLE_DURING } from '@/hooks/common'
+import _ from 'lodash'
 import {
   CalendarModel,
   SelectTitlesModel,
@@ -81,6 +81,8 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
   const [open, isOpen] = useState<boolean>(false)
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -247,6 +249,9 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
   }
 
   const createSchedule = async (m: CalendarModel) => {
+    if (processing.current) return
+    processing.current = true
+
     const start = new Date(
       m.date.getFullYear(),
       m.date.getMonth(),
@@ -287,6 +292,9 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
         })
 
         setCurrentDate(m.date)
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -305,6 +313,10 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -323,6 +335,9 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
   }
 
   const updateSchedule = async (m: CalendarModel) => {
+    if (processing.current) return
+    processing.current = true
+
     const start = new Date(
       m.date.getFullYear(),
       m.date.getMonth(),
@@ -364,6 +379,9 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
         })
 
         setCurrentDate(m.date)
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -382,6 +400,10 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -400,6 +422,9 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
   }
 
   const deleteSchedule = async (id: string) => {
+    if (processing.current) return
+    processing.current = true
+
     // API カレンダー削除
     await DeleteSchedulesCSR({
       user_hash_key: user.hashKey,
@@ -416,6 +441,10 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
         if (isServerError) {
@@ -434,6 +463,10 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 

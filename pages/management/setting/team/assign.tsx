@@ -1,7 +1,7 @@
 import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import store, { RootState } from '@/hooks/store/store'
@@ -73,6 +73,7 @@ import {
 } from 'react-beautiful-dnd'
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt'
 import DropDownList from '@/components/common/DropDownList'
+import { LITTLE_DURING } from '@/hooks/common'
 
 const INTERVIEW_MIN = 1
 const INTERVIEW_MAX = 6
@@ -155,6 +156,8 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
 
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -330,6 +333,9 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
   }
 
   const update = async () => {
+    if (processing.current) return
+    processing.current = true
+
     // バリデーション
     for (const possible of selectedPossibleList) {
       if (_.isEmpty(possible.ableList)) {
@@ -350,6 +356,10 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
             closeButton: () => <ClearIcon />,
           },
         )
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
         return
       }
 
@@ -371,6 +381,10 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
             closeButton: () => <ClearIcon />,
           },
         )
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
         return
       }
     }
@@ -427,6 +441,10 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 

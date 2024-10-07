@@ -26,7 +26,7 @@ import _ from 'lodash'
 import { RouterPath } from '@/enum/router'
 import { Color, mb, mt, SidebarBody, SidebarName, wBlock } from '@/styles/index'
 import { LogoutRequest, SidebarRequest } from '@/api/model/request'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SidebarCSR } from '@/api/repository'
 import { toast } from 'react-toastify'
 import { common } from '@mui/material/colors'
@@ -199,6 +199,7 @@ const Sidebar = (props: Props) => {
               ? row.button
               : (e) => {
                   e.preventDefault()
+
                   router.push(row.href)
                 }
           }

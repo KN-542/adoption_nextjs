@@ -1,7 +1,7 @@
 import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import store, { RootState } from '@/hooks/store/store'
@@ -67,6 +67,8 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
 
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -242,13 +244,16 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
                     minW(100),
                     ButtonColorInverse(common.white, setting.color),
                   ]}
-                  onClick={() =>
+                  onClick={() => {
+                    if (processing.current) return
+                    processing.current = true
+
                     router.push(
                       RouterPath.Management +
                         RouterPath.Setting +
                         RouterPath.SettingTeamApplicantTypeCreate,
                     )
-                  }
+                  }}
                 >
                   {t('common.button.create')}
                 </Button>

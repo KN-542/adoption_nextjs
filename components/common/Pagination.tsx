@@ -3,7 +3,7 @@ import { RootState } from '@/hooks/store/store'
 import { Box, Button, MenuItem, Select } from '@mui/material'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import {
   ButtonColor,
@@ -18,7 +18,6 @@ import {
   w,
   mr,
   SelectWithoutBox,
-  mt,
 } from '@/styles/index'
 import { common } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'

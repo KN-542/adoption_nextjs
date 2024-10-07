@@ -17,7 +17,7 @@ import { common } from '@mui/material/colors'
 import _ from 'lodash'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -50,6 +50,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import { SearchUserByCompanyResponse } from '@/api/model/response'
 import DropDownList from '@/components/common/DropDownList'
 import { GetServerSideProps } from 'next'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
@@ -72,6 +73,8 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
 
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -171,6 +174,9 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
   } = useForm<Inputs>()
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
+    if (processing.current) return
+    processing.current = true
+
     if (_.isEmpty(users)) {
       toast(
         t('features.team.header.users') + t('common.validate.requiredList'),
@@ -185,6 +191,10 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
           closeButton: () => <ClearIcon />,
         },
       )
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
 
@@ -222,6 +232,10 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 

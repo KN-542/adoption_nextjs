@@ -20,15 +20,13 @@ type Props = {
 }
 
 const Content = (props: Props) => {
-  // maskShow の状態を配列として管理
   const [maskShows, setMaskShows] = useState<boolean[]>(
     props.data.map((item) => item.mask?.show ?? false),
   )
 
   const handleMaskClick = (index: number) => {
-    // maskShow を更新するための関数
     setMaskShows((prevMaskShows) =>
-      prevMaskShows.map((show, i) => (i === index ? !show : show)),
+      prevMaskShows.map((show, i) => (_.isEqual(i, index) ? !show : show)),
     )
   }
 

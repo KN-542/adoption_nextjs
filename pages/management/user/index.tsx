@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import store, { RootState } from '@/hooks/store/store'
 import CustomTable from '@/components/common/Table'
@@ -7,9 +7,7 @@ import {
   UsersTableBody,
   TableHeader,
   SelectedCheckbox,
-  TopMenu,
   SettingModel,
-  TeamTableBody,
   Icons,
   Body,
 } from '@/types/index'
@@ -47,6 +45,7 @@ import EditNoteIcon from '@mui/icons-material/EditNote'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { HttpStatusCode } from 'axios'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
@@ -76,6 +75,8 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [pageDisp, isPageDisp] = useState<boolean>(false)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     // API 使用可能ロール一覧
@@ -242,10 +243,31 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
   ]
 
   const changePage = (i: number) => {
+    if (processing.current) return
+    processing.current = true
+
     setPage(i)
+
+    setTimeout(() => {
+      processing.current = false
+    }, LITTLE_DURING)
+  }
+
+  const changePageSize = (i: number) => {
+    if (processing.current) return
+    processing.current = true
+
+    setPageSize(i)
+
+    setTimeout(() => {
+      processing.current = false
+    }, LITTLE_DURING)
   }
 
   const deleteTeam = async () => {
+    if (processing.current) return
+    processing.current = true
+
     if (_.isEmpty(deleteList)) {
       toast(t('common.api.header.400'), {
         style: {
@@ -257,6 +279,10 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         hideProgressBar: true,
         closeButton: () => <ClearIcon />,
       })
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
 
@@ -280,7 +306,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         isLoading(true)
         await search(1, pageSize)
         setDeleteList([])
-        isLoading(false)
+        isLoading(false) // Backへのページ遷移に変えるかも
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
@@ -299,6 +325,10 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -313,6 +343,10 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -328,10 +362,6 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
           )
         }
       })
-  }
-
-  const changePageSize = (i: number) => {
-    setPageSize(i)
   }
 
   useEffect(() => {
@@ -436,9 +466,12 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
                       ml(1),
                       ButtonColorInverse(common.white, setting.color),
                     ]}
-                    onClick={() =>
+                    onClick={() => {
+                      if (processing.current) return
+                      processing.current = true
+
                       router.push(RouterPath.Management + RouterPath.UserCreate)
-                    }
+                    }}
                   >
                     <AddCircleOutlineIcon sx={mr(0.25)} />
                     {t('features.user.create')}

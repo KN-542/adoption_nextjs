@@ -20,7 +20,7 @@ import _ from 'lodash'
 import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -51,6 +51,7 @@ import { FormValidation } from '@/hooks/validation'
 import { ValidationType } from '@/enum/validation'
 import DropDownList from '@/components/common/DropDownList'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
@@ -110,6 +111,8 @@ const ManuscriptCreate: FC<Props> = ({
   const [teams, setTeams] = useState<SearchTeamByCompanyResponse[]>([])
   const [initSites, setInitSites] = useState<SelectTitlesModel[]>(sitesSSR)
   const [sites, setSites] = useState<SelectTitlesModel[]>([])
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -197,6 +200,9 @@ const ManuscriptCreate: FC<Props> = ({
   }
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
+    if (processing.current) return
+    processing.current = true
+
     if (_.isEmpty(teams)) {
       toast(
         t('features.manuscript.header.team') +
@@ -212,6 +218,10 @@ const ManuscriptCreate: FC<Props> = ({
           closeButton: () => <ClearIcon />,
         },
       )
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
     if (_.isEmpty(sites)) {
@@ -229,6 +239,10 @@ const ManuscriptCreate: FC<Props> = ({
           closeButton: () => <ClearIcon />,
         },
       )
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
 
@@ -274,6 +288,10 @@ const ManuscriptCreate: FC<Props> = ({
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -288,6 +306,10 @@ const ManuscriptCreate: FC<Props> = ({
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 

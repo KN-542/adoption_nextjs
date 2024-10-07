@@ -52,7 +52,7 @@ import {
   SearchRoleByCompanyRequest,
   SearchTeamByCompanyRequest,
 } from '@/api/model/request'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { Contents, SelectTitlesModel, SettingModel } from '@/types/index'
 import Content from '@/components/common/Content'
 import { GetServerSideProps } from 'next'
@@ -63,6 +63,7 @@ import {
   SearchTeamByCompanyResponse,
 } from '@/api/model/response'
 import DropDownList from '@/components/common/DropDownList'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
@@ -94,6 +95,8 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
 
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -232,6 +235,9 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
   }
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
+    if (processing.current) return
+    processing.current = true
+
     if (_.isEmpty(teams)) {
       toast(
         t('features.user.header.team') + t('common.validate.requiredList'),
@@ -246,6 +252,10 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
           closeButton: () => <ClearIcon />,
         },
       )
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
     if (_.isEmpty(rolesModel)) {
@@ -262,6 +272,10 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
           closeButton: () => <ClearIcon />,
         },
       )
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
 
@@ -308,6 +322,10 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
@@ -326,6 +344,10 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -340,6 +362,10 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 

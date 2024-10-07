@@ -25,10 +25,11 @@ import {
 } from '@mui/material'
 import { common } from '@mui/material/colors'
 import { useTranslations } from 'next-intl'
-import { FC, useEffect, useState } from 'react'
+import { FC, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import ViewColumnIcon from '@mui/icons-material/ViewColumn'
 import _ from 'lodash'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
   open: boolean
@@ -47,6 +48,8 @@ const ColumnsModal: FC<Props> = (props: Props) => {
   )
 
   const [loading, isLoading] = useState<boolean>(false)
+
+  const processing = useRef<boolean>(false)
 
   return (
     <Dialog open={props.open} maxWidth="md" sx={ModalResponsive}>
@@ -112,7 +115,16 @@ const ColumnsModal: FC<Props> = (props: Props) => {
             size="large"
             variant="outlined"
             sx={[minW(180), ButtonColor(common.white, setting.color)]}
-            onClick={() => props.submit(headers)}
+            onClick={() => {
+              if (processing.current) return
+              processing.current = true
+
+              props.submit(headers)
+
+              setTimeout(() => {
+                processing.current = false
+              }, LITTLE_DURING)
+            }}
           >
             <ViewColumnIcon sx={mr(0.25)} />
             {t('common.button.columnDisplay')}

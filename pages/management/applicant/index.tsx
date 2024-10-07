@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import store, { RootState } from '@/hooks/store/store'
 import CustomTable from '@/components/common/Table'
@@ -113,7 +113,7 @@ import {
   changeSetting,
 } from '@/hooks/store'
 import Pagination from '@/components/common/Pagination'
-import { formatDate, formatDate3 } from '@/hooks/common'
+import { formatDate, formatDate3, LITTLE_DURING } from '@/hooks/common'
 import SelectedMenu from '@/components/common/SelectedMenu'
 import ItemsSelectModal from '@/components/common/modal/ItemsSelectModal'
 import UploadModal from '@/components/management/modal/UploadModal'
@@ -187,6 +187,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [init, isInit] = useState<boolean>(true)
   const [spinner, isSpinner] = useState<boolean>(false)
   const [pageDisp, isPageDisp] = useState<boolean>(false)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -883,6 +885,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   }
 
   const submitUsers = async (hashKeys: string[]) => {
+    if (processing.current) return
+    processing.current = true
+
     const a = _.find(checkedList, (c) => c.checked)
     if (_.isUndefined(a)) {
       router.push(RouterPath.Error)
@@ -913,6 +918,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         })
 
         await search(1, pageSize)
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         const error = { isServerError, routerPath, toastMsg, storeMsg, code }
@@ -932,6 +940,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           throw error
         }
 
@@ -946,6 +958,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           throw error
         }
 
@@ -964,6 +980,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   }
 
   const selectStatus = async (hashKey: string) => {
+    if (processing.current) return
+    processing.current = true
+
     const hashKeys: string[] = _.map(
       _.filter(
         bodies,
@@ -1003,6 +1022,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         })
 
         await search(1, pageSize)
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         const error = { isServerError, routerPath, toastMsg, storeMsg, code }
@@ -1022,6 +1044,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           throw error
         }
 
@@ -1040,6 +1066,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   }
 
   const selectManuscript = async (hashKey: string) => {
+    if (processing.current) return
+    processing.current = true
+
     const hashKeys: string[] = _.map(
       _.filter(
         bodies,
@@ -1082,6 +1111,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         )
 
         await search(1, pageSize)
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         const error = { isServerError, routerPath, toastMsg, storeMsg, code }
@@ -1101,6 +1133,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           throw error
         }
 
@@ -1119,6 +1155,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   }
 
   const selectType = async (hashKey: string) => {
+    if (processing.current) return
+    processing.current = true
+
     const hashKeys: string[] = _.map(
       _.filter(
         bodies,
@@ -1158,6 +1197,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         })
 
         await search(1, pageSize)
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         const error = { isServerError, routerPath, toastMsg, storeMsg, code }
@@ -1177,6 +1219,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           throw error
         }
 
@@ -1231,6 +1277,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
         ),
       ]),
       onClick: async () => {
+        if (processing.current) return
+        processing.current = true
+
         const hashKey = _.filter(checkedList, (c) => c.checked)[0].key
 
         try {
@@ -1239,6 +1288,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             user_hash_key: user.hashKey,
             hash_key: hashKey,
           } as GoogleAuthRequest)
+
+          processing.current = false
 
           window.open(
             _.isEmpty(res2.data?.auth_url)
@@ -1264,6 +1315,10 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
               hideProgressBar: true,
               closeButton: () => <ClearIcon />,
             })
+
+            setTimeout(() => {
+              processing.current = false
+            }, LITTLE_DURING)
             return
           }
 
@@ -1907,10 +1962,24 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   }
 
   const changePage = (i: number) => {
+    if (processing.current) return
+    processing.current = true
+
     setPage(i)
+
+    setTimeout(() => {
+      processing.current = false
+    }, LITTLE_DURING)
   }
   const changePageSize = (i: number) => {
+    if (processing.current) return
+    processing.current = true
+
     setPageSize(i)
+
+    setTimeout(() => {
+      processing.current = false
+    }, LITTLE_DURING)
   }
 
   useEffect(() => {
@@ -2166,13 +2235,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             open={searchOpen}
             closeModal={() => isSearchOpen(false)}
             searchObj={searchObj}
-            changeSearchObjBySelect={changeSearchObjBySelect}
             selectInit={selectInit}
             initInputs={initInputs}
             submit={() => {
+              if (processing.current) return
+              processing.current = true
+
               router.push(RouterPath.Management + RouterPath.Back)
             }}
             changePage={changePage}
+            changeSearchObjBySelect={changeSearchObjBySelect}
             changeSearchObjByText={changeSearchObjByText}
             changeSearchObjByAutoComp={changeSearchObjByAutoComp}
             changeSearchObjByFromDates={changeSearchObjByFromDates}

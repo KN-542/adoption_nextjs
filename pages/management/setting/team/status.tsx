@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import NextHead from '@/components/common/Header'
 import {
   M0Auto,
@@ -83,6 +83,7 @@ import {
   DropResult,
 } from 'react-beautiful-dnd'
 import DragHandleIcon from '@mui/icons-material/DragHandle'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
@@ -113,6 +114,8 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSR }) => {
   const [noContent, isNoContent] = useState<boolean>(false)
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -237,6 +240,9 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSR }) => {
   }
 
   const update = async () => {
+    if (processing.current) return
+    processing.current = true
+
     // バリデーション
     if (
       _.size(_.filter(newStatusList, (s) => !_.isEmpty(s.trim()))) <
@@ -252,6 +258,10 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSR }) => {
         hideProgressBar: true,
         closeButton: () => <ClearIcon />,
       })
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
 
@@ -269,6 +279,10 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSR }) => {
         hideProgressBar: true,
         closeButton: () => <ClearIcon />,
       })
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
       return
     }
 
@@ -327,6 +341,10 @@ const SettingTeamStatus: FC<Props> = ({ isError, locale, eventsSSR }) => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 

@@ -13,7 +13,7 @@ import _ from 'lodash'
 import { GetServerSideProps } from 'next'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -78,6 +78,8 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   const [noContent, isNoContent] = useState<boolean>(false)
   const [spinner, isSpinner] = useState<boolean>(false)
   const [pageDisp, isPageDisp] = useState<boolean>(false)
+
+  const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
@@ -332,11 +334,14 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
                       ml(1),
                       ButtonColorInverse(common.white, setting.color),
                     ]}
-                    onClick={() =>
+                    onClick={() => {
+                      if (processing.current) return
+                      processing.current = true
+
                       router.push(
                         RouterPath.Management + RouterPath.ManuscriptCreate,
                       )
-                    }
+                    }}
                   >
                     <AddCircleOutlineIcon sx={mr(0.25)} />
                     {t('features.manuscript.create')}

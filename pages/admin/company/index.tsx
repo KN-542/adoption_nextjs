@@ -47,10 +47,9 @@ import { DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
-  locale: string
 }
 
-const Company: React.FC<Props> = ({ isError, locale }) => {
+const Company: React.FC<Props> = ({ isError }) => {
   const router = useRouter()
   const t = useTranslations()
 

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import Container from '@mui/material/Container'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
@@ -15,6 +15,8 @@ import { GetServerSideProps } from 'next'
 const Error = () => {
   const router = useRouter()
   const t = useTranslations()
+
+  const processing = useRef<boolean>(false)
 
   return (
     <>
@@ -46,7 +48,12 @@ const Error = () => {
             type="submit"
             variant="contained"
             sx={[mt(10), w(60), ButtonColor(common.white, common.black)]}
-            onClick={() => router.push(RouterPath.Login)}
+            onClick={() => {
+              if (processing.current) return
+              processing.current = true
+
+              router.push(RouterPath.Login)
+            }}
           >
             {t('features.login.errorButton')}
           </Button>

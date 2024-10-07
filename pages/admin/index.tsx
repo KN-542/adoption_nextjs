@@ -1,19 +1,7 @@
-import { Box } from '@mui/material'
 import { GetServerSideProps } from 'next'
 
 const HomeAdmin = () => {
-  return (
-    <Box
-      sx={{
-        marginTop: '500px',
-        marginLeft: '500px',
-        fontSize: '50px',
-        fontWeight: 'bold',
-      }}
-    >
-      ホーム画面らしきもの後で作るよ~~~~~~ん
-    </Box>
-  )
+  return <></>
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => {

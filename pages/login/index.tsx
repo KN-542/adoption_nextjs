@@ -56,6 +56,7 @@ import PasswordChange from '@/components/common/modal/PasswordChange'
 import { Inputs as InputsPassword } from '@/components/common/modal/PasswordChange'
 import MFA from '@/components/common/modal/MFA'
 import { GetServerSideProps } from 'next'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Inputs = {
   email: string
@@ -70,12 +71,15 @@ const Login = () => {
   const user: UserModel = useSelector((state: RootState) => state.user)
 
   const [hash, setHash] = useState<string>('')
+  const [path, setPath] = useState<string>('')
+
   const [open, isOpen] = useState<boolean>(false)
   const [openPasswordChange, isOpenPasswordChange] = useState<boolean>(false)
   const [loading, isLoading] = useState<boolean>(true)
   const [showPassword, setShowPassword] = useState<boolean>(false)
-  const [path, setPath] = useState<string>('')
+
   const submitButtonRef = useRef(null)
+  const processing = useRef<boolean>(false)
 
   const formValidationValue: FormValidationValue = {
     email: {
@@ -150,6 +154,9 @@ const Login = () => {
   } = useForm<Inputs>()
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
+    if (processing.current) return
+    processing.current = true
+
     try {
       // API ログイン
       const res = await LoginCSR({
@@ -171,6 +178,8 @@ const Login = () => {
           email: d.email,
         } as UserModel),
       )
+
+      processing.current = false
       isOpen(true)
     } catch ({ isServerError, routerPath, toastMsg, storeMsg, code }) {
       if (isServerError) {
@@ -189,6 +198,10 @@ const Login = () => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
         return
       }
 
@@ -203,6 +216,10 @@ const Login = () => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
         return
       }
 
@@ -223,14 +240,20 @@ const Login = () => {
   }
 
   const reSend = async () => {
+    if (processing.current) return
+    processing.current = true
+
     isOpen(false)
+
     setTimeout(async () => {
       await submitButtonRef.current.click()
+      processing.current = false
     }, 0.25 * 1000)
   }
 
   const reset = async () => {
     if (_.isEmpty(user.hashKey)) return
+
     // API ログアウト
     await LogoutCSR({
       hash_key: user.hashKey,
@@ -244,6 +267,9 @@ const Login = () => {
   }
 
   const mfaSubmit = async (mfa: string) => {
+    if (processing.current) return
+    processing.current = true
+
     // API MFA
     await MFACSR({
       hash_key: hash,
@@ -261,6 +287,7 @@ const Login = () => {
         if (Boolean(res.data.is_password_change)) {
           setPath(String(res.data.path))
           isOpenPasswordChange(true)
+          processing.current = false
           return
         }
 
@@ -278,6 +305,7 @@ const Login = () => {
           if (code) {
             setTimeout(async () => {
               await submitButtonRef.current.click()
+              processing.current = false
             }, 0.25 * 1000)
             return
           }
@@ -293,6 +321,10 @@ const Login = () => {
               hideProgressBar: true,
               closeButton: () => <ClearIcon />,
             })
+
+            setTimeout(() => {
+              processing.current = false
+            }, LITTLE_DURING)
             return
           }
 
@@ -314,6 +346,9 @@ const Login = () => {
   }
 
   const passwordChangeSubmit = async (obj: InputsPassword) => {
+    if (processing.current) return
+    processing.current = true
+
     // API パスワード変更
     await ChangePasswordCSR({
       hash_key: hash,
@@ -342,6 +377,10 @@ const Login = () => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -356,6 +395,10 @@ const Login = () => {
             hideProgressBar: true,
             closeButton: () => <ClearIcon />,
           })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -406,7 +449,7 @@ const Login = () => {
       reset()
     }
     isLoading(false)
-  })
+  }, [])
 
   return (
     <>

@@ -10,7 +10,7 @@ import { common } from '@mui/material/colors'
 import _ from 'lodash'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/router'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 import Diversity2Icon from '@mui/icons-material/Diversity2'
 import SettingsIcon from '@mui/icons-material/Settings'
@@ -50,6 +50,8 @@ const SettingMenu: FC<Props> = () => {
 
   const [menus, setMenus] = useState<ButtonContents[]>([])
 
+  const processing = useRef<boolean>(false)
+
   const inits = async () => {
     // API 使用可能ロール一覧
     await RolesCSR({
@@ -77,39 +79,55 @@ const SettingMenu: FC<Props> = () => {
             contents: [
               {
                 name: t('features.setting.team.sub.basic.index'),
-                onClick: () =>
+                onClick: () => {
+                  if (processing.current) return
+                  processing.current = true
+
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
                       RouterPath.SettingTeam,
-                  ),
+                  )
+                },
               },
               {
                 name: t('features.setting.team.sub.status.index'),
-                onClick: () =>
+                onClick: () => {
+                  if (processing.current) return
+                  processing.current = true
+
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
                       RouterPath.SettingTeamStatus,
-                  ),
+                  )
+                },
               },
               {
                 name: t('features.setting.team.sub.assign.index'),
-                onClick: () =>
+                onClick: () => {
+                  if (processing.current) return
+                  processing.current = true
+
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
                       RouterPath.SettingTeamAssign,
-                  ),
+                  )
+                },
               },
               {
                 name: t('features.setting.team.sub.type.index'),
-                onClick: () =>
+                onClick: () => {
+                  if (processing.current) return
+                  processing.current = true
+
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
                       RouterPath.SettingTeamApplicantType,
-                  ),
+                  )
+                },
               },
             ] as ButtonContentsSub[],
           },
@@ -124,12 +142,16 @@ const SettingMenu: FC<Props> = () => {
             contents: [
               {
                 name: t('features.setting.personal.sub.color.index'),
-                onClick: () =>
+                onClick: () => {
+                  if (processing.current) return
+                  processing.current = true
+
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
                       RouterPath.SettingPersonalColor,
-                  ),
+                  )
+                },
               },
             ] as ButtonContentsSub[],
           },
