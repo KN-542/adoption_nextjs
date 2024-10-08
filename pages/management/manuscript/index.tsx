@@ -40,6 +40,8 @@ import CustomTable from '@/components/common/Table'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 import DeleteIcon from '@mui/icons-material/Delete'
 import Spinner from '@/components/common/modal/Spinner'
+import DeleteModal from '@/components/common/modal/Delete'
+import { DeleteManuscriptsCSR } from '@/api/repository'
 
 type Props = {
   isError: boolean
@@ -79,6 +81,9 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   const [spinner, isSpinner] = useState<boolean>(false)
   const [pageDisp, isPageDisp] = useState<boolean>(false)
 
+  const [selectedIndex, setSelectedIndex] = useState<number>(0)
+  const [isOpenDeleteModal, setOpenDeleteModal] = useState<boolean>(false)
+
   const inits = async () => {
     try {
       // API: 使用可能ロール一覧
@@ -99,7 +104,10 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
           color: setting.toastErrorColor,
           element: <DeleteIcon />,
           role: res.data.map[Operation.ManagementUserDelete],
-          onClick: (_i: number) => {},
+          onClick: (_i: number) => {
+            setSelectedIndex(_i)
+            setOpenDeleteModal(true)
+          }
         },
       ])
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
@@ -220,6 +228,59 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
 
   const changePageSize = (i: number) => {
     setPageSize(i)
+  }
+
+  // 削除処理
+  const manuscriptDelete = async (manuscriptHashKey) => {
+    // API呼び出し: 削除
+    await DeleteManuscriptsCSR({
+      user_hash_key: user.hashKey,
+      manuscript_hash_key: [manuscriptHashKey],
+    }).then(() => {
+      toast(t(`features.manuscript.index`) + t(`common.toast.delete`), {
+        style: {
+          backgroundColor: setting.toastSuccessColor,
+          color: common.white,
+          width: 500,
+        },
+        position: 'bottom-left',
+        hideProgressBar: true,
+        closeButton: () => <ClearIcon />,
+      })
+      // リストを再取得
+      search(page, pageSize)
+    }).catch(({isServerError, routerPath, toastMsg, storeMsg}) => {
+      if (isServerError) {
+        router.push(routerPath)
+        return
+      }
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+        return
+      }
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(
+          _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+        )
+      }
+    })
+    // 削除モーダルを閉じる
+    setOpenDeleteModal(false)
   }
 
   const tableHeader: TableHeader[] = [
@@ -367,6 +428,13 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
               }).slice(pageSize * (page - 1), pageSize * page)}
             />
           </Box>
+          <DeleteModal
+            open={isOpenDeleteModal}
+            headers={[{ name: '原稿内容' }]}
+            bodies={[{ '原稿内容': new Body(bodies[selectedIndex]?.content) }]}
+            close={() => setOpenDeleteModal(false)}
+            delete={() => manuscriptDelete(bodies[selectedIndex]?.hashKey)}
+          />
         </>
       )}
     </>
