@@ -70,6 +70,8 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [icons, setIcons] = useState<Icons[]>([])
   const [bodies, setBodies] = useState<SearchManuscriptResponse[]>([])
+  let manuscripts: SearchManuscriptResponse[] = []
+  const [deleteList, setDeleteList] = useState<SearchManuscriptResponse[]>([])
 
   const [page, setPage] = useState<number>(1)
   const [size, setSize] = useState<number>(0)
@@ -82,8 +84,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   const [pageDisp, isPageDisp] = useState<boolean>(false)
 
   const processing = useRef<boolean>(false)
-  const [selectedIndex, setSelectedIndex] = useState<number>(0)
-  const [isOpenDeleteModal, setOpenDeleteModal] = useState<boolean>(false)
+  const [isOpenDeleteModal, setIsOpenDeleteModal] = useState<boolean>(false)
 
 
   const inits = async () => {
@@ -100,15 +101,16 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
           color: setting.toastSuccessColor,
           element: <EditNoteIcon />,
           role: res.data.map[Operation.ManagementUserEdit],
-          onClick: (_i: number) => {},
+          onClick: (i: number) => {},
         },
         {
           color: setting.toastErrorColor,
           element: <DeleteIcon />,
           role: res.data.map[Operation.ManagementUserDelete],
-          onClick: (_i: number) => {
-            setSelectedIndex(_i)
-            setOpenDeleteModal(true)
+          onClick: (i: number) => {
+            const body: SearchManuscriptResponse = manuscripts[i]
+            setDeleteList([body])
+            setIsOpenDeleteModal(true)
           }
         },
       ])
@@ -177,6 +179,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
             }),
           } as SearchManuscriptResponse)
         })
+        manuscripts = list
         setBodies(list)
         setSize(Number(res.data.num))
 
@@ -233,11 +236,11 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   }
 
   // 削除処理
-  const manuscriptDelete = async (manuscriptHashKey) => {
+  const manuscriptDelete = async (manuscriptHashKeys: string[]) => {
     // API呼び出し: 削除
     await DeleteManuscriptsCSR({
       user_hash_key: user.hashKey,
-      manuscript_hash_key: [manuscriptHashKey],
+      manuscript_hash_keys: manuscriptHashKeys,
     }).then(() => {
       toast(t(`features.manuscript.index`) + t(`common.toast.delete`), {
         style: {
@@ -282,7 +285,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
       }
     })
     // 削除モーダルを閉じる
-    setOpenDeleteModal(false)
+    setIsOpenDeleteModal(false)
   }
 
   const tableHeader: TableHeader[] = [
@@ -433,13 +436,35 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
               }).slice(pageSize * (page - 1), pageSize * page)}
             />
           </Box>
-          <DeleteModal
-            open={isOpenDeleteModal}
-            headers={[{ name: '原稿内容' }]}
-            bodies={[{ '原稿内容': new Body(bodies[selectedIndex]?.content) }]}
-            close={() => setOpenDeleteModal(false)}
-            delete={() => manuscriptDelete(bodies[selectedIndex]?.hashKey)}
-          />
+          {isOpenDeleteModal && (
+            <DeleteModal
+              open={isOpenDeleteModal}
+              headers={_.map(tableHeader, (table) => {
+                return {
+                  name: table.name,
+                } as TableHeader
+              })}
+              bodies={_.map(deleteList, (u) => {
+                return {
+                  no: new Body(u.no),
+                  content: new Body(u.content),
+                  sites: new Body(
+                    <Box sx={DirectionColumnForTable}>
+                      {_.map(u.sites, (site, index) => {
+                        return <Box key={index}>{site.name}</Box>
+                      })}
+                    </Box>,
+                  ),
+                }
+              })}
+              close={() => setIsOpenDeleteModal(false)}
+              delete={() => {
+                const hashkeys = _.map(deleteList, (d) => d.hashKey)
+                manuscriptDelete(hashkeys)
+              }}
+            ></DeleteModal>
+          )}
+
         </>
       )}
     </>

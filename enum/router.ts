@@ -25,7 +25,6 @@ export enum RouterPath {
   // 原稿
   Manuscript = '/manuscript',
   ManuscriptCreate = '/manuscript/create',
-  ManuscriptDelete = '/manuscript/delete',
   // メールテンプレート
   Email = '/mail',
   // 変数

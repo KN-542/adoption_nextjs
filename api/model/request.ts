@@ -426,5 +426,5 @@ export class SearchManuscriptByTeamRequest extends AbstractRequest2 {
 export class DeleteManuscriptsRequest extends AbstractRequest2 {
   user_hash_key: string
   // 原稿ID
-  manuscript_hash_key: string[]
+  manuscript_hash_keys: string[]
 }
