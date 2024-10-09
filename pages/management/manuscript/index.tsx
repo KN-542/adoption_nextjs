@@ -86,7 +86,6 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   const processing = useRef<boolean>(false)
   const [isOpenDeleteModal, setIsOpenDeleteModal] = useState<boolean>(false)
 
-
   const inits = async () => {
     try {
       // API: 使用可能ロール一覧
@@ -464,7 +463,6 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
               }}
             ></DeleteModal>
           )}
-
         </>
       )}
     </>
