@@ -151,6 +151,12 @@ export type InterviewEvents = {
   hashKey: string
   // ステータス名
   name: string
+  // 過程ハッシュ
+  processHash: string
+  // 過程
+  processing: string
+  // 説明
+  desc: string
   // 選択済み新ステータスID
   selectedStatusID?: number
   // 選択済み新ステータス
@@ -193,6 +199,18 @@ export type StatusEventResponse = {
   selectedStatusID?: number
   // 選択済み新ステータス
   selectedStatus?: string
+}
+
+// API: 面接過程マスタ一覧
+export type ProcessingResponse = {
+  // No
+  no: number
+  // ハッシュキー
+  hashKey: string
+  // 過程
+  processing: string
+  // 説明
+  desc: string
 }
 
 // API: ステータスイベント取得

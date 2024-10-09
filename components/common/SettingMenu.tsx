@@ -50,8 +50,6 @@ const SettingMenu: FC<Props> = () => {
 
   const [menus, setMenus] = useState<ButtonContents[]>([])
 
-  const processing = useRef<boolean>(false)
-
   const inits = async () => {
     // API 使用可能ロール一覧
     await RolesCSR({
@@ -80,9 +78,6 @@ const SettingMenu: FC<Props> = () => {
               {
                 name: t('features.setting.team.sub.basic.index'),
                 onClick: () => {
-                  if (processing.current) return
-                  processing.current = true
-
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
@@ -93,9 +88,6 @@ const SettingMenu: FC<Props> = () => {
               {
                 name: t('features.setting.team.sub.status.index'),
                 onClick: () => {
-                  if (processing.current) return
-                  processing.current = true
-
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
@@ -106,9 +98,6 @@ const SettingMenu: FC<Props> = () => {
               {
                 name: t('features.setting.team.sub.assign.index'),
                 onClick: () => {
-                  if (processing.current) return
-                  processing.current = true
-
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
@@ -119,9 +108,6 @@ const SettingMenu: FC<Props> = () => {
               {
                 name: t('features.setting.team.sub.type.index'),
                 onClick: () => {
-                  if (processing.current) return
-                  processing.current = true
-
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +
@@ -143,9 +129,6 @@ const SettingMenu: FC<Props> = () => {
               {
                 name: t('features.setting.personal.sub.color.index'),
                 onClick: () => {
-                  if (processing.current) return
-                  processing.current = true
-
                   router.push(
                     RouterPath.Management +
                       RouterPath.Setting +

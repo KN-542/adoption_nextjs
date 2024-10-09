@@ -665,3 +665,12 @@ export const ListApplicantTypeCSR = async (req: ListApplicantTypeRequest) => {
   return res
 }
 
+// 面接過程マスタ一覧 SSR
+export const ProcessingSSR = async () => {
+  const res = await axios.post(
+    `${process.env.NEXT_SSR_URL}/setting/processing_list`,
+    {},
+    APICommonHeader,
+  )
+  return res
+}

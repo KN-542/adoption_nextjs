@@ -309,6 +309,8 @@ class UpdateStatusRequestSub2 {
 class UpdateStatusRequestSub3 {
   // 面接回数
   num: number
+  // 過程
+  process_hash: string
   // ステータス
   status: number
 }
