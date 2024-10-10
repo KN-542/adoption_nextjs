@@ -20,6 +20,8 @@ export type SiteListResponse = {
   telIndex: number
   // 年齢_index
   ageIndex: number
+  // 原稿_index
+  manuscriptIndex: number
   // 氏名_チェックタイプ
   nameCheckType: number
   // カラム数

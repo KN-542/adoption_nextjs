@@ -126,6 +126,7 @@ const SettingTeamStatus: FC<Props> = ({
   const processing = useRef<boolean>(false)
 
   const inits = async () => {
+    console.log(eventsSSR)
     try {
       // API: 使用可能ロール一覧
       const res = await RolesCSR({
@@ -1050,13 +1051,16 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   const eventsSSR: StatusEventResponse[] = []
   await ListStatusEventSSR()
     .then((res) => {
-      _.forEach(res.data.list, (item, index) => {
-        eventsSSR.push({
-          no: Number(index) + 1,
-          hashKey: item.hash_key,
-          desc: item[`desc_${locale}`],
-        })
-      })
+      _.forEach(
+        res.data.list.sort((a, b) => a.id - b.id),
+        (item, index) => {
+          eventsSSR.push({
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            desc: item[`desc_${locale}`],
+          })
+        },
+      )
     })
     .catch(() => {
       isError = true

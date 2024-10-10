@@ -139,6 +139,8 @@ export type DownloadApplicantSubRequest = {
   tel: string
   // 年齢
   age: number
+  // 原稿ハッシュ
+  manuscript_hash: string
 }
 // 応募者取得
 export class GetApplicantRequest extends AbstractRequest3 {

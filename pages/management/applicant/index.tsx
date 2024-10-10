@@ -262,7 +262,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       )
       setTypes(res4)
 
-      // API: 種別一覧_同一チーム
+      // API: 原稿一覧_同一チーム
       const tempList4 = await SearchManuscriptByTeamCSR({
         user_hash_key: user.hashKey,
       } as SearchManuscriptByTeamRequest)
@@ -1543,6 +1543,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             : item[site.telIndex]
 
           const age = item[site.ageIndex].match(/\d+/)
+
+          const manuscript = item[site.manuscriptIndex]
+
           if (
             _.some([
               _.isEmpty(outerId),
@@ -1575,6 +1578,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             email: email,
             tel: tel,
             age: Number(age[0]),
+            manuscript_hash: _.find(manuscripts, (m) =>
+              _.isEqual(m.content, manuscript),
+            )?.hashKey,
           } as DownloadApplicantSubRequest)
         }
 
@@ -1809,6 +1815,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     },
     manuscript: {
       name: t('features.applicant.header.manuscript'),
+      minW: 1000,
       option: {
         isChange: applicantSearchOption['manuscript'].isChange,
         display: applicantSearchOption['manuscript'].display,
@@ -2522,6 +2529,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
           emailIndex: Number(item.email_index),
           telIndex: Number(item.tel_index),
           ageIndex: Number(item.age_index),
+          manuscriptIndex: Number(item.manuscript_index),
           nameCheckType: Number(item.name_check_type),
           columns: Number(item.num_of_column),
         } as SiteListResponse)
