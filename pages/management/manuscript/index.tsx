@@ -1,4 +1,4 @@
-import { RolesRequest, SearchManuscriptRequest } from '@/api/model/request'
+import { RolesRequest, SearchManuscriptRequest, DeleteManuscriptsRequest } from '@/api/model/request'
 import {
   SearchManuscriptResponse,
   SiteListResponse,
@@ -42,6 +42,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import Spinner from '@/components/common/modal/Spinner'
 import DeleteModal from '@/components/common/modal/Delete'
 import { DeleteManuscriptsCSR } from '@/api/repository'
+import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
   isError: boolean
@@ -70,7 +71,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [icons, setIcons] = useState<Icons[]>([])
   const [bodies, setBodies] = useState<SearchManuscriptResponse[]>([])
-  let manuscripts: SearchManuscriptResponse[] = []
+  const manuscripts: SearchManuscriptResponse[] = []
   const [deleteList, setDeleteList] = useState<SearchManuscriptResponse[]>([])
 
   const [page, setPage] = useState<number>(1)
@@ -153,7 +154,6 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
     if (init) isLoading(true)
 
     // API: 原稿検索
-    const list: SearchManuscriptResponse[] = []
     await SearchManuscriptCSR({
       user_hash_key: user.hashKey,
       page: currentPage,
@@ -166,7 +166,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
         }
 
         _.forEach(res.data.list, (m, index) => {
-          list.push({
+          manuscripts.push({
             no: currentSize * (currentPage - 1) + Number(index) + 1,
             hashKey: m.hash_key,
             content: m.content,
@@ -178,8 +178,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
             }),
           } as SearchManuscriptResponse)
         })
-        manuscripts = list
-        setBodies(list)
+        setBodies(manuscripts)
         setSize(Number(res.data.num))
 
         if (currentSize) {
@@ -235,33 +234,36 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
   }
 
   // 削除処理
-  const manuscriptDelete = async (manuscriptHashKeys: string[]) => {
-    // API呼び出し: 削除
-    await DeleteManuscriptsCSR({
-      user_hash_key: user.hashKey,
-      manuscript_hash_keys: manuscriptHashKeys,
-    }).then(() => {
-      toast(t(`features.manuscript.index`) + t(`common.toast.delete`), {
+  const manuscriptDelete = async () => {
+    if (processing.current) return
+    processing.current = true
+
+    if (_.isEmpty(deleteList)) {
+      toast(t('common.api.header.400'), {
         style: {
-          backgroundColor: setting.toastSuccessColor,
+          backgroundColor: setting.toastErrorColor,
           color: common.white,
-          width: 500,
+          width: 630,
         },
         position: 'bottom-left',
         hideProgressBar: true,
         closeButton: () => <ClearIcon />,
       })
-      // リストを再取得
-      search(page, pageSize)
-    }).catch(({isServerError, routerPath, toastMsg, storeMsg}) => {
-      if (isServerError) {
-        router.push(routerPath)
-        return
-      }
-      if (!_.isEmpty(toastMsg)) {
-        toast(t(toastMsg), {
+
+      setTimeout(() => {
+        processing.current = false
+      }, LITTLE_DURING)
+      return
+    }
+    // API: 原稿削除
+    await DeleteManuscriptsCSR({
+      user_hash_key: user.hashKey,
+      manuscript_hash_keys: deleteList.map((d) => d.hashKey),
+    } as DeleteManuscriptsRequest)
+      .then(async () => {
+        toast(t(`features.manuscript.index`) + t(`common.toast.delete`), {
           style: {
-            backgroundColor: setting.toastErrorColor,
+            backgroundColor: setting.toastSuccessColor,
             color: common.white,
             width: 500,
           },
@@ -269,22 +271,74 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
           hideProgressBar: true,
           closeButton: () => <ClearIcon />,
         })
-        return
-      }
-      if (!_.isEmpty(storeMsg)) {
-        const msg = t(storeMsg)
-        store.dispatch(
-          changeSetting({
-            errorMsg: _.isEmpty(msg) ? [] : [msg],
-          } as SettingModel),
-        )
-        router.push(
-          _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
-        )
-      }
-    })
-    // 削除モーダルを閉じる
-    setIsOpenDeleteModal(false)
+
+        isLoading(true)
+        await search(1, pageSize)
+        setDeleteList([])
+        isLoading(false)
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
+      })
+      .catch(({isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (code) {
+          toast(
+            `${t(`common.api.code.manuscript.${String(code)}`)}${t(
+              'common.api.code.manuscript.index',
+            )}`,
+            {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 500,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
+            },
+          )
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
+          return
+        }
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
   }
 
   const tableHeader: TableHeader[] = [
@@ -457,10 +511,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
                 }
               })}
               close={() => setIsOpenDeleteModal(false)}
-              delete={() => {
-                const hashkeys = _.map(deleteList, (d) => d.hashKey)
-                manuscriptDelete(hashkeys)
-              }}
+              delete={manuscriptDelete}
             ></DeleteModal>
           )}
         </>
