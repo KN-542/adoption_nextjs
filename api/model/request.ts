@@ -233,9 +233,9 @@ export class CreateUserRequest extends AbstractRequest {
   role_hash_key: string
 }
 // ユーザー削除
-export class DeleteUserRequest extends AbstractRequest3 {
+export class DeleteUserRequest extends AbstractRequest2 {
   user_hash_key: string
-  hash_key: string
+  hash_keys: string[]
 }
 
 /* 
