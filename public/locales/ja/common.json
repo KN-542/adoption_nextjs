@@ -232,6 +232,11 @@
         },
         "type": {
           "msg": "以下の応募者の種別の変更を行ってください"
+        },
+        "submit": {
+          "msg": "以下の応募者の選考結果を入力してください",
+          "button": "不通過",
+          "button2": "通過"
         }
       },
       "documents": {
@@ -244,7 +249,7 @@
         "status": "ステータス変更",
         "manuscript": "原稿設定",
         "type": "種別設定",
-        "result": "面接結果入力"
+        "result": "結果入力"
       }
     },
     "user": {
@@ -327,7 +332,7 @@
             "index": "面接官割り振り方法",
             "num": "各面接に参加する最低人数",
             "possibleTransaction": "各面接への参加可能者",
-            "possibleTransactionContent": "次面接の",
+            "possibleTransactionContent": "次面接",
             "possibleTransactionContentValidation": "の参加者が指定されていません",
             "possibleTransactionContentValidation2": "の参加者が最低人数を下回っています",
             "rule": "アサインルール",

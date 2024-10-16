@@ -57,7 +57,7 @@ const ItemsSelectModal = (props: Props) => {
 
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [loading, isLoading] = useState(true)
+  const [loading, isLoading] = useState<boolean>(true)
 
   const [options, setOptions] = useState<SelectTitlesModel[]>([])
   const [selectedOptions, setSelectedOptions] = useState<SelectTitlesModel[]>(

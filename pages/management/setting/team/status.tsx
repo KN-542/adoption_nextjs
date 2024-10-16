@@ -126,7 +126,6 @@ const SettingTeamStatus: FC<Props> = ({
   const processing = useRef<boolean>(false)
 
   const inits = async () => {
-    console.log(eventsSSR)
     try {
       // API: 使用可能ロール一覧
       const res = await RolesCSR({

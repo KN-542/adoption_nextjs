@@ -1,5 +1,5 @@
 const Index = () => {
-  return <>あああ</>
+  return <>ヘルスチェックのため消さないでください</>
 }
 
 export default Index

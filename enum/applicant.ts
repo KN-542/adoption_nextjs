@@ -154,3 +154,13 @@ export enum SearchSortKey {
   // 種別
   Type = 't_applicant_type.id',
 }
+
+// 書類通過
+export enum DocumentPass {
+  // 進行中
+  Process = 0,
+  // 通過
+  Pass,
+  // 不通過
+  Fail,
+}

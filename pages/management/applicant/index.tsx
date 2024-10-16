@@ -40,6 +40,7 @@ import {
   yellow,
 } from '@mui/material/colors'
 import {
+  DocumentPass,
   DocumentUploaded,
   SearchAutoCompIndex,
   SearchDateIndex,
@@ -133,6 +134,7 @@ import Spinner from '@/components/common/modal/Spinner'
 import { GetServerSideProps } from 'next'
 import { Dayjs } from 'dayjs'
 import ColumnsModal from '@/components/common/modal/Columns'
+import SubmitModal from '@/components/common/modal/Submit'
 
 type Props = {
   isError: boolean
@@ -182,6 +184,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [manuscriptSelectOpen, isManuscriptSelectOpen] =
     useState<boolean>(false)
   const [typeSelectOpen, isTypeSelectOpen] = useState<boolean>(false)
+  const [submitOpen, isSubmitOpen] = useState<boolean>(false)
   const [columnsOpen, isColumnsOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [init, isInit] = useState<boolean>(true)
@@ -257,6 +260,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             no: Number(index) + 1,
             hashKey: item.hash_key,
             name: item.name,
+            isDocumentConfirm: Boolean(item.is_document_confirm),
           } as ListApplicantTypeResponse
         },
       )
@@ -664,6 +668,8 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             content: r.content,
             type: r.type,
             scheduleHash: r.schedule_hash_key,
+            numOfInterview: Number(r.num_of_interview),
+            documentPassFlg: Number(r.document_pass_flg),
           } as SearchApplicantResponse)
         })
         setBodies(list)
@@ -1240,6 +1246,44 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       })
   }
 
+  const condition = (): boolean => {
+    const index = _.findIndex(bodies, (item) =>
+      _.isEqual(item.hashKey, _.filter(checkedList, (c) => c.checked)[0]?.key),
+    )
+    if (_.isEqual(index, -1)) return false
+
+    const body = bodies[index]
+
+    return _.every([
+      _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
+      !_.isEmpty(body?.resume),
+      !_.isEmpty(body?.curriculumVitae),
+      !_.isEmpty(body?.content),
+      !_.isEmpty(body?.type),
+      !_.isEqual(body?.documentPassFlg, DocumentPass.Fail),
+    ])
+  }
+  const condition2 = (): boolean => {
+    const index = _.findIndex(bodies, (item) =>
+      _.isEqual(item.hashKey, _.filter(checkedList, (c) => c.checked)[0]?.key),
+    )
+    if (_.isEqual(index, -1)) return false
+
+    const body = bodies[index]
+
+    const type = _.find(types, (t) => _.isEqual(t.name, body?.type))
+    if (_.isUndefined(type)) return false
+
+    return _.every([
+      _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
+      !_.isEmpty(body?.resume),
+      !_.isEmpty(body?.curriculumVitae),
+      !_.isEmpty(body?.content),
+      type.isDocumentConfirm,
+      !_.isEqual(body?.documentPassFlg, DocumentPass.Fail),
+    ])
+  }
+
   // 選択済みメニュー表示
   const dispMenu: SelectedMenuModel[] = [
     // Google Meet
@@ -1247,35 +1291,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       name: t('features.applicant.menu.googleMeet'),
       icon: <MeetingRoomIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: blue[300],
-      condition: _.every([
-        _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
-        _.findIndex(bodies, (item) =>
-          _.isEqual(
-            item.hashKey,
-            _.filter(checkedList, (c) => c.checked)[0]?.key,
-          ),
-        ) > -1,
-        !_.isEmpty(
-          bodies[
-            _.findIndex(bodies, (item) =>
-              _.isEqual(
-                item.hashKey,
-                _.filter(checkedList, (c) => c.checked)[0]?.key,
-              ),
-            )
-          ]?.resume,
-        ),
-        !_.isEmpty(
-          bodies[
-            _.findIndex(bodies, (item) =>
-              _.isEqual(
-                item.hashKey,
-                _.filter(checkedList, (c) => c.checked)[0]?.key,
-              ),
-            )
-          ]?.curriculumVitae,
-        ),
-      ]),
+      condition: condition(),
       onClick: async () => {
         if (processing.current) return
         processing.current = true
@@ -1341,36 +1357,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       name: t('features.applicant.menu.user'),
       icon: <CoPresentIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: setting.color,
-      condition: _.every([
-        _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
-        _.findIndex(bodies, (item) =>
-          _.isEqual(
-            item.hashKey,
-            _.filter(checkedList, (c) => c.checked)[0]?.key,
-          ),
-        ) > -1,
-        !_.isEmpty(
-          bodies[
-            _.findIndex(bodies, (item) =>
-              _.isEqual(
-                item.hashKey,
-                _.filter(checkedList, (c) => c.checked)[0]?.key,
-              ),
-            )
-          ]?.resume,
-        ),
-        !_.isEmpty(
-          bodies[
-            _.findIndex(bodies, (item) =>
-              _.isEqual(
-                item.hashKey,
-                _.filter(checkedList, (c) => c.checked)[0]?.key,
-              ),
-            )
-          ]?.curriculumVitae,
-        ),
-        roles[Operation.ManagementApplicantAssignUser],
-      ]),
+      condition: condition(),
       onClick: () => {
         isUserSelectOpen(true)
       },
@@ -1408,13 +1395,13 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       ]),
       onClick: () => isTypeSelectOpen(true),
     },
-    // 面接結果入力
+    // 結果入力
     {
       name: t('features.applicant.menu.result'),
       icon: <FeedbackIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: green[500],
-      condition: !_.isEmpty(_.filter(checkedList, (c) => c.checked)),
-      onClick: () => {},
+      condition: condition(),
+      onClick: () => isSubmitOpen(true),
     },
   ]
 
@@ -2498,6 +2485,54 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             m={15}
             submit={selectType}
             close={() => isTypeSelectOpen(false)}
+          />
+          <SubmitModal
+            open={submitOpen}
+            close={() => isSubmitOpen(false)}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'status'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  status: new Body(l.statusName),
+                }
+              },
+            )}
+            msg={t('features.applicant.assign.submit.msg')}
+            title={t('features.applicant.menu.result')}
+            buttonTitle={t('features.applicant.assign.submit.button')}
+            buttonTitle2={t('features.applicant.assign.submit.button2')}
+            ok={() => console.log(111)}
+            ng={() => console.log(222)}
           />
           <ColumnsModal
             open={columnsOpen}

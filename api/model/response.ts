@@ -84,6 +84,10 @@ export type SearchApplicantResponse = {
   type: string
   // 予定ハッシュ
   scheduleHash: string
+  // 面接回数
+  numOfInterview: number
+  // 書類通過フラグ
+  documentPassFlg: number
 }
 
 // API ユーザー検索
@@ -303,4 +307,6 @@ export type ListApplicantTypeResponse = {
   rule?: string
   // 職種名
   occupation?: string
+  // 書類確認必要性
+  isDocumentConfirm: boolean
 }
