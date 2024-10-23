@@ -244,9 +244,9 @@ export class CreateUserRequest extends AbstractRequest {
   role_hash_key: string
 }
 // ユーザー削除
-export class DeleteUserRequest extends AbstractRequest3 {
+export class DeleteUserRequest extends AbstractRequest2 {
   user_hash_key: string
-  hash_key: string
+  hash_keys: string[]
 }
 
 /* 
@@ -433,4 +433,11 @@ export class CreateManuscriptRequest extends AbstractRequest2 {
 // 原稿検索_同一チーム
 export class SearchManuscriptByTeamRequest extends AbstractRequest2 {
   user_hash_key: string
+}
+
+// 原稿削除
+export class DeleteManuscriptsRequest extends AbstractRequest2 {
+  user_hash_key: string
+  // 原稿ID
+  manuscript_hash_keys: string[]
 }

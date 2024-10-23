@@ -43,6 +43,7 @@ import {
   CheckAssignableUserRequest,
   SearchManuscriptRequest,
   CreateManuscriptRequest,
+  DeleteManuscriptsRequest,
   CreateApplicantTypeRequest,
   ListApplicantTypeRequest,
   SearchManuscriptByTeamRequest,
@@ -554,6 +555,16 @@ export const CreateApplicantAssociationCSR = async (
 ) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/assign_applicant`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 原稿削除 CSR
+export const DeleteManuscriptsCSR = async (req: DeleteManuscriptsRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/delete`,
     req,
     APICommonHeader,
   )

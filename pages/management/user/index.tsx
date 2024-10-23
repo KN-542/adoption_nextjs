@@ -46,6 +46,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { HttpStatusCode } from 'axios'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import { LITTLE_DURING } from '@/hooks/common'
+import DeleteModal from '@/components/common/modal/Delete'
 
 type Props = {
   isError: boolean
@@ -264,7 +265,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
     }, LITTLE_DURING)
   }
 
-  const deleteTeam = async () => {
+  const deleteUser = async () => {
     if (processing.current) return
     processing.current = true
 
@@ -289,7 +290,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
     // API: ユーザー削除
     await DeleteUserCSR({
       user_hash_key: user.hashKey,
-      hash_key: deleteList[0].hashKey,
+      hash_keys: _.map(deleteList, (u) => u.hashKey),
     } as DeleteUserRequest)
       .then(async () => {
         toast(t(`features.user.index`) + t(`common.toast.delete`), {
@@ -307,6 +308,11 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         await search(1, pageSize)
         setDeleteList([])
         isLoading(false) // Backへのページ遷移に変えるかも
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
+
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
@@ -315,7 +321,7 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         }
 
         if (code) {
-          toast(t('common.api.code.userDelete'), {
+          toast(t(`common.api.code.userDelete.${code}`) + t('common.api.code.userDelete.index'), {
             style: {
               backgroundColor: setting.toastErrorColor,
               color: common.white,
@@ -496,6 +502,26 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
                 }
               }).slice(pageSize * (page - 1), pageSize * page)}
             />
+            {deleteOpen && (
+              <DeleteModal
+                open={deleteOpen}
+                headers={_.map(tableHeader, (table) => {
+                  return {
+                    name: table.name,
+                  } as TableHeader
+                })}
+                bodies={_.map(deleteList, (u) => {
+                  return {
+                    no: new Body(u.no),
+                    name: new Body(u.name),
+                    email: new Body(u.email),
+                    role: new Body(u.roleName),
+                  }
+                })}
+                close={() => isDeleteOpen(false)}
+                delete={deleteUser}
+              ></DeleteModal>
+            )}
           </Box>
         </>
       )}
