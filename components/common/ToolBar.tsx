@@ -261,15 +261,6 @@ const ToolBar = (props: Props) => {
                   <LogoutIcon sx={mr(0.25)} />
                   {t('toolbar.logout')}
                 </Button>
-                {/* TODO ロゴは後に対応 */}
-                {/* <Image
-              src="/logo.png"
-              alt="CLINKS logo"
-              width={100}
-              height={24}
-              style={{ marginLeft: '2rem' }}
-              priority
-            /> */}
               </Box>
             </Toolbar>
           </Box>
