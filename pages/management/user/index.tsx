@@ -312,7 +312,6 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         setTimeout(() => {
           processing.current = false
         }, LITTLE_DURING)
-
       })
       .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
@@ -321,16 +320,20 @@ const User: FC<Props> = ({ isError, locale: _locale }) => {
         }
 
         if (code) {
-          toast(t(`common.api.code.userDelete.${code}`) + t('common.api.code.userDelete.index'), {
-            style: {
-              backgroundColor: setting.toastErrorColor,
-              color: common.white,
-              width: 500,
+          toast(
+            t(`common.api.code.userDelete.${code}`) +
+              t('common.api.code.userDelete.index'),
+            {
+              style: {
+                backgroundColor: setting.toastErrorColor,
+                color: common.white,
+                width: 500,
+              },
+              position: 'bottom-left',
+              hideProgressBar: true,
+              closeButton: () => <ClearIcon />,
             },
-            position: 'bottom-left',
-            hideProgressBar: true,
-            closeButton: () => <ClearIcon />,
-          })
+          )
 
           setTimeout(() => {
             processing.current = false

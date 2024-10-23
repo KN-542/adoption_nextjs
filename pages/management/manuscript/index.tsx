@@ -1,4 +1,8 @@
-import { RolesRequest, SearchManuscriptRequest, DeleteManuscriptsRequest } from '@/api/model/request'
+import {
+  RolesRequest,
+  SearchManuscriptRequest,
+  DeleteManuscriptsRequest,
+} from '@/api/model/request'
 import {
   SearchManuscriptResponse,
   SiteListResponse,
@@ -111,7 +115,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
             const body: SearchManuscriptResponse = manuscripts[i]
             setDeleteList([body])
             setIsOpenDeleteModal(true)
-          }
+          },
         },
       ])
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
@@ -281,7 +285,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
           processing.current = false
         }, LITTLE_DURING)
       })
-      .catch(({isServerError, routerPath, toastMsg, storeMsg, code }) => {
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
           router.push(routerPath)
           return
@@ -504,11 +508,13 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
                   no: new Body(u.no),
                   content: new Body(u.content),
                   sites: new Body(
-                    <Box sx={DirectionColumnForTable}>
-                      {_.map(u.sites, (site, index) => {
-                        return <Box key={index}>{site.name}</Box>
-                      })}
-                    </Box>,
+                    (
+                      <Box sx={DirectionColumnForTable}>
+                        {_.map(u.sites, (site, index) => {
+                          return <Box key={index}>{site.name}</Box>
+                        })}
+                      </Box>
+                    ),
                   ),
                 }
               })}
