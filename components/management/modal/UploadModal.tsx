@@ -51,7 +51,12 @@ const UploadModal = (props: Props) => {
       <Divider sx={mb(2)} />
 
       <DialogActions sx={[mr(2), mb(2)]}>
-        <Button variant="outlined" color="inherit" onClick={props.closeModal}>
+        <Button
+          tabIndex={-1}
+          variant="outlined"
+          color="inherit"
+          onClick={props.closeModal}
+        >
           {t('common.button.cancel')}
         </Button>
       </DialogActions>

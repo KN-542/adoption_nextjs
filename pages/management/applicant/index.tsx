@@ -9,6 +9,7 @@ import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import FunctionsIcon from '@mui/icons-material/Functions'
 import FeedbackIcon from '@mui/icons-material/Feedback'
+import DocumentScannerIcon from '@mui/icons-material/DocumentScanner'
 import {
   Body,
   CheckboxPropsField,
@@ -35,12 +36,13 @@ import {
   blue,
   brown,
   common,
+  cyan,
   deepPurple,
   green,
   yellow,
 } from '@mui/material/colors'
 import {
-  DocumentPass,
+  Processing,
   DocumentUploaded,
   SearchAutoCompIndex,
   SearchDateIndex,
@@ -48,6 +50,7 @@ import {
   SearchRangeIndex,
   SearchSortKey,
   SearchTextIndex,
+  IsContinue,
 } from '@/enum/applicant'
 import {
   ApplicantDocumentDownloadRequest,
@@ -64,6 +67,8 @@ import {
   UpdateSelectStatusRequest,
   CreateApplicantManuscriptAssociationRequest,
   CreateApplicantTypeAssociationRequest,
+  InputResultRequest,
+  GetOwnTeamRequest,
 } from '@/api/model/request'
 import {
   GoogleAuthCSR,
@@ -80,6 +85,9 @@ import {
   CreateApplicantAssociationCSR,
   CreateApplicantTypeAssociationCSR,
   ApplicantSitesSSR,
+  ProcessingSSR,
+  InputResultCSR,
+  GetOwnTeamCSR,
 } from '@/api/repository'
 import _ from 'lodash'
 import { useRouter } from 'next/router'
@@ -127,6 +135,7 @@ import {
   SearchUserByCompanyResponse,
   SearchManuscriptResponse,
   ListApplicantTypeResponse,
+  ProcessingResponse,
 } from '@/api/model/response'
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
@@ -136,13 +145,78 @@ import { Dayjs } from 'dayjs'
 import ColumnsModal from '@/components/common/modal/Columns'
 import SubmitModal from '@/components/common/modal/Submit'
 
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
+  let isError: boolean = false
+
+  // API サイト一覧
+  const sites: SiteListResponse[] = []
+  await ApplicantSitesSSR()
+    .then((res) => {
+      _.forEach(res.data.list, (item, index) => {
+        sites.push({
+          id: Number(index) + 1,
+          hashKey: item.hash_key,
+          name: item.site_name,
+          fileName: item.file_name,
+          outerIndex: Number(item.outer_id_index),
+          nameIndex: Number(item.name_index),
+          emailIndex: Number(item.email_index),
+          telIndex: Number(item.tel_index),
+          ageIndex: Number(item.age_index),
+          manuscriptIndex: Number(item.manuscript_index),
+          nameCheckType: Number(item.name_check_type),
+          columns: Number(item.num_of_column),
+        } as SiteListResponse)
+      })
+    })
+    .catch(() => {
+      isError = true
+    })
+
+  // API: 面接過程マスタ一覧
+  const processingSSR: ProcessingResponse[] = []
+  await ProcessingSSR()
+    .then((res) => {
+      _.forEach(res.data.list, (item, index) => {
+        processingSSR.push({
+          no: Number(index) + 1,
+          hashKey: item.hash_key,
+          processing: item.processing,
+          desc: item[`desc_${locale}`],
+          isContinue: Number(item.is_continue),
+          code: Number(item.code),
+        })
+      })
+    })
+    .catch(() => {
+      isError = true
+    })
+
+  return {
+    props: {
+      isError,
+      locale,
+      sites,
+      processingSSR,
+      messages: (await import(`../../../public/locales/${locale}/common.json`))
+        .default,
+    },
+  }
+}
+
 type Props = {
   isError: boolean
   locale: string
   sites: SiteListResponse[]
+  processingSSR: ProcessingResponse[]
 }
 
-const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
+const Applicants: React.FC<Props> = ({
+  isError,
+  locale: _locale,
+  sites,
+  processingSSR,
+}) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -173,6 +247,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
   const [checkedList, setCheckedList] = useState<SelectedCheckbox[]>([])
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
   const [searchObj, setSearchObj] = useState<SearchForm>({})
+  const [numOfInterview, setNumOfInterview] = useState<number>(1)
 
   const [size, setSize] = useState<number>(0)
 
@@ -185,6 +260,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     useState<boolean>(false)
   const [typeSelectOpen, isTypeSelectOpen] = useState<boolean>(false)
   const [submitOpen, isSubmitOpen] = useState<boolean>(false)
+  const [documentOpen, isDocumentOpen] = useState<boolean>(false)
   const [columnsOpen, isColumnsOpen] = useState<boolean>(false)
   const [noContent, isNoContent] = useState<boolean>(false)
   const [init, isInit] = useState<boolean>(true)
@@ -499,6 +575,13 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
           },
         ] as SearchDates[],
       })
+
+      // API: チーム取得
+      const res6 = await GetOwnTeamCSR({
+        user_hash_key: user.hashKey,
+      } as GetOwnTeamRequest)
+
+      setNumOfInterview(Number(res6.data.team.num_of_interview))
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
@@ -668,6 +751,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             content: r.content,
             type: r.type,
             scheduleHash: r.schedule_hash_key,
+            processHash: r.process_hash,
             numOfInterview: Number(r.num_of_interview),
             documentPassFlg: Number(r.document_pass_flg),
           } as SearchApplicantResponse)
@@ -890,7 +974,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     setSearchObj(newObj)
   }
 
-  const submitUsers = async (hashKeys: string[]) => {
+  const submitUsers = async (hashKeys: string[] | string) => {
     if (processing.current) return
     processing.current = true
 
@@ -908,7 +992,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     await AssignUserCSR({
       user_hash_key: user.hashKey,
       hash_key: a.key,
-      hash_keys: hashKeys,
+      hash_keys: _.isArray(hashKeys) ? hashKeys : [hashKeys],
       remove_schedule_hash_keys: [app.scheduleHash],
     } as AssignUserRequest)
       .then(async () => {
@@ -1246,6 +1330,99 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       })
   }
 
+  const inputResult = async (code: number, documentPass: number) => {
+    if (processing.current) return
+    processing.current = true
+
+    const a = _.find(checkedList, (c) => c.checked)
+    if (_.isUndefined(a)) {
+      router.push(RouterPath.Error)
+    }
+
+    const app = _.find(bodies, (b) => _.isEqual(b.hashKey, a.key))
+    if (_.isUndefined(app)) {
+      router.push(RouterPath.Error)
+    }
+
+    const processCode = _.every([
+      _.isEqual(numOfInterview, app.numOfInterview),
+      _.isEqual(code, Processing.Process),
+    ])
+      ? Processing.Pass
+      : code
+
+    const p = _.find(processingSSR, (pp) => _.isEqual(pp.code, processCode))
+    if (_.isUndefined(p)) {
+      router.push(RouterPath.Error)
+    }
+
+    // API: 結果入力
+    await InputResultCSR({
+      user_hash_key: user.hashKey,
+      hash_key: app.hashKey,
+      process_hash: p.hashKey,
+      document_pass_flg: documentPass,
+    } as InputResultRequest)
+      .then(async () => {
+        toast(t('features.applicant.menu.result') + t('common.toast.create'), {
+          style: {
+            backgroundColor: setting.toastSuccessColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        await search(1, pageSize)
+        isSubmitOpen(false)
+        isDocumentOpen(false)
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
+      })
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
+        const error = { isServerError, routerPath, toastMsg, storeMsg, code }
+        if (isServerError) {
+          router.push(routerPath)
+          return
+        }
+
+        if (!_.isEmpty(toastMsg)) {
+          toast(t(toastMsg), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+
+          isSubmitOpen(false)
+          isDocumentOpen(false)
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
+          throw error
+        }
+
+        if (!_.isEmpty(storeMsg)) {
+          const msg = t(storeMsg)
+          store.dispatch(
+            changeSetting({
+              errorMsg: _.isEmpty(msg) ? [] : [msg],
+            } as SettingModel),
+          )
+          router.push(
+            _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
+          )
+        }
+      })
+  }
+
   const condition = (): boolean => {
     const index = _.findIndex(bodies, (item) =>
       _.isEqual(item.hashKey, _.filter(checkedList, (c) => c.checked)[0]?.key),
@@ -1260,10 +1437,29 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       !_.isEmpty(body?.curriculumVitae),
       !_.isEmpty(body?.content),
       !_.isEmpty(body?.type),
-      !_.isEqual(body?.documentPassFlg, DocumentPass.Fail),
+      !_.isEqual(body?.documentPassFlg, Processing.Fail),
     ])
   }
   const condition2 = (): boolean => {
+    const index = _.findIndex(bodies, (item) =>
+      _.isEqual(item.hashKey, _.filter(checkedList, (c) => c.checked)[0]?.key),
+    )
+    if (_.isEqual(index, -1)) return false
+
+    const body = bodies[index]
+
+    const p = _.find(processingSSR, (pp) =>
+      _.isEqual(pp.hashKey, body.processHash),
+    )
+    if (_.isUndefined(p)) return false
+
+    return _.every([
+      condition(),
+      !_.isEmpty(body?.users),
+      _.isEqual(p.isContinue, IsContinue.Continue),
+    ])
+  }
+  const condition3 = (): boolean => {
     const index = _.findIndex(bodies, (item) =>
       _.isEqual(item.hashKey, _.filter(checkedList, (c) => c.checked)[0]?.key),
     )
@@ -1275,12 +1471,9 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
     if (_.isUndefined(type)) return false
 
     return _.every([
-      _.isEqual(_.size(_.filter(checkedList, (c) => c.checked)), 1),
-      !_.isEmpty(body?.resume),
-      !_.isEmpty(body?.curriculumVitae),
-      !_.isEmpty(body?.content),
+      condition(),
+      _.isEqual(body.documentPassFlg, Processing.Process),
       type.isDocumentConfirm,
-      !_.isEqual(body?.documentPassFlg, DocumentPass.Fail),
     ])
   }
 
@@ -1400,8 +1593,16 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       name: t('features.applicant.menu.result'),
       icon: <FeedbackIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: green[500],
-      condition: condition(),
+      condition: _.every([condition(), condition2(), !condition3()]),
       onClick: () => isSubmitOpen(true),
+    },
+    // 書類選考
+    {
+      name: t('features.applicant.menu.document'),
+      icon: <DocumentScannerIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
+      color: cyan[900],
+      condition: _.every([condition(), condition2(), condition3()]),
+      onClick: () => isDocumentOpen(true),
     },
   ]
 
@@ -2075,6 +2276,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
               )}
               <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
+                  tabIndex={-1}
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
                   onClick={() => isColumnsOpen(true)}
@@ -2083,6 +2285,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                   {t('common.button.columnDisplay')}
                 </Button>
                 <Button
+                  tabIndex={-1}
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
                   onClick={() => isSearchOpen(true)}
@@ -2092,6 +2295,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                 </Button>
                 {roles[Operation.ManagementApplicantDownload] && (
                   <Button
+                    tabIndex={-1}
                     variant="contained"
                     sx={[
                       ml(1),
@@ -2158,6 +2362,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                       <>{t('features.applicant.documents.f')}</>
                     ) : (
                       <Button
+                        tabIndex={-1}
                         variant="text"
                         sx={Resume(setting.color)}
                         onClick={async () => {
@@ -2175,6 +2380,7 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
                       <>{t('features.applicant.documents.f')}</>
                     ) : (
                       <Button
+                        tabIndex={-1}
                         variant="text"
                         sx={Resume(setting.color)}
                         onClick={async () => {
@@ -2531,8 +2737,60 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
             title={t('features.applicant.menu.result')}
             buttonTitle={t('features.applicant.assign.submit.button')}
             buttonTitle2={t('features.applicant.assign.submit.button2')}
-            ok={() => console.log(111)}
-            ng={() => console.log(222)}
+            ok={async () =>
+              await inputResult(Processing.Process, Processing.Pass)
+            }
+            ng={async () => await inputResult(Processing.Fail, Processing.Pass)}
+          />
+          <SubmitModal
+            open={documentOpen}
+            close={() => isDocumentOpen(false)}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                    _.isEqual(key, 'status'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                  status: new Body(l.statusName),
+                }
+              },
+            )}
+            msg={t('features.applicant.assign.submit.msg')}
+            title={t('features.applicant.menu.document')}
+            buttonTitle={t('features.applicant.assign.submit.button')}
+            buttonTitle2={t('features.applicant.assign.submit.button2')}
+            ok={async () =>
+              await inputResult(Processing.Process, Processing.Pass)
+            }
+            ng={async () => await inputResult(Processing.Fail, Processing.Fail)}
           />
           <ColumnsModal
             open={columnsOpen}
@@ -2544,45 +2802,6 @@ const Applicants: React.FC<Props> = ({ isError, locale: _locale, sites }) => {
       )}
     </>
   )
-}
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  let isError: boolean = false
-
-  // API サイト一覧
-  const sites: SiteListResponse[] = []
-  await ApplicantSitesSSR()
-    .then((res) => {
-      _.forEach(res.data.list, (item, index) => {
-        sites.push({
-          id: Number(index) + 1,
-          hashKey: item.hash_key,
-          name: item.site_name,
-          fileName: item.file_name,
-          outerIndex: Number(item.outer_id_index),
-          nameIndex: Number(item.name_index),
-          emailIndex: Number(item.email_index),
-          telIndex: Number(item.tel_index),
-          ageIndex: Number(item.age_index),
-          manuscriptIndex: Number(item.manuscript_index),
-          nameCheckType: Number(item.name_check_type),
-          columns: Number(item.num_of_column),
-        } as SiteListResponse)
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
-  return {
-    props: {
-      isError,
-      locale,
-      sites: sites,
-      messages: (await import(`../../../public/locales/${locale}/common.json`))
-        .default,
-    },
-  }
 }
 
 export default Applicants

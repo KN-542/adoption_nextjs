@@ -45,7 +45,7 @@ const Error = () => {
             <Box>{t('features.login.errorMsg3')}</Box>
           </Typography>
           <Button
-            type="submit"
+            tabIndex={-1}
             variant="contained"
             sx={[mt(10), w(60), ButtonColor(common.white, common.black)]}
             onClick={() => {

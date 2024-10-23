@@ -71,6 +71,7 @@ const DeleteModal: FC<Props> = (props: Props) => {
       <DialogActions sx={[ml(2), mt(-1)]}>
         <Box sx={FormButtons}>
           <Button
+            tabIndex={-1}
             size="large"
             variant="outlined"
             color="inherit"
@@ -80,6 +81,7 @@ const DeleteModal: FC<Props> = (props: Props) => {
             {t('common.button.cancel')}
           </Button>
           <Button
+            tabIndex={-1}
             size="large"
             variant="outlined"
             sx={[minW(180), ButtonColor(common.white, setting.toastErrorColor)]}

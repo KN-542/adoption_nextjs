@@ -399,6 +399,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
 
               <Box sx={[FormThreeButtons, mt(8)]}>
                 <Button
+                  tabIndex={-1}
                   size="large"
                   variant="outlined"
                   color="inherit"
@@ -410,6 +411,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
                   {t('common.button.cancel')}
                 </Button>
                 <Button
+                  tabIndex={-1}
                   size="large"
                   variant="outlined"
                   color="inherit"

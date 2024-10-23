@@ -443,6 +443,7 @@ const CalendarModal = (props: Props) => {
           <DialogActions sx={[mr(2), mb(2)]}>
             <Box sx={FormTwoButtons}>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 color="inherit"
@@ -456,6 +457,7 @@ const CalendarModal = (props: Props) => {
               </Button>
               {every([props.isEdit, !isEmpty(props.model.id)]) && (
                 <Button
+                  tabIndex={-1}
                   size="large"
                   variant="outlined"
                   sx={[

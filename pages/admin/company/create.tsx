@@ -319,6 +319,7 @@ const CompanyCreate: FC<Props> = ({ isError }) => {
 
             <Box sx={FormButtons}>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 color="inherit"

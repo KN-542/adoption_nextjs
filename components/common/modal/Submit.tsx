@@ -95,6 +95,7 @@ const SubmitModal = (props: Props) => {
           <DialogActions sx={[mr(2), mb(2)]}>
             <Box sx={FormThreeButtons}>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 color="inherit"
@@ -104,6 +105,7 @@ const SubmitModal = (props: Props) => {
                 {t('common.button.cancel')}
               </Button>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 sx={[
@@ -115,6 +117,7 @@ const SubmitModal = (props: Props) => {
                 {props.buttonTitle}
               </Button>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 sx={[

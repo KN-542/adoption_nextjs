@@ -134,6 +134,7 @@ const SettingTeamDefault: FC<Props> = () => {
             <DialogContent sx={[DialogContentSetting, w(90), ml(3)]}>
               <Box sx={[TableMenuButtons, mt(1)]}>
                 <Button
+                  tabIndex={-1}
                   variant="contained"
                   sx={[
                     mr(10),

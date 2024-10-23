@@ -104,6 +104,7 @@ const SearchModal = (props: Props) => {
                             {item.name}
                           </Box>
                           <Button
+                            tabIndex={-1}
                             variant="text"
                             sx={[
                               ml(4),
@@ -121,6 +122,7 @@ const SearchModal = (props: Props) => {
                           {_.map(item.list, (option, index2) => (
                             <Box key={index2}>
                               <Button
+                                tabIndex={-1}
                                 fullWidth
                                 sx={SearchModalSelectButtonColor(
                                   option.isSelected,
@@ -287,6 +289,7 @@ const SearchModal = (props: Props) => {
           <DialogActions sx={[mr(2), mb(2)]}>
             <Box sx={FormThreeButtons}>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 color="inherit"
@@ -296,6 +299,7 @@ const SearchModal = (props: Props) => {
                 {t('common.button.cancel')}
               </Button>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 color="inherit"
@@ -308,6 +312,7 @@ const SearchModal = (props: Props) => {
                 {t('common.button.init')}
               </Button>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 sx={[minW(180), ButtonColor(common.white, setting.color)]}

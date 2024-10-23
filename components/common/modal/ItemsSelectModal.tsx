@@ -181,6 +181,7 @@ const ItemsSelectModal = (props: Props) => {
           <DialogActions sx={[mr(2), mb(2)]}>
             <Box sx={FormTwoButtons}>
               <Button
+                tabIndex={-1}
                 size="large"
                 variant="outlined"
                 color="inherit"

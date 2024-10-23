@@ -258,6 +258,7 @@ const PasswordChange = (props: Props) => {
 
           <Box sx={[SpaceEvenly, M0Auto, mt(6)]}>
             <Button
+              tabIndex={-1}
               variant="outlined"
               color="inherit"
               onClick={() => {

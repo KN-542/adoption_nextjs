@@ -211,6 +211,7 @@ const ToolBar = (props: Props) => {
                 {_.isEqual(user.path, RouterPath.Management) && (
                   <>
                     <Button
+                      tabIndex={-1}
                       sx={[mr(1), TextTransformNone]}
                       color="inherit"
                       onClick={(e) => setAnchorEl(e.currentTarget)}
@@ -238,6 +239,7 @@ const ToolBar = (props: Props) => {
                   </>
                 )}
                 <Button
+                  tabIndex={-1}
                   sx={mr(1)}
                   color="inherit"
                   onClick={(e) => {
@@ -249,6 +251,7 @@ const ToolBar = (props: Props) => {
                   {t('toolbar.setting')}
                 </Button>
                 <Button
+                  tabIndex={-1}
                   color="inherit"
                   onClick={async (e) => {
                     e.preventDefault()

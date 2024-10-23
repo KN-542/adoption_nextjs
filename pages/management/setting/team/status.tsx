@@ -494,6 +494,7 @@ const SettingTeamStatus: FC<Props> = ({
                 <>
                   <Box sx={[TableMenuButtons, mt(1)]}>
                     <Button
+                      tabIndex={-1}
                       variant="contained"
                       sx={[
                         mr(10),
@@ -615,6 +616,7 @@ const SettingTeamStatus: FC<Props> = ({
                                       }}
                                     />
                                     <Button
+                                      tabIndex={-1}
                                       disabled={_.every([
                                         _.isEqual(index, 0),
                                         _.isEqual(_.size(newStatusList), 1),
@@ -654,6 +656,7 @@ const SettingTeamStatus: FC<Props> = ({
                     </DragDropContext>
 
                     <Button
+                      tabIndex={-1}
                       variant="text"
                       sx={[
                         minW(100),
@@ -667,6 +670,7 @@ const SettingTeamStatus: FC<Props> = ({
                       {t('common.button.add')}
                     </Button>
                     <Button
+                      tabIndex={-1}
                       variant="text"
                       sx={[
                         minW(300),
@@ -792,6 +796,7 @@ const SettingTeamStatus: FC<Props> = ({
                               })}
                             </Select>
                             <Button
+                              tabIndex={-1}
                               disabled={_.isEmpty(c.selectedStatus)}
                               sx={[ml(1), Color(setting.toastErrorColor)]}
                               variant="text"
@@ -867,6 +872,7 @@ const SettingTeamStatus: FC<Props> = ({
                               })}
                             </Select>
                             <Button
+                              tabIndex={-1}
                               disabled={_.isEmpty(c.selectedStatus)}
                               sx={[ml(1), Color(setting.toastErrorColor)]}
                               variant="text"
@@ -980,6 +986,7 @@ const SettingTeamStatus: FC<Props> = ({
                                         })}
                                       </Select>
                                       <Button
+                                        tabIndex={-1}
                                         disabled={_.isEmpty(c.selectedStatus)}
                                         sx={[
                                           ml(1),

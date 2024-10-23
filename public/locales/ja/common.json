@@ -249,7 +249,8 @@
         "status": "ステータス変更",
         "manuscript": "原稿設定",
         "type": "種別設定",
-        "result": "結果入力"
+        "result": "結果入力",
+        "document": "書類選考"
       }
     },
     "user": {

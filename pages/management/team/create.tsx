@@ -336,6 +336,7 @@ const TeamCreate: FC<Props> = ({ isError, locale: _locale }) => {
 
               <Box sx={FormButtons}>
                 <Button
+                  tabIndex={-1}
                   size="large"
                   variant="outlined"
                   color="inherit"

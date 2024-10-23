@@ -126,6 +126,7 @@ const MFA = (props: Props) => {
 
           <Box sx={[SpaceEvenly, M0Auto, mt(6)]}>
             <Button
+              tabIndex={-1}
               variant="outlined"
               color="inherit"
               onClick={() => {
@@ -136,6 +137,7 @@ const MFA = (props: Props) => {
               {t('common.button.back')}
             </Button>
             <Button
+              tabIndex={-1}
               variant="contained"
               sx={ButtonColor(common.white, setting.color)}
               onClick={async () => {

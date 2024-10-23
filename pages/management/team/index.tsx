@@ -449,6 +449,7 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
               )}
               <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
+                  tabIndex={-1}
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
                   onClick={() => isSearchOpen(true)}
@@ -458,6 +459,7 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
                 </Button>
                 {roles[Operation.ManagementTeamCreate] && (
                   <Button
+                    tabIndex={-1}
                     variant="contained"
                     sx={[
                       ml(1),

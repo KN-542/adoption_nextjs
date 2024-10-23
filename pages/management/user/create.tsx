@@ -518,6 +518,7 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
 
               <Box sx={FormButtons}>
                 <Button
+                  tabIndex={-1}
                   size="large"
                   variant="outlined"
                   color="inherit"
@@ -573,6 +574,7 @@ const UserCreate: FC<Props> = ({ isError, locale: _locale }) => {
 
           <DialogActions sx={[mr(2), mb(2)]}>
             <Button
+              tabIndex={-1}
               variant="outlined"
               color="inherit"
               onClick={() =>

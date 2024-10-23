@@ -48,6 +48,7 @@ const SelectedMenu = (props: Props) => {
           (menu, index) => {
             return (
               <Button
+                tabIndex={-1}
                 key={index}
                 variant="text"
                 onClick={menu.onClick}

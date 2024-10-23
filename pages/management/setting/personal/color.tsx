@@ -286,6 +286,7 @@ const PersonalColor = () => {
                 {_.map(colorSet, (obj, index) => (
                   <Box key={index} sx={ColorBoxChildNowrap}>
                     <Button
+                      tabIndex={-1}
                       variant="contained"
                       sx={[ColorButton, ButtonColor(common.white, obj.color)]}
                       onClick={(e) => {

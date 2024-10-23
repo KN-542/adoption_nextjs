@@ -238,6 +238,7 @@ const SettingTeamType: FC<Props> = ({ locale }) => {
             <DialogContent sx={[DialogContentSetting, w(90), ml(3)]}>
               <Box sx={[TableMenuButtons, w(90), mt(1)]}>
                 <Button
+                  tabIndex={-1}
                   variant="contained"
                   sx={[
                     mb(2),

@@ -320,6 +320,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
               )}
               <Box sx={[TableMenuButtons, mb(3)]}>
                 <Button
+                  tabIndex={-1}
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
                   onClick={() => {}}
@@ -329,6 +330,7 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
                 </Button>
                 {roles[Operation.ManagementManuscriptCreate] && (
                   <Button
+                    tabIndex={-1}
                     variant="contained"
                     sx={[
                       ml(1),

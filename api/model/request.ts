@@ -214,6 +214,15 @@ export class CreateApplicantTypeAssociationRequest extends AbstractRequest2 {
   // 応募者ハッシュ
   applicants: string[]
 }
+// 結果入力
+export class InputResultRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+  // 過程ハッシュ
+  process_hash: string
+  // 書類選考フラグ
+  document_pass_flg: number
+}
 
 /* 
   ユーザー

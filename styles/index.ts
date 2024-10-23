@@ -216,7 +216,7 @@ export const FormThreeButtons = {
   '@media (min-width:950px)': {
     flexDirection: 'row',
     width: '90%',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
 }
 

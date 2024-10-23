@@ -117,6 +117,7 @@ const CustomTable = (props: Props) => {
                           <>
                             {!header.sort.target && (
                               <Button
+                                tabIndex={-1}
                                 variant="text"
                                 sx={[Color(common.white), Padding(0)]}
                                 onClick={async () => {
@@ -137,6 +138,7 @@ const CustomTable = (props: Props) => {
                             )}
                             {header.sort.target && (
                               <Button
+                                tabIndex={-1}
                                 variant="text"
                                 sx={[Color(common.white), Bold, Padding(0)]}
                                 onClick={async () => {
@@ -241,6 +243,7 @@ const CustomTable = (props: Props) => {
                               {_.map(props.icons, (icon, index2) => {
                                 return (
                                   <Button
+                                    tabIndex={-1}
                                     key={index2}
                                     sx={[ButtonColor(icon.color, '')]}
                                     disabled={!icon.role}

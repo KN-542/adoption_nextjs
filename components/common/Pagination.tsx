@@ -202,6 +202,7 @@ const Pagination = (props: Props) => {
               const flg = _.isEqual(props.currentPage, item.value)
               return (
                 <Button
+                  tabIndex={-1}
                   key={index}
                   disabled={flg}
                   sx={[

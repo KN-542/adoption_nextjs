@@ -84,6 +84,8 @@ export type SearchApplicantResponse = {
   type: string
   // 予定ハッシュ
   scheduleHash: string
+  // 過程ハッシュ
+  processHash: string
   // 面接回数
   numOfInterview: number
   // 書類通過フラグ
@@ -217,6 +219,10 @@ export type ProcessingResponse = {
   processing: string
   // 説明
   desc: string
+  // 面接続行フラグ
+  isContinue?: number
+  // ボタンコード
+  code?: number
 }
 
 // API: ステータスイベント取得

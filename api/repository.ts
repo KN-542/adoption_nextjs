@@ -49,6 +49,7 @@ import {
   UpdateSelectStatusRequest,
   CreateApplicantManuscriptAssociationRequest,
   CreateApplicantTypeAssociationRequest,
+  InputResultRequest,
 } from './model/request'
 
 /* 
@@ -289,6 +290,16 @@ export const CreateApplicantTypeAssociationCSR = async (
 ) => {
   const res = await axios1.post(
     `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/update_type`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 結果入力 CSR
+export const InputResultCSR = async (req: InputResultRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/result`,
     req,
     APICommonHeader,
   )

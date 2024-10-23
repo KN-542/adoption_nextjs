@@ -205,6 +205,7 @@ const SettingMenu: FC<Props> = () => {
                         <ListItem key={index} sx={[ml(2), Padding(0)]}>
                           {'・'}
                           <Button
+                            tabIndex={-1}
                             sx={[MenuDisp(common.black)]}
                             onClick={c.onClick}
                           >

@@ -309,6 +309,7 @@ const Company: React.FC<Props> = ({ isError }) => {
                 ]}
               >
                 <Button
+                  tabIndex={-1}
                   variant="contained"
                   sx={[ml(1), ButtonColorInverse(common.white, setting.color)]}
                   onClick={() => {
@@ -325,6 +326,7 @@ const Company: React.FC<Props> = ({ isError }) => {
                 </Button>
                 {roles[Operation.AdminCompanyCreate] && (
                   <Button
+                    tabIndex={-1}
                     variant="contained"
                     sx={[
                       ml(1),
