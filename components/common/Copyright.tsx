@@ -15,7 +15,11 @@ const Copyright = (props: Props) => {
       {...props}
     >
       {'Copyright © '}
-      <Link color="inherit" href={process.env.NEXT_PUBLIC_COMPANY_HREF} target="_blank">
+      <Link
+        color="inherit"
+        href={process.env.NEXT_PUBLIC_COMPANY_HREF}
+        target="_blank"
+      >
         {process.env.NEXT_PUBLIC_COMPANY_NAME}
       </Link>{' '}
       {new Date().getFullYear()}

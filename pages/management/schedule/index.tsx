@@ -522,7 +522,6 @@ const Schedules: FC<Props> = ({ isError, scheduleList }) => {
               dayCellContent={(e) => {
                 return (
                   <Box
-                    className="day-cell-content"
                     onClick={() => {
                       const today = new Date()
                       if (
