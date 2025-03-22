@@ -54,3 +54,8 @@ export enum Operation {
   ManagementSettingCompany = 'ManagementSettingCompany',
   ManagementSettingTeam = 'ManagementSettingTeam',
 }
+
+// アイコン変換キー
+export enum IconKey {
+  Palette = 0,
+}

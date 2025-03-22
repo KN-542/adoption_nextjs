@@ -47,7 +47,7 @@ import {
   Possible,
 } from '@/api/model/response'
 import {
-  AssignMasterSSR,
+  AssignMasterCSR,
   GetOwnTeamCSR,
   RolesCSR,
   UpdateAssignMethodCSR,
@@ -79,53 +79,13 @@ const INTERVIEW_MIN = 1
 const INTERVIEW_MAX = 6
 
 type Props = {
-  isError: boolean
-  api: APIProps
-}
-type APIProps = {
-  assignRules: AssignRuleMasterResponse[]
-  autoAssignRules: AutoAssignRuleMasterResponse[]
+  locale: string
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  let isError = false
-
-  // API: アサイン関連マスタ取得
-  const assignRules: AssignRuleMasterResponse[] = []
-  const autoAssignRules: AutoAssignRuleMasterResponse[] = []
-  await AssignMasterSSR()
-    .then((res) => {
-      _.forEach(res.data.rule, (item, index) => {
-        assignRules.push({
-          no: Number(index) + 1,
-          hashKey: item.hash_key,
-          desc: item[`desc_${locale}`],
-          setFlg: Number(item.additional_configuration),
-          selected: false,
-        })
-      })
-      _.forEach(res.data.auto_rule, (item, index) => {
-        autoAssignRules.push({
-          no: Number(index) + 1,
-          hashKey: item.hash_key,
-          desc: item[`desc_${locale}`],
-          setFlg: Number(item.additional_configuration),
-          selected: _.isEqual(index, 0),
-          selectedHash: _.isEqual(index, 0) ? item.hash_key : '',
-        })
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
   return {
     props: {
-      isError,
-      api: {
-        assignRules,
-        autoAssignRules,
-      },
+      locale,
       messages: (
         await import(`../../../../public/locales/${locale}/common.json`)
       ).default,
@@ -133,7 +93,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   }
 }
 
-const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
+const SettingTeamAssign: FC<Props> = ({ locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -141,13 +101,8 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
   const setting = useSelector((state: RootState) => state.setting)
 
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
-  const [team, setTeam] = useState<GetOwnTeamResponse>(null)
-  const [rules, setRules] = useState<AssignRuleMasterResponse[]>(
-    api.assignRules,
-  )
-  const [autoRules, setAutoRules] = useState<AutoAssignRuleMasterResponse[]>(
-    api.autoAssignRules,
-  )
+  const [rules, setRules] = useState<AssignRuleMasterResponse[]>([])
+  const [autoRules, setAutoRules] = useState<AutoAssignRuleMasterResponse[]>([])
   const [priority, setPriority] = useState<InterviewerPriority[]>([])
   const [possibleList, setPossibleList] = useState<Possible[]>([])
   const [selectedPossibleList, setSelectedPossibleList] = useState<Possible[]>(
@@ -161,6 +116,31 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
 
   const inits = async () => {
     try {
+      // API: アサイン関連マスタ取得
+      const assignRules: AssignRuleMasterResponse[] = []
+      const autoAssignRules: AutoAssignRuleMasterResponse[] = []
+
+      const res0 = await AssignMasterCSR()
+      _.forEach(res0.data.rule, (item, index) => {
+        assignRules.push({
+          no: Number(index) + 1,
+          hashKey: item.hash_key,
+          desc: item[`desc_${locale}`],
+          setFlg: Number(item.additional_configuration),
+          selected: false,
+        })
+      })
+      _.forEach(res0.data.auto_rule, (item, index) => {
+        autoAssignRules.push({
+          no: Number(index) + 1,
+          hashKey: item.hash_key,
+          desc: item[`desc_${locale}`],
+          setFlg: Number(item.additional_configuration),
+          selected: _.isEqual(index, 0),
+          selectedHash: _.isEqual(index, 0) ? item.hash_key : '',
+        })
+      })
+
       // API: 使用可能ロール一覧
       const res = await RolesCSR({
         hash_key: user.hashKey,
@@ -173,13 +153,8 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
         user_hash_key: user.hashKey,
       } as GetOwnTeamRequest)
 
-      setTeam({
-        numOfInterview: Number(res2.data.team.num_of_interview),
-        userMin: Number(res2.data.team.user_min),
-      } as GetOwnTeamResponse)
-
       setRules(
-        _.map(rules, (rule) => {
+        _.map(assignRules, (rule) => {
           if (_.isEqual(rule.hashKey, res2.data.team.rule_hash)) {
             return {
               no: rule.no,
@@ -201,35 +176,30 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
         }),
       )
 
-      if (
-        _.every([
-          !_.isEmpty(res2.data.auto_rule),
-          !_.isEmpty(res2.data.auto_rule.hash_key),
-        ])
-      ) {
-        setAutoRules(
-          _.map(autoRules, (rule) => {
-            if (_.isEqual(rule.hashKey, res2.data.auto_rule.hash_key)) {
-              return {
-                no: rule.no,
-                hashKey: rule.hashKey,
-                desc: rule.desc,
-                setFlg: rule.setFlg,
-                selected: true,
-                selectedHash: res2.data.auto_rule.hash_key,
-              }
-            }
-            return {
-              no: rule.no,
-              hashKey: rule.hashKey,
-              desc: rule.desc,
-              setFlg: rule.setFlg,
-              selected: false,
-              selectedHash: '',
-            }
-          }),
-        )
-      }
+      const autoRuleList = _.map(autoAssignRules, (rule) => {
+        if (_.isEqual(rule.hashKey, res2.data.auto_rule.hash_key)) {
+          return {
+            no: rule.no,
+            hashKey: rule.hashKey,
+            desc: rule.desc,
+            setFlg: rule.setFlg,
+            selected: true,
+            selectedHash: res2.data.auto_rule.hash_key,
+          }
+        }
+        return {
+          no: rule.no,
+          hashKey: rule.hashKey,
+          desc: rule.desc,
+          setFlg: rule.setFlg,
+          selected: false,
+          selectedHash: '',
+        }
+      })
+      if (_.isEmpty(_.compact(_.map(autoRuleList, (a) => a.selected))))
+        autoRuleList[0].selected = true
+
+      setAutoRules(autoRuleList)
 
       if (!_.isEmpty(res2.data.priority)) {
         setPriority(
@@ -514,11 +484,6 @@ const SettingTeamAssign: FC<Props> = ({ isError, api }) => {
 
     const initialize = async () => {
       try {
-        if (isError) {
-          router.push(RouterPath.Error)
-          return
-        }
-
         if (init) await inits()
       } finally {
         isLoading(false)

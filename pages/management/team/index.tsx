@@ -289,7 +289,7 @@ const Team: FC<Props> = ({ isError, locale: _locale }) => {
     // API: チーム削除
     await DeleteTeamCSR({
       user_hash_key: user.hashKey,
-      hash_key: deleteList[0].hashKey,
+      hash_keys: _.map(deleteList, (u) => u.hashKey),
     } as DeleteTeamRequest)
       .then(async () => {
         store.dispatch(

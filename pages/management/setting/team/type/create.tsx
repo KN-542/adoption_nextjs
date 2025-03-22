@@ -37,8 +37,8 @@ import { common } from '@mui/material/colors'
 import { DocumentRuleResponse, OccupationResponse } from '@/api/model/response'
 import {
   CreateApplicantTypeCSR,
-  DocumentRulesSSR,
-  OccupationsSSR,
+  DocumentRulesCSR,
+  OccupationsCSR,
   RolesCSR,
 } from '@/api/repository'
 import { CreateApplicantTypeRequest, RolesRequest } from '@/api/model/request'
@@ -55,9 +55,7 @@ import { FormValidation, FormValidationValue } from '@/hooks/validation'
 import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
-  isError: boolean
-  documentRules: DocumentRuleResponse[]
-  occupations: OccupationResponse[]
+  locale: string
 }
 
 type Inputs = {
@@ -65,45 +63,9 @@ type Inputs = {
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  let isError: boolean = false
-
-  // API: ステータスイベントマスタ一覧
-  const documentRulesSSR: DocumentRuleResponse[] = []
-  await DocumentRulesSSR()
-    .then((res) => {
-      _.forEach(res.data.list, (item, index) => {
-        documentRulesSSR.push({
-          no: Number(index) + 1,
-          hashKey: item.hash_key,
-          rule: item[`rule_${locale}`],
-        })
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
-  // API: 職種マスタ一覧
-  const occupationsSSR: OccupationResponse[] = []
-  await OccupationsSSR()
-    .then((res) => {
-      _.forEach(res.data.list, (item, index) => {
-        occupationsSSR.push({
-          no: Number(index) + 1,
-          hashKey: item.hash_key,
-          name: item[`name_${locale}`],
-        })
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
   return {
     props: {
-      isError,
-      documentRules: documentRulesSSR,
-      occupations: occupationsSSR,
+      locale,
       messages: (
         await import(`../../../../../public/locales/${locale}/common.json`)
       ).default,
@@ -111,11 +73,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   }
 }
 
-const SettingTeamType: FC<Props> = ({
-  isError,
-  documentRules,
-  occupations,
-}) => {
+const SettingTeamType: FC<Props> = ({ locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -124,10 +82,13 @@ const SettingTeamType: FC<Props> = ({
 
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
 
-  const [ruleHash, setRuleHash] = useState<string>(documentRules[0].hashKey)
-  const [occupationHash, setOccupationHash] = useState<string>(
-    occupations[0].hashKey,
-  )
+  const [documentRuleList, setDocumentRuleList] = useState<
+    DocumentRuleResponse[]
+  >([])
+  const [occupationList, setOccupationList] = useState<OccupationResponse[]>([])
+
+  const [ruleHash, setRuleHash] = useState<string>()
+  const [occupationHash, setOccupationHash] = useState<string>()
 
   const [loading, isLoading] = useState<boolean>(true)
   const [init, isInit] = useState<boolean>(true)
@@ -136,6 +97,32 @@ const SettingTeamType: FC<Props> = ({
 
   const inits = async () => {
     try {
+      // API: ステータスイベントマスタ一覧
+      const tempList0_1: DocumentRuleResponse[] = []
+      const res0_1 = await DocumentRulesCSR()
+      _.forEach(res0_1.data.list, (item, index) => {
+        tempList0_1.push({
+          no: Number(index) + 1,
+          hashKey: item.hash_key,
+          rule: item[`rule_${locale}`],
+        })
+      })
+      setDocumentRuleList(tempList0_1)
+      setRuleHash(tempList0_1[0].hashKey)
+
+      // API: 職種マスタ一覧
+      const tempList0_2: OccupationResponse[] = []
+      const res0_2 = await OccupationsCSR()
+      _.forEach(res0_2.data.list, (item, index) => {
+        tempList0_2.push({
+          no: Number(index) + 1,
+          hashKey: item.hash_key,
+          name: item[`name_${locale}`],
+        })
+      })
+      setOccupationList(tempList0_2)
+      setOccupationHash(tempList0_2[0].hashKey)
+
       // API: 使用可能ロール一覧
       const res = await RolesCSR({
         hash_key: user.hashKey,
@@ -276,10 +263,6 @@ const SettingTeamType: FC<Props> = ({
 
   useEffect(() => {
     const initialize = async () => {
-      if (isError) {
-        router.push(RouterPath.Error)
-        return
-      }
       try {
         if (init) await inits()
       } finally {
@@ -351,7 +334,7 @@ const SettingTeamType: FC<Props> = ({
                     className="form-radio"
                     sx={[ml(2)]}
                   >
-                    {_.map(documentRules, (rule, idx) => {
+                    {_.map(documentRuleList, (rule, idx) => {
                       return (
                         <FormControlLabel
                           key={idx}
@@ -384,7 +367,7 @@ const SettingTeamType: FC<Props> = ({
                     className="form-radio"
                     sx={[ml(2), w(60)]}
                   >
-                    {_.map(occupations, (o, idx) => {
+                    {_.map(occupationList, (o, idx) => {
                       return (
                         <FormControlLabel
                           key={idx}

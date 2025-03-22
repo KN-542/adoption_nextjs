@@ -25,6 +25,10 @@ const App = ({ Component, pageProps }) => {
         router.pathname,
         RouterPath.Management + RouterPath.AuthGoogleMeet,
       ),
+      _.isEqual(
+        router.pathname,
+        RouterPath.Management + RouterPath.AuthGoogleMeet2,
+      ),
       _.isEqual(router.pathname, RouterPath.Management + RouterPath.Back),
     ])
   ) {

@@ -84,8 +84,8 @@ import {
   UpdateSelectStatusCSR,
   CreateApplicantAssociationCSR,
   CreateApplicantTypeAssociationCSR,
-  ApplicantSitesSSR,
-  ProcessingSSR,
+  ApplicantSitesCSR,
+  ProcessingCSR,
   InputResultCSR,
   GetOwnTeamCSR,
 } from '@/api/repository'
@@ -136,6 +136,7 @@ import {
   SearchManuscriptResponse,
   ListApplicantTypeResponse,
   ProcessingResponse,
+  Possible,
 } from '@/api/model/response'
 import Papa from 'papaparse'
 import { Pattern } from '@/enum/validation'
@@ -146,58 +147,9 @@ import ColumnsModal from '@/components/common/modal/Columns'
 import SubmitModal from '@/components/common/modal/Submit'
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  let isError: boolean = false
-
-  // API サイト一覧
-  const sites: SiteListResponse[] = []
-  await ApplicantSitesSSR()
-    .then((res) => {
-      _.forEach(res.data.list, (item, index) => {
-        sites.push({
-          id: Number(index) + 1,
-          hashKey: item.hash_key,
-          name: item.site_name,
-          fileName: item.file_name,
-          outerIndex: Number(item.outer_id_index),
-          nameIndex: Number(item.name_index),
-          emailIndex: Number(item.email_index),
-          telIndex: Number(item.tel_index),
-          ageIndex: Number(item.age_index),
-          manuscriptIndex: Number(item.manuscript_index),
-          nameCheckType: Number(item.name_check_type),
-          columns: Number(item.num_of_column),
-        } as SiteListResponse)
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
-  // API: 面接過程マスタ一覧
-  const processingSSR: ProcessingResponse[] = []
-  await ProcessingSSR()
-    .then((res) => {
-      _.forEach(res.data.list, (item, index) => {
-        processingSSR.push({
-          no: Number(index) + 1,
-          hashKey: item.hash_key,
-          processing: item.processing,
-          desc: item[`desc_${locale}`],
-          isContinue: Number(item.is_continue),
-          code: Number(item.code),
-        })
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
   return {
     props: {
-      isError,
       locale,
-      sites,
-      processingSSR,
       messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },
@@ -205,18 +157,10 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
 }
 
 type Props = {
-  isError: boolean
   locale: string
-  sites: SiteListResponse[]
-  processingSSR: ProcessingResponse[]
 }
 
-const Applicants: React.FC<Props> = ({
-  isError,
-  locale: _locale,
-  sites,
-  processingSSR,
-}) => {
+const Applicants: React.FC<Props> = ({ locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -236,11 +180,11 @@ const Applicants: React.FC<Props> = ({
 
   const [bodies, setBodies] = useState<SearchApplicantResponse[]>([])
   const [statusList, setStatusList] = useState<SiteListResponse[]>([])
-  const [usersBelongTeam, setUsersBelongTeam] = useState<
-    SearchUserByCompanyResponse[]
-  >([])
   const [manuscripts, setManuscripts] = useState<SearchManuscriptResponse[]>([])
   const [types, setTypes] = useState<ListApplicantTypeResponse[]>([])
+  const [sites, setSites] = useState<SiteListResponse[]>([])
+  const [processings, setProcessings] = useState<ProcessingResponse[]>([])
+  const [ableList, setAbleList] = useState<Possible[]>([])
 
   const [page, setPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(applicant.search.pageSize)
@@ -254,6 +198,7 @@ const Applicants: React.FC<Props> = ({
   const [loading, isLoading] = useState<boolean>(true)
   const [open, isOpen] = useState<boolean>(false)
   const [searchOpen, isSearchOpen] = useState<boolean>(false)
+  const [googleMeetOpen, isGoogleMeetOpen] = useState<boolean>(false)
   const [userSelectOpen, isUserSelectOpen] = useState<boolean>(false)
   const [statusSelectOpen, isStatusSelectOpen] = useState<boolean>(false)
   const [manuscriptSelectOpen, isManuscriptSelectOpen] =
@@ -271,6 +216,55 @@ const Applicants: React.FC<Props> = ({
 
   const inits = async () => {
     try {
+      // API: サイト一覧
+      const tempList0_1: SiteListResponse[] = []
+      const res0_1 = await ApplicantSitesCSR()
+      _.forEach(res0_1.data.list, (item, index) => {
+        tempList0_1.push({
+          id: Number(index) + 1,
+          hashKey: item.hash_key,
+          name: item.site_name,
+          fileName: item.file_name,
+          outerIndex: Number(item.outer_id_index),
+          nameIndex: Number(item.name_index),
+          emailIndex: Number(item.email_index),
+          telIndex: Number(item.tel_index),
+          ageIndex: Number(item.age_index),
+          manuscriptIndex: Number(item.manuscript_index),
+          nameCheckType: Number(item.name_check_type),
+          columns: Number(item.num_of_column),
+        } as SiteListResponse)
+      })
+      setSites(tempList0_1)
+
+      for (const app of _.filter(applicantSearchTermList, (a) =>
+        _.isEqual(a.index, SearchIndex.Site),
+      )) {
+        if (
+          _.findIndex(tempList0_1, (r) => _.isEqual(r.hashKey, app.hashKey)) <=
+          -1
+        ) {
+          applicantSearchTermList.length = 0
+          store.dispatch(applicantSearchTerm([]))
+          break
+        }
+      }
+
+      // API: 面接過程マスタ一覧
+      const tempList0_2: ProcessingResponse[] = []
+      const res0_2 = await ProcessingCSR()
+      _.forEach(res0_2.data.list, (item, index) => {
+        tempList0_2.push({
+          no: Number(index) + 1,
+          hashKey: item.hash_key,
+          processing: item.processing,
+          desc: item[`desc_${locale}`],
+          isContinue: Number(item.is_continue),
+          code: Number(item.code),
+        })
+      })
+      setProcessings(tempList0_2)
+
       // API: 使用可能ロール一覧
       const res = await RolesCSR({
         hash_key: user.hashKey,
@@ -298,6 +292,16 @@ const Applicants: React.FC<Props> = ({
       })
       setStatusList(res2)
 
+      for (const app of _.filter(applicantSearchTermList, (a) =>
+        _.isEqual(a.index, SearchIndex.Status),
+      )) {
+        if (_.findIndex(res2, (r) => _.isEqual(r.hashKey, app.hashKey)) <= -1) {
+          applicantSearchTermList.length = 0
+          store.dispatch(applicantSearchTerm([]))
+          break
+        }
+      }
+
       // API: ユーザー検索
       const res3: SearchUserByCompanyResponse[] = []
       const tempList2 = await SearchUserByCompanyCSR({
@@ -317,7 +321,6 @@ const Applicants: React.FC<Props> = ({
           email: item.email,
         } as SearchUserByCompanyResponse)
       })
-      setUsersBelongTeam(res3)
 
       // API: 種別一覧_同一チーム
       const tempList3 = await ListApplicantTypeByTeamCSR({
@@ -342,6 +345,16 @@ const Applicants: React.FC<Props> = ({
       )
       setTypes(res4)
 
+      for (const app of _.filter(applicantSearchTermList, (a) =>
+        _.isEqual(a.index, SearchIndex.Type),
+      )) {
+        if (_.findIndex(res4, (r) => _.isEqual(r.hashKey, app.hashKey)) <= -1) {
+          applicantSearchTermList.length = 0
+          store.dispatch(applicantSearchTerm([]))
+          break
+        }
+      }
+
       // API: 原稿一覧_同一チーム
       const tempList4 = await SearchManuscriptByTeamCSR({
         user_hash_key: user.hashKey,
@@ -363,6 +376,16 @@ const Applicants: React.FC<Props> = ({
         },
       )
       setManuscripts(res5)
+
+      for (const app of _.filter(applicantSearchTermList, (a) =>
+        _.isEqual(a.index, SearchIndex.Manuscript),
+      )) {
+        if (_.findIndex(res5, (r) => _.isEqual(r.hashKey, app.hashKey)) <= -1) {
+          applicantSearchTermList.length = 0
+          store.dispatch(applicantSearchTerm([]))
+          break
+        }
+      }
 
       setSearchObj({
         selectList: [
@@ -388,7 +411,7 @@ const Applicants: React.FC<Props> = ({
           {
             name: t('features.applicant.header.site'),
             isRadio: false,
-            list: _.map(sites, (item) => {
+            list: _.map(tempList0_1, (item) => {
               return {
                 id: Number(item.id),
                 key: item.hashKey,
@@ -582,6 +605,27 @@ const Applicants: React.FC<Props> = ({
       } as GetOwnTeamRequest)
 
       setNumOfInterview(Number(res6.data.team.num_of_interview))
+
+      const tempList5: Possible[] = []
+      for (let i = 1; i <= Number(res6.data.team.num_of_interview); i++) {
+        tempList5.push({
+          num: i,
+          userMin: Number(res6.data.per_list[i - 1].user_min),
+          ableList: _.map(
+            _.filter(res6.data.possible_list, (p) =>
+              _.isEqual(Number(p.num_of_interview), i),
+            ),
+            (item) => {
+              return {
+                key: item.hash_key,
+                title: item.name,
+                subTitle: item.email,
+              } as SelectTitlesModel
+            },
+          ),
+        } as Possible)
+      }
+      setAbleList(tempList5)
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
@@ -1330,7 +1374,11 @@ const Applicants: React.FC<Props> = ({
       })
   }
 
-  const inputResult = async (code: number, documentPass: number) => {
+  const inputResult = async (
+    code: number,
+    documentPass: number,
+    isDocument?: boolean,
+  ) => {
     if (processing.current) return
     processing.current = true
 
@@ -1345,13 +1393,14 @@ const Applicants: React.FC<Props> = ({
     }
 
     const processCode = _.every([
+      !isDocument,
       _.isEqual(numOfInterview, app.numOfInterview),
       _.isEqual(code, Processing.Process),
     ])
       ? Processing.Pass
       : code
 
-    const p = _.find(processingSSR, (pp) => _.isEqual(pp.code, processCode))
+    const p = _.find(processings, (pp) => _.isEqual(pp.code, processCode))
     if (_.isUndefined(p)) {
       router.push(RouterPath.Error)
     }
@@ -1423,6 +1472,120 @@ const Applicants: React.FC<Props> = ({
       })
   }
 
+  const openGoogleMeet = async (isHref?: boolean) => {
+    if (processing.current) return
+    processing.current = true
+
+    const a = _.find(checkedList, (c) => c.checked)
+    if (_.isUndefined(a)) {
+      router.push(RouterPath.Error)
+    }
+
+    const app = _.find(bodies, (b) => _.isEqual(b.hashKey, a.key))
+    if (_.isUndefined(app)) {
+      router.push(RouterPath.Error)
+    }
+
+    if (!_.isEmpty(app.google)) {
+      if (!isHref) {
+        try {
+          await navigator.clipboard.writeText(app.google)
+
+          toast(t('features.applicant.assign.google.copied'), {
+            style: {
+              backgroundColor: setting.toastSuccessColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
+          return
+        } catch {
+          router.push(RouterPath.Error)
+        }
+      } else {
+        window.open(app.google, '_blank', 'noopener,noreferrer')
+        return
+      }
+    }
+
+    try {
+      // API Google認証URL作成
+      const res2 = await GoogleAuthCSR({
+        user_hash_key: user.hashKey,
+        hash_key: app.hashKey,
+        is_href: isHref,
+      } as GoogleAuthRequest)
+
+      processing.current = false
+
+      const url = _.isEmpty(res2.data?.auth_url)
+        ? res2.data?.google_meet_url
+        : res2.data?.auth_url
+
+      if (_.some([isHref, !_.isEmpty(res2.data?.auth_url)])) {
+        window.open(url, '_blank', 'noopener,noreferrer')
+        return
+      } else {
+        await navigator.clipboard.writeText(res2.data?.google_meet_url)
+
+        toast(t('features.applicant.assign.google.copied'), {
+          style: {
+            backgroundColor: setting.toastSuccessColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
+      }
+    } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
+      if (isServerError) {
+        router.push(routerPath)
+        return
+      }
+
+      if (!_.isEmpty(toastMsg)) {
+        toast(t(toastMsg), {
+          style: {
+            backgroundColor: setting.toastErrorColor,
+            color: common.white,
+            width: 500,
+          },
+          position: 'bottom-left',
+          hideProgressBar: true,
+          closeButton: () => <ClearIcon />,
+        })
+
+        setTimeout(() => {
+          processing.current = false
+        }, LITTLE_DURING)
+        return
+      }
+
+      if (!_.isEmpty(storeMsg)) {
+        const msg = t(storeMsg)
+        store.dispatch(
+          changeSetting({
+            errorMsg: _.isEmpty(msg) ? [] : [msg],
+          } as SettingModel),
+        )
+        router.push(_.isEmpty(routerPath) ? RouterPath.Management : routerPath)
+      }
+    }
+  }
+
   const condition = (): boolean => {
     const index = _.findIndex(bodies, (item) =>
       _.isEqual(item.hashKey, _.filter(checkedList, (c) => c.checked)[0]?.key),
@@ -1448,7 +1611,7 @@ const Applicants: React.FC<Props> = ({
 
     const body = bodies[index]
 
-    const p = _.find(processingSSR, (pp) =>
+    const p = _.find(processings, (pp) =>
       _.isEqual(pp.hashKey, body.processHash),
     )
     if (_.isUndefined(p)) return false
@@ -1485,64 +1648,8 @@ const Applicants: React.FC<Props> = ({
       icon: <MeetingRoomIcon sx={[mr(0.5), mb(0.5), FontSize(26)]} />,
       color: blue[300],
       condition: condition(),
-      onClick: async () => {
-        if (processing.current) return
-        processing.current = true
-
-        const hashKey = _.filter(checkedList, (c) => c.checked)[0].key
-
-        try {
-          // API Google認証URL作成
-          const res2 = await GoogleAuthCSR({
-            user_hash_key: user.hashKey,
-            hash_key: hashKey,
-          } as GoogleAuthRequest)
-
-          processing.current = false
-
-          window.open(
-            _.isEmpty(res2.data?.auth_url)
-              ? res2.data?.google_meet_url
-              : res2.data?.auth_url,
-            '_blank',
-            'noopener,noreferrer',
-          )
-        } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
-          if (isServerError) {
-            router.push(routerPath)
-            return
-          }
-
-          if (!_.isEmpty(toastMsg)) {
-            toast(t(toastMsg), {
-              style: {
-                backgroundColor: setting.toastErrorColor,
-                color: common.white,
-                width: 500,
-              },
-              position: 'bottom-left',
-              hideProgressBar: true,
-              closeButton: () => <ClearIcon />,
-            })
-
-            setTimeout(() => {
-              processing.current = false
-            }, LITTLE_DURING)
-            return
-          }
-
-          if (!_.isEmpty(storeMsg)) {
-            const msg = t(storeMsg)
-            store.dispatch(
-              changeSetting({
-                errorMsg: _.isEmpty(msg) ? [] : [msg],
-              } as SettingModel),
-            )
-            router.push(
-              _.isEmpty(routerPath) ? RouterPath.Management : routerPath,
-            )
-          }
-        }
+      onClick: () => {
+        isGoogleMeetOpen(true)
       },
     },
     // 面接官割振り
@@ -2229,11 +2336,6 @@ const Applicants: React.FC<Props> = ({
 
     const initialize = async () => {
       try {
-        if (isError) {
-          router.push(RouterPath.Error)
-          return
-        }
-
         if (init) await inits()
 
         await search(1, pageSize)
@@ -2248,11 +2350,7 @@ const Applicants: React.FC<Props> = ({
   return (
     <>
       <NextHead />
-      {_.every([
-        !isError,
-        !loading,
-        roles[Operation.ManagementApplicantRead],
-      ]) && (
+      {_.every([!loading, roles[Operation.ManagementApplicantRead]]) && (
         <>
           {spinner && <Spinner />}
           {_.size(_.filter(checkedList, (c) => c.checked)) > 0 && (
@@ -2358,7 +2456,21 @@ const Applicants: React.FC<Props> = ({
                     tableHeader.users.option.display,
                   ),
                   resume: new Body(
-                    _.isEmpty(l.resume) ? (
+                    _.some([
+                      _.isEmpty(l.resume),
+                      _.isEqual(l.documentPassFlg, Processing.Fail),
+                      _.isUndefined(
+                        _.find(processings, (pp) =>
+                          _.isEqual(pp.hashKey, l.processHash),
+                        ),
+                      ),
+                      _.isEqual(
+                        _.find(processings, (pp) =>
+                          _.isEqual(pp.hashKey, l.processHash),
+                        ).code,
+                        Processing.Fail,
+                      ),
+                    ]) ? (
                       <>{t('features.applicant.documents.f')}</>
                     ) : (
                       <Button
@@ -2376,7 +2488,21 @@ const Applicants: React.FC<Props> = ({
                     tableHeader.resume.option.display,
                   ),
                   curriculumVitae: new Body(
-                    _.isEmpty(l.curriculumVitae) ? (
+                    _.some([
+                      _.isEmpty(l.curriculumVitae),
+                      _.isEqual(l.documentPassFlg, Processing.Fail),
+                      _.isUndefined(
+                        _.find(processings, (pp) =>
+                          _.isEqual(pp.hashKey, l.processHash),
+                        ),
+                      ),
+                      _.isEqual(
+                        _.find(processings, (pp) =>
+                          _.isEqual(pp.hashKey, l.processHash),
+                        ).code,
+                        Processing.Fail,
+                      ),
+                    ]) ? (
                       <>{t('features.applicant.documents.f')}</>
                     ) : (
                       <Button
@@ -2452,22 +2578,63 @@ const Applicants: React.FC<Props> = ({
           />
           <ItemsSelectModal
             open={userSelectOpen}
-            items={_.map(usersBelongTeam, (u) => {
-              return {
-                key: u.hashKey,
-                title: u.name,
-                subTitle: u.email,
-              } as SelectTitlesModel
-            })}
+            auto={true}
+            selectedMin={
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? 1
+                : _.find(ableList, (a) =>
+                    _.isEqual(
+                      a.num,
+                      _.find(bodies, (b) =>
+                        _.isEqual(
+                          b.hashKey,
+                          _.find(checkedList, (c) => c.checked).key,
+                        ),
+                      ).numOfInterview,
+                    ),
+                  ).userMin
+            }
+            items={
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.find(ableList, (a) =>
+                    _.isEqual(
+                      a.num,
+                      _.find(bodies, (b) =>
+                        _.isEqual(
+                          b.hashKey,
+                          _.find(checkedList, (c) => c.checked).key,
+                        ),
+                      ).numOfInterview,
+                    ),
+                  ).ableList
+            }
             selectedItems={
               _.isEmpty(_.filter(checkedList, (c) => c.checked))
                 ? []
-                : _.filter(bodies, (b) =>
-                    _.isEqual(
-                      b.hashKey,
-                      _.filter(checkedList, (c) => c.checked)[0].key,
-                    ),
-                  )[0].users
+                : _.filter(
+                    _.find(bodies, (b) =>
+                      _.isEqual(
+                        b.hashKey,
+                        _.find(checkedList, (c) => c.checked).key,
+                      ),
+                    ).users,
+                    (h) =>
+                      _.findIndex(
+                        _.find(ableList, (a) =>
+                          _.isEqual(
+                            a.num,
+                            _.find(bodies, (b) =>
+                              _.isEqual(
+                                b.hashKey,
+                                _.find(checkedList, (c) => c.checked).key,
+                              ),
+                            ).numOfInterview,
+                          ),
+                        ).ableList,
+                        (a) => _.isEqual(a.key, h),
+                      ) > -1,
+                  )
             }
             headers={_.values(
               Object.fromEntries(
@@ -2735,12 +2902,20 @@ const Applicants: React.FC<Props> = ({
             )}
             msg={t('features.applicant.assign.submit.msg')}
             title={t('features.applicant.menu.result')}
-            buttonTitle={t('features.applicant.assign.submit.button')}
-            buttonTitle2={t('features.applicant.assign.submit.button2')}
-            ok={async () =>
-              await inputResult(Processing.Process, Processing.Pass)
-            }
-            ng={async () => await inputResult(Processing.Fail, Processing.Pass)}
+            buttonMenus={[
+              {
+                color: setting.toastErrorColor,
+                name: t('features.applicant.assign.submit.button'),
+                onClick: async () =>
+                  await inputResult(Processing.Fail, Processing.Pass),
+              },
+              {
+                color: setting.toastSuccessColor,
+                name: t('features.applicant.assign.submit.button2'),
+                onClick: async () =>
+                  await inputResult(Processing.Process, Processing.Pass),
+              },
+            ]}
           />
           <SubmitModal
             open={documentOpen}
@@ -2785,12 +2960,79 @@ const Applicants: React.FC<Props> = ({
             )}
             msg={t('features.applicant.assign.submit.msg')}
             title={t('features.applicant.menu.document')}
-            buttonTitle={t('features.applicant.assign.submit.button')}
-            buttonTitle2={t('features.applicant.assign.submit.button2')}
-            ok={async () =>
-              await inputResult(Processing.Process, Processing.Pass)
-            }
-            ng={async () => await inputResult(Processing.Fail, Processing.Fail)}
+            buttonMenus={[
+              {
+                color: setting.toastErrorColor,
+                name: t('features.applicant.assign.submit.button'),
+                onClick: async () =>
+                  await inputResult(Processing.Fail, Processing.Fail, true),
+              },
+              {
+                color: setting.toastSuccessColor,
+                name: t('features.applicant.assign.submit.button2'),
+                onClick: async () =>
+                  await inputResult(Processing.Process, Processing.Pass, true),
+              },
+            ]}
+          />
+          <SubmitModal
+            open={googleMeetOpen}
+            close={() => isGoogleMeetOpen(false)}
+            headers={_.values(
+              Object.fromEntries(
+                _.filter(Object.entries(tableHeader), ([key, _value]) =>
+                  _.some([
+                    _.isEqual(key, 'no'),
+                    _.isEqual(key, 'name'),
+                    _.isEqual(key, 'email'),
+                  ]),
+                ),
+              ),
+            )}
+            bodies={_.map(
+              _.isEmpty(_.filter(checkedList, (c) => c.checked))
+                ? []
+                : _.filter(
+                    bodies,
+                    (b) =>
+                      !_.isEmpty(
+                        _.compact(
+                          _.map(
+                            _.filter(checkedList, (c) => c.checked),
+                            (cc) => {
+                              return _.isEqual(cc.key, b.hashKey)
+                            },
+                          ),
+                        ),
+                      ),
+                  ),
+              (l) => {
+                return {
+                  no: new Body(String(l.no)),
+                  name: new Body(l.name),
+                  email: new Body(l.email),
+                }
+              },
+            )}
+            msg={t('features.applicant.assign.google.msg')}
+            title={t('features.applicant.menu.googleMeet')}
+            buttonMenus={[
+              {
+                color: setting.color,
+                name: t('features.applicant.assign.google.button'),
+                onClick: async () => await openGoogleMeet(),
+              },
+              {
+                color: setting.color,
+                name: t('features.applicant.assign.google.button2'),
+                onClick: () => {},
+              },
+              {
+                color: setting.color,
+                name: t('features.applicant.assign.google.button3'),
+                onClick: async () => await openGoogleMeet(true),
+              },
+            ]}
           />
           <ColumnsModal
             open={columnsOpen}

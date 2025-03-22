@@ -105,6 +105,18 @@ export type SearchUserResponse = {
   // 追加分、、
 }
 
+// API ユーザー取得
+export type GetUserResponse = {
+  // ハッシュキー
+  hashKey: string
+  // 氏名
+  name: string
+  // メールアドレス
+  email: string
+  // 所属しているチーム
+  teams: SearchTeamByCompanyResponse[]
+}
+
 // API ユーザー検索_同一企業
 export type SearchUserByCompanyResponse = {
   // ハッシュキー
@@ -279,6 +291,18 @@ export type SearchManuscriptResponse = {
   content: string
   // サイト
   sites: SiteListResponse[]
+}
+
+// API: 原稿取得
+export type GetManuscriptResponse = {
+  // ハッシュキー
+  hashKey: string
+  // 内容
+  content: string
+  // サイト
+  sites: SiteListResponse[]
+  // チーム
+  teams: SearchTeamByCompanyResponse[]
 }
 
 // API: 書類提出ルールマスタ一覧

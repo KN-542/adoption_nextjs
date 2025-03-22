@@ -151,11 +151,13 @@ export class GetApplicantRequest extends AbstractRequest3 {
 export class GoogleAuthRequest extends AbstractRequest3 {
   user_hash_key: string
   hash_key: string
+  is_href: boolean
 }
 // GoogleMeetURL発行
 export class GoogleMeetURLRequest extends AbstractRequest2 {
   user_hash_key: string
   code: string
+  is_href: boolean
 }
 // 書類ダウンロード
 export class ApplicantDocumentDownloadRequest extends AbstractRequest3 {
@@ -248,6 +250,19 @@ export class DeleteUserRequest extends AbstractRequest2 {
   user_hash_key: string
   hash_keys: string[]
 }
+// ユーザー取得
+export class GetUserRequest extends AbstractRequest2 {
+  user_hash_key: string
+}
+
+// ユーザー更新
+export class UpdateUserRequest extends AbstractRequest2 {
+  user_hash_key: string
+  hash_key: string
+  name: string
+  email: string
+  teams: string[]
+}
 
 /* 
   チーム
@@ -275,9 +290,9 @@ export class UpdateBasicTeamRequest extends AbstractRequest2 {
   num_of_interview: number
 }
 // チーム削除
-export class DeleteTeamRequest extends AbstractRequest3 {
+export class DeleteTeamRequest extends AbstractRequest2 {
   user_hash_key: string
-  hash_key: string
+  hash_keys: string[]
 }
 // チーム取得
 export class GetTeamRequest extends AbstractRequest3 {
@@ -353,6 +368,10 @@ export class UpdateAssignMethodSubRequest {
 // 予定検索
 export class SearchScheduleRequest extends AbstractRequest2 {
   user_hash_key: string
+  // ユーザー
+  users: string[]
+  // 面接フラグ
+  interview_flg: number
 }
 // 予定登録
 export class CreateScheduleRequest extends AbstractRequest2 {
@@ -430,6 +449,18 @@ export class CreateManuscriptRequest extends AbstractRequest2 {
   sites: string[]
 }
 
+// 原稿更新
+export class UpdateManuscriptRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
+  // 内容
+  content: string
+  // 使用可能チーム
+  teams: string[]
+  // 使用可能サイト
+  sites: string[]
+}
+
 // 原稿検索_同一チーム
 export class SearchManuscriptByTeamRequest extends AbstractRequest2 {
   user_hash_key: string
@@ -440,4 +471,10 @@ export class DeleteManuscriptsRequest extends AbstractRequest2 {
   user_hash_key: string
   // 原稿ID
   manuscript_hash_keys: string[]
+}
+
+// 原稿取得
+export class GetManuscriptRequest extends AbstractRequest3 {
+  user_hash_key: string
+  hash_key: string
 }

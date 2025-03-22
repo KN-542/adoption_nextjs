@@ -25,6 +25,7 @@ export enum RouterPath {
   // 原稿
   Manuscript = '/manuscript',
   ManuscriptCreate = '/manuscript/create',
+  ManuscriptEdit = '/manuscript/edit/[id]',
   // メールテンプレート
   Email = '/mail',
   // 変数
@@ -41,11 +42,13 @@ export enum RouterPath {
   SettingTeamApplicantType = '/team/type',
   SettingTeamApplicantTypeCreate = '/team/type/create',
   SettingPersonalColor = '/personal/color',
+  SettingCalendarDesign = '/personal/calendar',
   // 企業
   Company = '/company',
   CompanyCreate = '/company/create',
   // 認証
   AuthGoogleMeet = '/auth/google',
+  AuthGoogleMeet2 = '/auth/google2',
   // BACK
   Back = '/back',
 }
@@ -89,6 +92,8 @@ export const decideTitle = (path: string) => {
       return 'common.title.manuscript.list'
     case RouterPath.Management + RouterPath.ManuscriptCreate:
       return 'common.title.manuscript.create'
+    case RouterPath.Management + RouterPath.ManuscriptEdit:
+      return 'common.title.manuscript.edit'
     // 設定
     case RouterPath.Admin + RouterPath.Setting:
       return 'common.title.setting.index'
@@ -116,9 +121,15 @@ export const decideTitle = (path: string) => {
       RouterPath.Setting +
       RouterPath.SettingPersonalColor:
       return 'common.title.setting.index'
+    case RouterPath.Management +
+      RouterPath.Setting +
+      RouterPath.SettingCalendarDesign:
+      return 'common.title.setting.index'
     // 認証
     case RouterPath.Management + RouterPath.AuthGoogleMeet:
-      return 'common.title.auth'
+      return 'Success!'
+    case RouterPath.Management + RouterPath.AuthGoogleMeet2:
+      return 'Success!'
     // メールテンプレート
     case RouterPath.Management + RouterPath.Email:
       return 'common.title.mail.list'
@@ -127,9 +138,6 @@ export const decideTitle = (path: string) => {
       return 'common.title.company.list'
     case RouterPath.Admin + RouterPath.CompanyCreate:
       return 'common.title.company.create'
-    // 認証
-    case RouterPath.Management + RouterPath.AuthGoogleMeet:
-      return 'common.title.back'
     default:
       return '404' // TODO
   }

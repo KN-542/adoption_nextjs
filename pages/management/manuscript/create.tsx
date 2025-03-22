@@ -5,7 +5,7 @@ import {
 } from '@/api/model/request'
 import { SearchTeamByCompanyResponse } from '@/api/model/response'
 import {
-  ApplicantSitesSSR,
+  ApplicantSitesCSR,
   CreateManuscriptCSR,
   RolesCSR,
   SearchTeamByCompanyCSR,
@@ -53,51 +53,22 @@ import DropDownList from '@/components/common/DropDownList'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import { LITTLE_DURING } from '@/hooks/common'
 
-type Props = {
-  isError: boolean
-  locale: string
-  sitesSSR: SelectTitlesModel[]
-}
+type Props = {}
 
 type Inputs = {
   content: string
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  let isError: boolean = false
-
-  // API サイト一覧
-  const sites: SelectTitlesModel[] = []
-  await ApplicantSitesSSR()
-    .then((res) => {
-      _.forEach(res.data.list, (item) => {
-        sites.push({
-          key: item.hash_key,
-          title: item.site_name,
-          subTitle: '',
-        } as SelectTitlesModel)
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
   return {
     props: {
-      isError,
-      locale,
-      sitesSSR: sites,
       messages: (await import(`../../../public/locales/${locale}/common.json`))
         .default,
     },
   }
 }
 
-const ManuscriptCreate: FC<Props> = ({
-  isError,
-  locale: _locale,
-  sitesSSR,
-}) => {
+const ManuscriptCreate: FC<Props> = ({}) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -109,13 +80,25 @@ const ManuscriptCreate: FC<Props> = ({
 
   const [initTeams, setInitTeams] = useState<SearchTeamByCompanyResponse[]>([])
   const [teams, setTeams] = useState<SearchTeamByCompanyResponse[]>([])
-  const [initSites, setInitSites] = useState<SelectTitlesModel[]>(sitesSSR)
+  const [initSites, setInitSites] = useState<SelectTitlesModel[]>([])
   const [sites, setSites] = useState<SelectTitlesModel[]>([])
 
   const processing = useRef<boolean>(false)
 
   const inits = async () => {
     try {
+      // API サイト一覧
+      const tempList0: SelectTitlesModel[] = []
+      const res0 = await ApplicantSitesCSR()
+      _.forEach(res0.data.list, (item) => {
+        tempList0.push({
+          key: item.hash_key,
+          title: item.site_name,
+          subTitle: '',
+        } as SelectTitlesModel)
+      })
+      setInitSites(tempList0)
+
       // API: 使用可能ロール一覧
       const res = await RolesCSR({
         hash_key: user.hashKey,
@@ -330,11 +313,6 @@ const ManuscriptCreate: FC<Props> = ({
   useEffect(() => {
     const initialize = async () => {
       try {
-        if (isError) {
-          router.push(RouterPath.Error)
-          return
-        }
-
         if (init) await inits()
       } finally {
         isInit(false)

@@ -136,6 +136,16 @@ const SettingMenu: FC<Props> = () => {
                   )
                 },
               },
+              {
+                name: t('features.setting.personal.sub.calendar.index'),
+                onClick: () => {
+                  router.push(
+                    RouterPath.Management +
+                      RouterPath.Setting +
+                      RouterPath.SettingCalendarDesign,
+                  )
+                },
+              },
             ] as ButtonContentsSub[],
           },
         ])

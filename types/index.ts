@@ -59,23 +59,22 @@ export type Color = {
   toastErrorColor: string
 }
 
-// ユーザー model
-export type UserModel = {
-  search: SearchModel
-  hashKey: string
-  name: string
-  email: string
-  path: string
-}
-
 // 設定 model
 export type SettingModel = {
   lang?: string
   color: string
   toastSuccessColor: string
   toastErrorColor: string
+  calendarColors?: string[]
   successMsg?: string[]
   errorMsg?: string[]
+}
+
+// ボタンメニュー
+export type ButtonMenu = {
+  color: string
+  onClick: () => void
+  name: string
 }
 
 // table head sort
@@ -232,8 +231,13 @@ export type ApplicantModel = {
   ユーザー
 */
 
-export type TeamModel = {
-  search: SearchModel
+export type UserModel = {
+  search?: SearchModel
+  hashKey: string
+  name: string
+  email: string
+  path?: string
+  checked?: boolean
 }
 
 // ユーザー一覧 table body
@@ -252,6 +256,14 @@ export type UsersTableBody = {
   roleName: string
 }
 
+/* 
+  チーム
+*/
+
+export type TeamModel = {
+  search: SearchModel
+}
+
 // チーム一覧 table body
 export type TeamTableBody = {
   // No
@@ -264,6 +276,25 @@ export type TeamTableBody = {
   email: string
   // 所属ユーザー
   users: string[]
+}
+
+/* 
+  予定
+*/
+
+export type ScheduleModel = {
+  users: UserModel[]
+  headers: CalendarHeader[]
+  initialView: string
+  initialDate: Date
+  isOnlyInterview: boolean
+}
+
+export type CalendarHeader = {
+  tool: string
+  custom: string
+  target: boolean
+  isLeft: boolean
 }
 
 // スケジュール 登録種別
@@ -304,6 +335,7 @@ export type SelectTitlesModel = {
   key: string
   title: string
   subTitle: string
+  icon?: JSX.Element
 }
 
 /* 

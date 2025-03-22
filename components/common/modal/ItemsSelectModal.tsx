@@ -33,9 +33,12 @@ import DropDownList from '../DropDownList'
 import CustomTable from '../Table'
 import { toast } from 'react-toastify'
 import ClearIcon from '@mui/icons-material/Clear'
+import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto'
 
 type Props = {
   open: boolean
+  auto?: boolean
+  selectedMin?: number
   single?: boolean
   items: SelectTitlesModel[]
   headers?: TableHeader[]
@@ -170,6 +173,28 @@ const ItemsSelectModal = (props: Props) => {
                         )
                       }
                     />
+                    {props.auto && (
+                      <Button
+                        tabIndex={-1}
+                        variant="text"
+                        sx={[
+                          ml(4),
+                          mr(4),
+                          ButtonColor(setting.color, common.white),
+                        ]}
+                        onClick={() => {
+                          setSelectedOptions(
+                            _.sampleSize(
+                              options,
+                              Math.max(1, props.selectedMin || 1),
+                            ),
+                          )
+                        }}
+                      >
+                        <BrightnessAutoIcon />
+                        {t('common.button.auto')}
+                      </Button>
+                    )}
                   </Box>
                 </Box>
               </Box>

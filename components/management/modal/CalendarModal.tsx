@@ -125,21 +125,19 @@ const CalendarModal = (props: Props) => {
       {
         type: ValidationType.Required,
         message:
-          t('features.user.schedule.modal.date') +
-          t('common.validate.required'),
+          t('features.schedule.modal.date') + t('common.validate.required'),
       },
     ],
     title: [
       {
         type: ValidationType.Required,
         message:
-          t('features.user.schedule.modal.title') +
-          t('common.validate.required'),
+          t('features.schedule.modal.title') + t('common.validate.required'),
       },
       {
         type: ValidationType.MaxLength,
         message:
-          t('features.user.schedule.modal.title') +
+          t('features.schedule.modal.title') +
           t('common.validate.is') +
           String(formValidationValue.title.max) +
           t('common.validate.maxLength'),
@@ -149,23 +147,21 @@ const CalendarModal = (props: Props) => {
       {
         type: ValidationType.Required,
         message:
-          t('features.user.schedule.modal.start') +
-          t('common.validate.required'),
+          t('features.schedule.modal.start') + t('common.validate.required'),
       },
     ],
     end: [
       {
         type: ValidationType.Required,
         message:
-          t('features.user.schedule.modal.end') + t('common.validate.required'),
+          t('features.schedule.modal.end') + t('common.validate.required'),
       },
     ],
     type: [
       {
         type: ValidationType.Required,
         message:
-          t('features.user.schedule.modal.type') +
-          t('common.validate.required'),
+          t('features.schedule.modal.type') + t('common.validate.required'),
       },
     ],
   }
@@ -180,7 +176,7 @@ const CalendarModal = (props: Props) => {
 
   const submit: SubmitHandler<Inputs> = async (d: Inputs) => {
     if (timeCheck(d.start, d.end)) {
-      toast(t('features.user.schedule.modal.msgStartEnd'), {
+      toast(t('features.schedule.modal.msgStartEnd'), {
         style: {
           backgroundColor: setting.toastErrorColor,
           color: common.white,
@@ -194,7 +190,7 @@ const CalendarModal = (props: Props) => {
     }
 
     if (isEmpty(selectedOptions)) {
-      toast(t('features.user.schedule.modal.msgNoExistUser'), {
+      toast(t('features.schedule.modal.msgNoExistUser'), {
         style: {
           backgroundColor: setting.toastErrorColor,
           color: common.white,
@@ -261,7 +257,7 @@ const CalendarModal = (props: Props) => {
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(4), mt(0.5), Bold]}>
-                        {t('features.user.schedule.modal.date')}
+                        {t('features.schedule.modal.date')}
                       </Box>
                     </Box>
                     <DateTimePicker
@@ -291,7 +287,7 @@ const CalendarModal = (props: Props) => {
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(16), mt(0.5), Bold]}>
-                        {t('features.user.schedule.modal.start')}
+                        {t('features.schedule.modal.start')}
                       </Box>
                     </Box>
                     <Select
@@ -320,7 +316,7 @@ const CalendarModal = (props: Props) => {
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(16), mt(0.5), Bold]}>
-                        {t('features.user.schedule.modal.end')}
+                        {t('features.schedule.modal.end')}
                       </Box>
                     </Box>
                     <Select
@@ -351,7 +347,7 @@ const CalendarModal = (props: Props) => {
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(16), mt(0.5), Bold]}>
-                        {t('features.user.schedule.modal.title')}
+                        {t('features.schedule.modal.title')}
                       </Box>
                     </Box>
                     <TextField
@@ -377,7 +373,7 @@ const CalendarModal = (props: Props) => {
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(4), mt(0.5), Bold]}>
-                        {t('features.user.schedule.modal.user')}
+                        {t('features.schedule.modal.user')}
                       </Box>
                     </Box>
                     <DropDownList
@@ -393,7 +389,7 @@ const CalendarModal = (props: Props) => {
                   <Box>
                     <Box sx={[mb(1)]}>
                       <Box component="span" sx={[ml(4), mr(4), mt(0.5), Bold]}>
-                        {t('features.user.schedule.modal.type')}
+                        {t('features.schedule.modal.type')}
                       </Box>
                     </Box>
                     <RadioGroup

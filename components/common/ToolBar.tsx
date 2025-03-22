@@ -84,10 +84,20 @@ const ToolBar = (props: Props) => {
         user_hash_key: user.hashKey,
       } as GetOwnTeamRequest)
 
+      if (
+        _.isEmpty(
+          _.filter(list, (l) => _.isEqual(res2.data.team.hash_key, l.hashKey)),
+        )
+      ) {
+        await changeTeam(list[0].hashKey)
+        return
+      }
+
       setTeam({
         hashKey: res2.data.team.hash_key,
         name: res2.data.team.name,
       } as GetTeamResponse)
+      isLoading(false)
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
         router.push(routerPath)
@@ -117,8 +127,6 @@ const ToolBar = (props: Props) => {
         )
         router.push(_.isEmpty(routerPath) ? RouterPath.Login : routerPath)
       }
-    } finally {
-      isLoading(false)
     }
   }
 

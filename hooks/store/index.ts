@@ -5,6 +5,7 @@ import {
   SearchTextIndex,
 } from '@/enum/applicant'
 import { SearchCompanyTextIndex } from '@/enum/company'
+import { CalendarHeaderTool } from '@/enum/schedule'
 import { Lang } from '@/enum/user'
 import { green, indigo, red } from '@mui/material/colors'
 import { PayloadAction, createSlice } from '@reduxjs/toolkit'
@@ -12,6 +13,7 @@ import _ from 'lodash'
 import {
   ApplicantModel,
   ManuscriptModel,
+  ScheduleModel,
   SearchAutoComplete,
   SearchDates,
   SearchModel,
@@ -167,6 +169,56 @@ const state = {
       pageSize: 25,
     } as SearchModel,
   } as TeamModel,
+  schedule: {
+    users: [] as UserModel[],
+    headers: [
+      {
+        tool: CalendarHeaderTool.Today,
+        custom: 'customToday',
+        target: false,
+        isLeft: true,
+      },
+      {
+        tool: CalendarHeaderTool.Day,
+        custom: 'customTimeGridDay',
+        target: false,
+        isLeft: true,
+      },
+      {
+        tool: CalendarHeaderTool.Week,
+        custom: 'customTimeGridWeek',
+        target: true,
+        isLeft: true,
+      },
+      {
+        tool: CalendarHeaderTool.Month,
+        custom: 'customDayGridMonth',
+        target: false,
+        isLeft: true,
+      },
+      {
+        tool: CalendarHeaderTool.Year,
+        custom: 'customDayGridYear',
+        target: false,
+        isLeft: true,
+      },
+      {
+        tool: CalendarHeaderTool.Prev,
+        custom: 'customPrev',
+        target: false,
+        isLeft: false,
+      },
+      {
+        tool: CalendarHeaderTool.Next,
+        custom: 'customNext',
+        target: false,
+        isLeft: false,
+      },
+    ],
+    initialView: CalendarHeaderTool.Week,
+    initialDate: new Date(),
+    isOnlyInterview: false,
+  } as ScheduleModel,
   manuscript: {
     search: {
       pageSize: 25,
@@ -177,6 +229,7 @@ const state = {
     color: indigo[500],
     toastSuccessColor: green[500],
     toastErrorColor: red[500],
+    calendarColors: [indigo[500]],
     successMsg: [],
     errorMsg: [],
   } as SettingModel,
@@ -242,6 +295,19 @@ export const slice = createSlice({
     teamSearchPageSize: (state, action: PayloadAction<number>) => {
       state.team.search.pageSize = action.payload
     },
+    // 予定
+    scheduleSearchUsers: (state, action: PayloadAction<UserModel[]>) => {
+      state.schedule.users = _.cloneDeep(action.payload)
+    },
+    scheduleInitialView: (state, action: PayloadAction<string>) => {
+      state.schedule.initialView = action.payload
+    },
+    scheduleInitialDate: (state, action: PayloadAction<Date>) => {
+      state.schedule.initialDate = action.payload
+    },
+    scheduleIsInterview: (state, action: PayloadAction<boolean>) => {
+      state.schedule.isOnlyInterview = action.payload
+    },
     // 原稿
     manuscriptSearchPageSize: (state, action: PayloadAction<number>) => {
       state.manuscript.search.pageSize = action.payload
@@ -264,5 +330,9 @@ export const {
   companySearchText,
   userSearchPageSize,
   teamSearchPageSize,
+  scheduleSearchUsers,
+  scheduleInitialView,
+  scheduleInitialDate,
+  scheduleIsInterview,
   manuscriptSearchPageSize,
 } = slice.actions

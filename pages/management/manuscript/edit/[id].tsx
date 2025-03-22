@@ -1,18 +1,20 @@
 import {
   RolesRequest,
-  GetTeamRequest,
-  UpdateTeamRequest,
-  SearchUserByCompanyRequest,
+  GetManuscriptRequest,
+  SearchTeamByCompanyRequest,
+  UpdateManuscriptRequest,
 } from '@/api/model/request'
 import {
-  GetTeamResponse,
-  SearchUserByCompanyResponse,
+  SearchTeamByCompanyResponse,
+  GetManuscriptResponse,
+  SiteListResponse,
 } from '@/api/model/response'
 import {
-  GetTeamCSR,
   RolesCSR,
-  UpdateTeamCSR,
-  SearchUserByCompanyCSR,
+  GetManuscriptCSR,
+  SearchTeamByCompanyCSR,
+  ApplicantSitesCSR,
+  UpdateManuscriptCSR,
 } from '@/api/repository'
 import NextHead from '@/components/common/Header'
 import { Operation } from '@/enum/common'
@@ -65,29 +67,41 @@ type Props = {
 }
 
 type Inputs = {
-  name: string
+  content: string
 }
 
-const TeamEdit: FC<Props> = ({ isError, id }) => {
+const ManuscriptEdit: FC<Props> = ({ isError, id }) => {
   const router = useRouter()
   const t = useTranslations()
 
+  // store
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [initUsers, setInitUsers] = useState<SearchUserByCompanyResponse[]>([])
-  const [users, setUsers] = useState<SearchUserByCompanyResponse[]>([])
-  const [selectedUsers, setSelectedUsers] = useState<
-    SearchUserByCompanyResponse[]
-  >([])
-  const [team, setTeam] = useState<GetTeamResponse>(null)
+  // 原稿
+  const [manuscript, setManuscript] = useState<GetManuscriptResponse>(null)
 
+  // チーム
+  const [initTeams, setInitTeams] = useState<SearchTeamByCompanyResponse[]>([])
+  const [teams, setTeams] = useState<SearchTeamByCompanyResponse[]>([])
+  const [selectedTeams, setSelectedTeams] = useState<
+    SearchTeamByCompanyResponse[]
+  >([])
+
+  // サイト
+  const [initSites, setInitSites] = useState<SelectTitlesModel[]>([])
+  const [sites, setSites] = useState<SelectTitlesModel[]>([])
+  const [selectedSites, setSelectedSites] = useState<SelectTitlesModel[]>([])
+
+  // ロールチェック
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
+
+  // 状態
   const [init, isInit] = useState<boolean>(true)
   const [loading, isLoading] = useState<boolean>(true)
-
   const processing = useRef<boolean>(false)
 
+  // 初期化処理定義
   const inits = async () => {
     try {
       // API: 使用可能ロール一覧
@@ -99,8 +113,8 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
 
       if (
         _.some([
-          !res.data.map[Operation.ManagementTeamEdit],
-          !res.data.map[Operation.ManagementTeamDetailRead],
+          !res.data.map[Operation.ManagementUserEdit],
+          !res.data.map[Operation.ManagementUserDetailRead],
         ])
       ) {
         store.dispatch(
@@ -111,56 +125,101 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         router.push(RouterPath.Management + RouterPath.Team)
       }
 
-      // API: ユーザー検索_同一企業
-      const res2 = await SearchUserByCompanyCSR({
+      // API: チーム検索_同一企業
+      const res2 = await SearchTeamByCompanyCSR({
         hash_key: user.hashKey,
-      } as SearchUserByCompanyRequest)
+      } as SearchTeamByCompanyRequest)
 
-      const list: SearchUserByCompanyResponse[] = []
+      const list: SearchTeamByCompanyResponse[] = []
       _.forEach(res2.data.list, (u) => {
         list.push({
           hashKey: u.hash_key,
           name: u.name,
-          email: u.email,
-        } as SearchUserByCompanyResponse)
+          sub: u.sub,
+        } as SearchTeamByCompanyResponse)
       })
 
-      // API: チーム取得
-      const res3 = await GetTeamCSR({
+      // API サイト一覧
+      const list2: SelectTitlesModel[] = []
+      const res3 = await ApplicantSitesCSR()
+      _.forEach(res3.data.list, (item) => {
+        list2.push({
+          key: item.hash_key,
+          title: item.site_name,
+          subTitle: '',
+        } as SelectTitlesModel)
+      })
+      setInitSites(list2)
+
+      // API: 原稿取得
+      const res4 = await GetManuscriptCSR({
         user_hash_key: user.hashKey,
         hash_key: decodeURIComponent(id),
-      } as GetTeamRequest)
+      } as GetManuscriptRequest)
 
-      setTeam({
-        hashKey: res3.data.hash_key,
-        name: res3.data.name,
-        users: _.map(res3.data.users, (user) => {
+      setManuscript({
+        hashKey: res4.data.hash_key,
+        content: res4.data.content,
+        sites: _.map(res4.data.sites, (site) => {
           return {
-            hashKey: user.hash_key,
-            name: user.name,
-            email: user.email,
-          } as SearchUserByCompanyResponse
+            hashKey: site.hash_key,
+            name: site.site_name,
+          } as SiteListResponse
         }),
-      } as GetTeamResponse)
-
-      setValue('name', res3.data.name)
-
-      setSelectedUsers(
-        _.map(res3.data.users, (user) => {
+        teams: _.map(res4.data.teams, (team) => {
           return {
-            hashKey: user.hash_key,
-            name: user.name,
-            email: user.email,
-          } as SearchUserByCompanyResponse
+            hashKey: team.hash_key,
+            name: team.name,
+            sub: team.sub,
+          } as SearchTeamByCompanyResponse
+        }),
+      } as GetManuscriptResponse)
+
+      // 表示初期値
+      setValue('content', res4.data.content)
+
+      // 設定済みのサイト
+      setSelectedSites(
+        _.map(res4.data.sites, (site) => {
+          return {
+            key: site.hash_key,
+            title: site.site_name,
+            subTitle: '',
+          } as SelectTitlesModel
         }),
       )
-      setInitUsers(
+      // 選択可能なサイト
+      setInitSites(
+        _.filter(
+          list2,
+          (item) =>
+            !_.includes(
+              _.map(res4.data.sites, (site) => {
+                return site.hash_key
+              }),
+              item.key,
+            ),
+        ),
+      )
+
+      // 所属済みのチーム
+      setSelectedTeams(
+        _.map(res4.data.teams, (team) => {
+          return {
+            hashKey: team.hash_key,
+            name: team.name,
+            sub: team.sub,
+          } as SearchTeamByCompanyResponse
+        }),
+      )
+      // 選択可能なチーム
+      setInitTeams(
         _.filter(
           list,
           (item) =>
             !_.includes(
-              _.map(res3.data.users, (user) => {
-                return user.hash_key
+              _.map(res4.data.teams, (team) => {
+                return team.hash_key
               }),
               item.hashKey,
             ),
@@ -181,7 +240,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         )
         router.push(
           _.isEmpty(routerPath)
-            ? RouterPath.Management + RouterPath.Team
+            ? RouterPath.Management + RouterPath.Manuscript
             : routerPath,
         )
         return
@@ -196,7 +255,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         )
         router.push(
           _.isEmpty(routerPath)
-            ? RouterPath.Management + RouterPath.Team
+            ? RouterPath.Management + RouterPath.Manuscript
             : routerPath,
         )
       }
@@ -205,25 +264,14 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
     }
   }
 
-  const formValidationValue: FormValidationValue = {
-    name: {
-      max: 50,
-    },
-  }
-
+  // バリデーション
   const formValidation: FormValidation = {
-    name: [
+    content: [
       {
         type: ValidationType.Required,
-        message: t('features.team.header.name') + t('common.validate.required'),
-      },
-      {
-        type: ValidationType.MaxLength,
         message:
-          t('features.team.header.name') +
-          t('common.validate.is') +
-          String(formValidationValue.name.max) +
-          t('common.validate.maxLength'),
+          t('features.manuscript.header.content') +
+          t('common.validate.required'),
       },
     ],
   }
@@ -240,27 +288,45 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
     if (processing.current) return
     processing.current = true
 
-    // API: チーム更新
-    await UpdateTeamCSR({
+    // API: 原稿更新
+    await UpdateManuscriptCSR({
       user_hash_key: user.hashKey,
-      hash_key: team.hashKey,
-      name: d.name,
-      users: _.map(users, (u) => {
-        return u.hashKey
-      }),
-    } as UpdateTeamRequest)
+      hash_key: manuscript.hashKey,
+      content: d.content,
+      sites: _.map(sites, (s) => s.key),
+      teams: _.map(teams, (t) => t.hashKey),
+    } as UpdateManuscriptRequest)
       .then(() => {
         store.dispatch(
           changeSetting({
-            successMsg: [t(`features.team.index`) + t(`common.toast.edit`)],
+            successMsg: [
+              t(`features.manuscript.index`) + t(`common.toast.edit`),
+            ],
           } as SettingModel),
         )
-
-        router.push(RouterPath.Management + RouterPath.Team)
+        router.push(RouterPath.Management + RouterPath.Manuscript)
       })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
           router.push(routerPath)
+          return
+        }
+
+        if (code) {
+          toast(t(`common.api.code.manuscriptUpdate.${code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -291,16 +357,20 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
           )
           router.push(
             _.isEmpty(routerPath)
-              ? RouterPath.Management + RouterPath.Team
+              ? RouterPath.Management + RouterPath.Manuscript
               : routerPath,
           )
         }
       })
+      .finally(() => {
+        processing.current = false
+      })
   }
 
   const formInit = () => {
-    setValue('name', team.name)
-    setUsers([])
+    setValue('content', manuscript.content)
+    setTeams([])
+    setSites([])
   }
 
   useEffect(() => {
@@ -316,12 +386,12 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         isLoading(false)
       }
     }
-
     initialize()
   }, [])
 
   return (
     <>
+      {/* ヘッダー */}
       <NextHead />
       {_.every([
         !init,
@@ -338,65 +408,112 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
               noValidate
               sx={ColumnMt4}
             >
-              <FormLabel>{t('features.team.header.name') + '*'}</FormLabel>
+              {/* 内容 */}
+              <FormLabel>
+                {t('features.manuscript.header.content') + '*'}
+              </FormLabel>
               <TextField
-                value={watch('name')}
+                value={watch('content')}
                 margin="normal"
                 required
                 style={w(100)}
-                {...register('name', {
+                {...register('content', {
                   required: true,
-                  maxLength: formValidationValue.name.max,
                   setValueAs: (value) => _.trim(value),
                 })}
-                aria-invalid={errors.name ? 'true' : 'false'}
+                aria-invalid={errors.content ? 'true' : 'false'}
               />
               <ErrorHandler
-                validations={formValidation.name}
-                type={errors.name?.type}
+                validations={formValidation.content}
+                type={errors.content?.type}
               ></ErrorHandler>
 
+              {/* 使用可能チーム */}
               <FormLabel sx={[mt(6), mb(1.5)]}>
-                {t('features.team.header.users') + '*'}
+                {t('features.manuscript.header.team')}
               </FormLabel>
               <DropDownList
-                list={_.map(users, (u) => {
+                list={_.map(teams, (team) => {
                   return {
-                    key: u.hashKey,
-                    title: u.name,
-                    subTitle: u.email,
+                    key: team.hashKey,
+                    title: team.name,
+                    subTitle: team.sub,
                   } as SelectTitlesModel
                 })}
-                initList={_.map(initUsers, (u) => {
+                initList={_.map(initTeams, (team) => {
                   return {
-                    key: u.hashKey,
-                    title: u.name,
-                    subTitle: u.email,
+                    key: team.hashKey,
+                    title: team.name,
+                    subTitle: team.sub,
                   } as SelectTitlesModel
                 })}
                 sx={[w(50)]}
                 onChange={(value) => {
-                  const list: SearchUserByCompanyResponse[] = []
+                  const list: SearchTeamByCompanyResponse[] = []
                   for (const l of value) {
                     list.push({
                       hashKey: l.key,
                       name: l.title,
-                      email: l.subTitle,
-                    } as SearchUserByCompanyResponse)
+                      sub: l.subTitle,
+                    } as SearchTeamByCompanyResponse)
                   }
-                  setUsers(list)
+                  setTeams(list)
                 }}
               ></DropDownList>
 
+              {/* 使用可能サイト */}
               <FormLabel sx={[mt(6), mb(1.5)]}>
-                {t('features.team.header.selectedUsers')}
+                {t('features.manuscript.header.site')}
+              </FormLabel>
+              <DropDownList
+                list={_.map(sites, (r) => {
+                  return {
+                    key: r.key,
+                    title: r.title,
+                    subTitle: '',
+                  } as SelectTitlesModel
+                })}
+                initList={_.map(initSites, (r) => {
+                  return {
+                    key: r.key,
+                    title: r.title,
+                    subTitle: '',
+                  } as SelectTitlesModel
+                })}
+                sx={[w(50)]}
+                onChange={(value) => {
+                  const list: SelectTitlesModel[] = _.map(value, (v) => {
+                    return {
+                      key: v.key,
+                      title: v.title,
+                      subTitle: '',
+                    } as SelectTitlesModel
+                  })
+                  setSites(list)
+                }}
+              ></DropDownList>
+
+              {/* 設定済みのチーム */}
+              <FormLabel sx={[mt(6), mb(1.5)]}>
+                {t('features.manuscript.header.seletedTeams')}
               </FormLabel>
               <List>
-                {_.map(selectedUsers, (user) => {
-                  return <ListItem>{'・' + user.name}</ListItem>
+                {_.map(selectedTeams, (team, i) => {
+                  return <ListItem key={i}>{'・' + team.name}</ListItem>
                 })}
               </List>
 
+              {/* 設定済みのサイト */}
+              <FormLabel sx={[mt(6), mb(1.5)]}>
+                {t('features.manuscript.header.selectedSites')}
+              </FormLabel>
+              <List>
+                {_.map(selectedSites, (role, i) => {
+                  return <ListItem key={i}>{'・' + role.title}</ListItem>
+                })}
+              </List>
+
+              {/* ボタン */}
               <Box sx={[FormThreeButtons, mt(8)]}>
                 <Button
                   tabIndex={-1}
@@ -405,7 +522,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
                   color="inherit"
                   sx={minW(180)}
                   onClick={() =>
-                    router.push(RouterPath.Management + RouterPath.Team)
+                    router.push(RouterPath.Management + RouterPath.Manuscript)
                   }
                 >
                   {t('common.button.cancel')}
@@ -428,9 +545,10 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
                   type="submit"
                   variant="contained"
                   sx={[minW(180), ButtonColor(common.white, setting.color)]}
+                  onClick={handleSubmit(submit)}
                 >
                   <EditNoteIcon sx={mr(0.25)} />
-                  {t('features.team.edit')}
+                  {t('features.manuscript.edit')}
                 </Button>
               </Box>
             </Box>
@@ -459,4 +577,4 @@ export const getServerSideProps: GetServerSideProps = async ({
   }
 }
 
-export default TeamEdit
+export default ManuscriptEdit

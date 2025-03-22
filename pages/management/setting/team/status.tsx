@@ -60,8 +60,8 @@ import {
 import {
   ApplicantStatusListCSR,
   GetOwnTeamCSR,
-  ListStatusEventSSR,
-  ProcessingSSR,
+  ListStatusEventCSR,
+  ProcessingCSR,
   RolesCSR,
   StatusEventsByTeamCSR,
   UpdateStatusCSR,
@@ -88,18 +88,10 @@ import DragHandleIcon from '@mui/icons-material/DragHandle'
 import { LITTLE_DURING } from '@/hooks/common'
 
 type Props = {
-  isError: boolean
   locale: string
-  eventsSSR: StatusEventResponse[]
-  processingSSR: ProcessingResponse[]
 }
 
-const SettingTeamStatus: FC<Props> = ({
-  isError,
-  locale,
-  eventsSSR,
-  processingSSR,
-}) => {
+const SettingTeamStatus: FC<Props> = ({ locale }) => {
   const router = useRouter()
   const t = useTranslations()
 
@@ -114,7 +106,8 @@ const SettingTeamStatus: FC<Props> = ({
   const [oldEvents, setOldEvents] = useState<ListStatusEventByTeamResponse[]>(
     [],
   )
-  const [events, setEvents] = useState<StatusEventResponse[]>(eventsSSR)
+  const [events, setEvents] = useState<StatusEventResponse[]>([])
+  const [processings, setProcessings] = useState<ProcessingResponse[]>([])
 
   const [teamEvents, setTeamEvents] = useState<GetOwnTeamResponse>(null)
   const [oldTeamEvents, setOldTeamEvents] = useState<GetOwnTeamResponse>(null)
@@ -127,6 +120,37 @@ const SettingTeamStatus: FC<Props> = ({
 
   const inits = async () => {
     try {
+      // API: ステータスイベントマスタ一覧
+      const tempList0_1: StatusEventResponse[] = []
+      const res0_1 = await ListStatusEventCSR()
+      _.forEach(
+        res0_1.data.list.sort((a, b) => a.id - b.id),
+        (item, index) => {
+          tempList0_1.push({
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            desc: item[`desc_${locale}`],
+          })
+        },
+      )
+      setEvents(tempList0_1)
+
+      // API: 面接過程マスタ一覧
+      const tempList0_2: ProcessingResponse[] = []
+      const res0_2 = await ProcessingCSR()
+      _.forEach(
+        res0_2.data.list.sort((a, b) => a.id - b.id),
+        (item, index) => {
+          tempList0_2.push({
+            no: Number(index) + 1,
+            hashKey: item.hash_key,
+            processing: item.processing,
+            desc: item[`desc_${locale}`],
+          })
+        },
+      )
+      setProcessings(tempList0_2)
+
       // API: 使用可能ロール一覧
       const res = await RolesCSR({
         hash_key: user.hashKey,
@@ -159,9 +183,9 @@ const SettingTeamStatus: FC<Props> = ({
       } as StatusEventsByTeamRequest)
 
       const list2: ListStatusEventByTeamResponse[] = []
-      for (let i = 0; i < _.size(eventsSSR); i++) {
+      for (let i = 0; i < _.size(tempList0_1); i++) {
         const event = _.find(res2.data.list, (item) =>
-          _.isEqual(item['event_hash_key'], eventsSSR[i].hashKey),
+          _.isEqual(item['event_hash_key'], tempList0_1[i].hashKey),
         )
 
         if (_.isUndefined(event)) {
@@ -189,7 +213,7 @@ const SettingTeamStatus: FC<Props> = ({
 
       const list3: InterviewEvents[] = []
       for (let i = 2; i <= Number(res3.data.team.num_of_interview); i++) {
-        for (const processing of processingSSR) {
+        for (const processing of tempList0_2) {
           list3.push({
             num: Number(i),
             hashKey: '',
@@ -461,11 +485,6 @@ const SettingTeamStatus: FC<Props> = ({
 
     const initialize = async () => {
       try {
-        if (isError) {
-          router.push(RouterPath.Error)
-          return
-        }
-
         if (init) await inits()
       } finally {
         isLoading(false)
@@ -481,11 +500,7 @@ const SettingTeamStatus: FC<Props> = ({
       <Box sx={mt(18)}>
         <Box sx={[SpaceBetween, w(90), M0Auto]}>
           <SettingMenu />
-          {_.every([
-            !isError,
-            !loading,
-            roles[Operation.ManagementSettingTeam],
-          ]) && (
+          {_.every([!loading, roles[Operation.ManagementSettingTeam]]) && (
             <DialogContent sx={[DialogContentSetting, w(90), ml(3)]}>
               {noContent && (
                 <Box sx={[w(100), M0Auto]}>{t('common.api.noContent')}</Box>
@@ -1051,50 +1066,9 @@ const SettingTeamStatus: FC<Props> = ({
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  let isError = false
-
-  // API: ステータスイベントマスタ一覧
-  const eventsSSR: StatusEventResponse[] = []
-  await ListStatusEventSSR()
-    .then((res) => {
-      _.forEach(
-        res.data.list.sort((a, b) => a.id - b.id),
-        (item, index) => {
-          eventsSSR.push({
-            no: Number(index) + 1,
-            hashKey: item.hash_key,
-            desc: item[`desc_${locale}`],
-          })
-        },
-      )
-    })
-    .catch(() => {
-      isError = true
-    })
-
-  // API: 面接過程マスタ一覧
-  const processingSSR: ProcessingResponse[] = []
-  await ProcessingSSR()
-    .then((res) => {
-      _.forEach(res.data.list, (item, index) => {
-        processingSSR.push({
-          no: Number(index) + 1,
-          hashKey: item.hash_key,
-          processing: item.processing,
-          desc: item[`desc_${locale}`],
-        })
-      })
-    })
-    .catch(() => {
-      isError = true
-    })
-
   return {
     props: {
-      isError,
       locale,
-      eventsSSR,
-      processingSSR,
       messages: (
         await import(`../../../../public/locales/${locale}/common.json`)
       ).default,

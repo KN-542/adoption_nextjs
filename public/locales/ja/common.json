@@ -28,7 +28,8 @@
       },
       "manuscript": {
         "list": "原稿一覧",
-        "create": "原稿作成"
+        "create": "原稿作成",
+        "edit": "原稿編集"
       },
       "setting": {
         "index": "設定"
@@ -77,6 +78,7 @@
       "search": "検索",
       "delete": "削除",
       "condSearch": "条件検索",
+      "auto": "自動で選択",
       "columnDisplay": "列指定",
       "init": "入力状態を初期化"
     },
@@ -123,6 +125,9 @@
           "2": "予定と紐づけられている",
           "3": "選択中の"
         },
+        "userUpdate": {
+          "1": "既に使用されているメールアドレスです"
+        },
         "createUserDupl": "メールアドレスが重複しています",
         "companyCreate": {
           "1": "既に使用されている企業名です",
@@ -143,6 +148,9 @@
         "manuscript": {
           "index": "原稿は削除できません",
           "1": "応募者と紐づけられている"
+        },
+        "manuscriptUpdate": {
+          "1": "原稿内容が重複しています"
         }
       },
       "header": {
@@ -246,6 +254,13 @@
           "msg": "以下の応募者の選考結果を入力してください",
           "button": "不通過",
           "button2": "通過"
+        },
+        "google": {
+          "msg": "以下の応募者について、必要な操作を行ってください",
+          "button": "面接案内テンプレートコピー",
+          "button2": "面接案内メール送信",
+          "button3": "面接へ",
+          "copied": "テンプレートがクリップボードにコピーされました"
         }
       },
       "documents": {
@@ -265,30 +280,20 @@
     "user": {
       "index": "ユーザー",
       "create": "ユーザーを作成",
+      "edit": "ユーザー編集",
       "createTeam": "チーム作成",
       "backList": "ユーザー一覧へ戻る",
       "createMsg": "ユーザーを作成しました。",
       "createMsg2": "以下のログイン情報をご確認ください。",
       "createMsg3": "※「ユーザーー一覧へ戻る」をクリックすると、これ以降初期パスワードの確認はできなくなります。",
-      "schedule": {
-        "schedule": "カレンダー",
-        "modal": {
-          "date": "年月日",
-          "title": "タイトル",
-          "start": "開始時刻",
-          "end": "終了時刻",
-          "type": "登録種別",
-          "msgStartEnd": "終了時刻は開始時刻より後の時刻を指定してください",
-          "msgNoExistUser": "ユーザーが選択されていません",
-          "user": "ユーザー"
-        }
-      },
       "header": {
         "name": "氏名",
         "email": "メールアドレス",
         "password": "パスワード",
         "team": "チーム",
-        "role": "ロール"
+        "role": "ロール",
+        "selectedTeams": "所属しているチーム",
+        "selectedRoles": "現在のロール"
       }
     },
     "team": {
@@ -301,13 +306,39 @@
         "selectedUsers": "所属済みユーザー"
       }
     },
+    "schedule": {
+      "index": "カレンダー",
+      "users": "ユーザーを選択",
+      "onlyInterview": "面接予定のみ表示する",
+      "header": {
+        "insert": "登録",
+        "today": "今日",
+        "day": "日",
+        "week": "週",
+        "month": "月",
+        "year": "年"
+      },
+      "modal": {
+        "date": "年月日",
+        "title": "タイトル",
+        "start": "開始時刻",
+        "end": "終了時刻",
+        "type": "登録種別",
+        "msgStartEnd": "終了時刻は開始時刻より後の時刻を指定してください",
+        "msgNoExistUser": "ユーザーが選択されていません",
+        "user": "ユーザー"
+      }
+    },
     "manuscript": {
       "index": "原稿",
       "create": "原稿作成",
+      "edit": "原稿編集",
       "header": {
         "content": "内容",
         "site": "使用可能サイト",
-        "team": "使用可能チーム"
+        "team": "使用可能チーム",
+        "seletedTeams": "使用しているチーム",
+        "selectedSites": "使用しているサイト"
       }
     },
     "setting": {
@@ -365,6 +396,10 @@
         "sub": {
           "color": {
             "index": "テーマカラー"
+          },
+          "calendar": {
+            "index": "カレンダーデザイン",
+            "array": "カラー配列"
           }
         }
       },

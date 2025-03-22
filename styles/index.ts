@@ -17,6 +17,7 @@ export const ml = (ml: number) => {
 }
 
 export const M0Auto = { m: '0 auto' }
+export const MAutoRight = { m: '0 0 0 auto' }
 
 export const w = (w: number) => {
   return { width: `${w}%` }
@@ -148,6 +149,12 @@ export const DialogContentSetting = {
   borderRadius: 4,
 }
 
+export const DialogContentSettingNone = {
+  p: 2,
+  borderRadius: 4,
+  border: 'none',
+}
+
 export const DirectionColumnForTable = {
   display: 'flex',
   flexDirection: 'column',
@@ -156,6 +163,11 @@ export const DirectionColumnForTable = {
 
 export const ColumnMt4 = {
   mt: 4,
+  display: 'flex',
+  flexFlow: 'column',
+}
+
+export const ColumnMt0 = {
   display: 'flex',
   flexFlow: 'column',
 }
@@ -334,6 +346,12 @@ export const SearchModalSelect = {
   mr: 4,
   border: '2px solid',
   borderColor: grey[300],
+  overflowY: 'auto',
+}
+
+export const ScheduleSelectedUsers = {
+  maxHeight: 400,
+  border: 'none',
   overflowY: 'auto',
 }
 

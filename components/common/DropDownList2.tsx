@@ -18,12 +18,11 @@ type Props = {
   list: SelectTitlesModel[]
   initList: SelectTitlesModel[]
   sx?: any
-  icon?: JSX.Element
   textSx?: any
   onChange(value: SelectTitlesModel[]): void
 }
 
-const DropDownList = (props: Props) => {
+const DropDownList2 = (props: Props) => {
   const setting = useSelector((state: RootState) => state.setting)
 
   return (
@@ -43,8 +42,8 @@ const DropDownList = (props: Props) => {
       getOptionLabel={(option) => option.title}
       renderOption={(propositions, option) => (
         <ListItem {...propositions} sx={[w(100)]}>
-          {!_.isEmpty(props.icon) && <>{props.icon}</>}
-          {_.isEmpty(props.icon) && (
+          {!_.isEmpty(option.icon) && <>{option.icon}</>}
+          {_.isEmpty(option.icon) && (
             <AccountCircleIcon fontSize="large" sx={mr(2)} />
           )}
           <Box sx={[Column, w(100)]}>
@@ -82,4 +81,4 @@ const DropDownList = (props: Props) => {
   )
 }
 
-export default DropDownList
+export default DropDownList2

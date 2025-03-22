@@ -25,6 +25,7 @@ import {
   UpdateTeamRequest,
   DeleteTeamRequest,
   DeleteUserRequest,
+  GetUserRequest,
   SearchRoleByCompanyRequest,
   SearchTeamByCompanyRequest,
   ChangeTeamRequest,
@@ -44,6 +45,7 @@ import {
   SearchManuscriptRequest,
   CreateManuscriptRequest,
   DeleteManuscriptsRequest,
+  GetManuscriptRequest,
   CreateApplicantTypeRequest,
   ListApplicantTypeRequest,
   SearchManuscriptByTeamRequest,
@@ -51,6 +53,8 @@ import {
   CreateApplicantManuscriptAssociationRequest,
   CreateApplicantTypeAssociationRequest,
   InputResultRequest,
+  UpdateUserRequest,
+  UpdateManuscriptRequest,
 } from './model/request'
 
 /* 
@@ -211,10 +215,10 @@ export const DownloadApplicantDocumentCSR = async (
   return res
 }
 
-// サイト一覧 SSR
-export const ApplicantSitesSSR = async () => {
+// サイト一覧 CSR
+export const ApplicantSitesCSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/applicant/sites`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/applicant/sites`,
     {},
     APICommonHeader,
   )
@@ -353,6 +357,26 @@ export const DeleteUserCSR = async (req: DeleteUserRequest) => {
   return res
 }
 
+//　ユーザー取得 CSR
+export const GetUserCSR = async (req: GetUserRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/get`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// ユーザー更新 CSR
+export const UpdateUserCSR = async (req: UpdateUserRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/user/update`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
 /* 
   チーム
 */
@@ -463,10 +487,10 @@ export const SchedulesCSR = async (req: SearchScheduleRequest) => {
   return res
 }
 
-// 予定登録種別一覧 SSR
-export const UserListScheduleTypeSSR = async () => {
+// 予定登録種別一覧 CSR
+export const UserListScheduleTypeCSR = async () => {
   const res = await axios1.post(
-    `${process.env.NEXT_SSR_URL}/schedule/type`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/schedule/type`,
     {},
     APICommonHeader,
   )
@@ -571,6 +595,26 @@ export const DeleteManuscriptsCSR = async (req: DeleteManuscriptsRequest) => {
   return res
 }
 
+// 原稿取得 CSR
+export const GetManuscriptCSR = async (req: GetManuscriptRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/get`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
+// 原稿更新 CSR
+export const UpdateManuscriptCSR = async (req: UpdateManuscriptRequest) => {
+  const res = await axios1.post(
+    `${process.env.NEXT_PUBLIC_CSR_URL}/manuscript/update`,
+    req,
+    APICommonHeader,
+  )
+  return res
+}
+
 /* 
   設定
 */
@@ -625,40 +669,40 @@ export const UpdateAssignMethodCSR = async (req: UpdateAssignMethodRequest) => {
   return res
 }
 
-// ステータスイベントマスタ一覧 SSR
-export const ListStatusEventSSR = async () => {
+// ステータスイベントマスタ一覧 CSR
+export const ListStatusEventCSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/status_events`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/status_events`,
     {},
     APICommonHeader,
   )
   return res
 }
 
-// ステータスイベントマスタ一覧 SSR
-export const AssignMasterSSR = async () => {
+// ステータスイベントマスタ一覧 CSR
+export const AssignMasterCSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/assign_masters`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/assign_masters`,
     {},
     APICommonHeader,
   )
   return res
 }
 
-// 書類提出ルールマスタ一覧 SSR
-export const DocumentRulesSSR = async () => {
+// 書類提出ルールマスタ一覧 CSR
+export const DocumentRulesCSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/document_rules`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/document_rules`,
     {},
     APICommonHeader,
   )
   return res
 }
 
-// 職種マスタ一覧 SSR
-export const OccupationsSSR = async () => {
+// 職種マスタ一覧 CSR
+export const OccupationsCSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/occupations`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/occupations`,
     {},
     APICommonHeader,
   )
@@ -687,10 +731,10 @@ export const ListApplicantTypeCSR = async (req: ListApplicantTypeRequest) => {
   return res
 }
 
-// 面接過程マスタ一覧 SSR
-export const ProcessingSSR = async () => {
+// 面接過程マスタ一覧 CSR
+export const ProcessingCSR = async () => {
   const res = await axios.post(
-    `${process.env.NEXT_SSR_URL}/setting/processing_list`,
+    `${process.env.NEXT_PUBLIC_CSR_URL}/setting/processing_list`,
     {},
     APICommonHeader,
   )

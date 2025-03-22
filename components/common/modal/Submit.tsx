@@ -25,7 +25,7 @@ import {
 import { useSelector } from 'react-redux'
 import { common } from '@mui/material/colors'
 import { RootState } from '@/hooks/store/store'
-import { Body, TableHeader } from '@/types/index'
+import { Body, ButtonMenu, TableHeader } from '@/types/index'
 import CustomTable from '../Table'
 
 type Props = {
@@ -33,14 +33,11 @@ type Props = {
   headers?: TableHeader[]
   bodies?: Record<string, Body>[]
   title: string
-  buttonTitle: string
-  buttonTitle2: string
   msg: string
   w?: number
   m?: number
-  ok: () => void
-  ng: () => void
   close: () => void
+  buttonMenus: ButtonMenu[]
 }
 
 const SubmitModal = (props: Props) => {
@@ -104,30 +101,20 @@ const SubmitModal = (props: Props) => {
               >
                 {t('common.button.cancel')}
               </Button>
-              <Button
-                tabIndex={-1}
-                size="large"
-                variant="outlined"
-                sx={[
-                  minW(180),
-                  ButtonColor(common.white, setting.toastErrorColor),
-                ]}
-                onClick={props.ng}
-              >
-                {props.buttonTitle}
-              </Button>
-              <Button
-                tabIndex={-1}
-                size="large"
-                variant="outlined"
-                sx={[
-                  minW(180),
-                  ButtonColor(common.white, setting.toastSuccessColor),
-                ]}
-                onClick={props.ok}
-              >
-                {props.buttonTitle2}
-              </Button>
+              {_.map(props.buttonMenus ?? ([] as ButtonMenu[]), (button, i) => {
+                return (
+                  <Button
+                    key={i}
+                    tabIndex={-1}
+                    size="large"
+                    variant="outlined"
+                    sx={[minW(180), ButtonColor(common.white, button.color)]}
+                    onClick={button.onClick}
+                  >
+                    {button.name}
+                  </Button>
+                )
+              })}
             </Box>
           </DialogActions>
         </Dialog>

@@ -105,7 +105,15 @@ const Manuscripts: FC<Props> = ({ locale: _locale }) => {
           color: setting.toastSuccessColor,
           element: <EditNoteIcon />,
           role: res.data.map[Operation.ManagementUserEdit],
-          onClick: (i: number) => {},
+          onClick: (i: number) => {
+            const body: SearchManuscriptResponse = manuscripts[i]
+            router.push(
+              `${RouterPath.Management}${RouterPath.ManuscriptEdit.replace(
+                '[id]',
+                '',
+              )}${encodeURIComponent(body.hashKey)}`,
+            )
+          },
         },
         {
           color: setting.toastErrorColor,

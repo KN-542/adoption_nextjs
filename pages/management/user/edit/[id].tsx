@@ -1,18 +1,21 @@
 import {
   RolesRequest,
-  GetTeamRequest,
-  UpdateTeamRequest,
-  SearchUserByCompanyRequest,
+  GetUserRequest,
+  SearchRoleByCompanyRequest,
+  SearchTeamByCompanyRequest,
+  UpdateUserRequest,
 } from '@/api/model/request'
 import {
-  GetTeamResponse,
-  SearchUserByCompanyResponse,
+  GetUserResponse,
+  SearchTeamByCompanyResponse,
+  SearchRoleByCompanyResponse,
 } from '@/api/model/response'
 import {
-  GetTeamCSR,
+  GetUserCSR,
   RolesCSR,
-  UpdateTeamCSR,
-  SearchUserByCompanyCSR,
+  SearchRoleByCompanyCSR,
+  SearchTeamByCompanyCSR,
+  UpdateUserCSR,
 } from '@/api/repository'
 import NextHead from '@/components/common/Header'
 import { Operation } from '@/enum/common'
@@ -29,7 +32,7 @@ import { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 import { FormValidation, FormValidationValue } from '@/hooks/validation'
-import { ValidationType } from '@/enum/validation'
+import { Pattern, ValidationType } from '@/enum/validation'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import {
   Box,
@@ -66,26 +69,44 @@ type Props = {
 
 type Inputs = {
   name: string
+  email: string
 }
 
-const TeamEdit: FC<Props> = ({ isError, id }) => {
+const UserEdit: FC<Props> = ({ isError, id }) => {
   const router = useRouter()
   const t = useTranslations()
 
+  // store
   const user = useSelector((state: RootState) => state.user)
   const setting = useSelector((state: RootState) => state.setting)
 
-  const [initUsers, setInitUsers] = useState<SearchUserByCompanyResponse[]>([])
-  const [users, setUsers] = useState<SearchUserByCompanyResponse[]>([])
-  const [selectedUsers, setSelectedUsers] = useState<
-    SearchUserByCompanyResponse[]
+  // チーム
+  const [initTeams, setInitTeams] = useState<SearchTeamByCompanyResponse[]>([])
+  const [teams, setTeams] = useState<SearchTeamByCompanyResponse[]>([])
+  const [selectedTeams, setSelectedTeams] = useState<
+    SearchTeamByCompanyResponse[]
   >([])
-  const [team, setTeam] = useState<GetTeamResponse>(null)
 
+  // ロール
+  const [initRolesModel, setInitRolesModel] = useState<
+    SearchRoleByCompanyResponse[]
+  >([])
+  const [rolesModel, setRolesModel] = useState<SearchRoleByCompanyResponse[]>(
+    [],
+  )
+  const [selectedRoles, setSelectedRoles] = useState<
+    SearchRoleByCompanyResponse[]
+  >([])
+
+  // ロールチェック
   const [roles, setRoles] = useState<{ [key: string]: boolean }>({})
+
+  // ユーザー
+  const [users, setUsers] = useState<GetUserResponse>(null)
+
+  // 状態
   const [init, isInit] = useState<boolean>(true)
   const [loading, isLoading] = useState<boolean>(true)
-
   const processing = useRef<boolean>(false)
 
   const inits = async () => {
@@ -99,8 +120,8 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
 
       if (
         _.some([
-          !res.data.map[Operation.ManagementTeamEdit],
-          !res.data.map[Operation.ManagementTeamDetailRead],
+          !res.data.map[Operation.ManagementUserEdit],
+          !res.data.map[Operation.ManagementUserDetailRead],
         ])
       ) {
         store.dispatch(
@@ -111,60 +132,91 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         router.push(RouterPath.Management + RouterPath.Team)
       }
 
-      // API: ユーザー検索_同一企業
-      const res2 = await SearchUserByCompanyCSR({
+      // API: チーム検索_同一企業
+      const res2 = await SearchTeamByCompanyCSR({
         hash_key: user.hashKey,
-      } as SearchUserByCompanyRequest)
+      } as SearchTeamByCompanyRequest)
 
-      const list: SearchUserByCompanyResponse[] = []
+      const list: SearchTeamByCompanyResponse[] = []
       _.forEach(res2.data.list, (u) => {
         list.push({
           hashKey: u.hash_key,
           name: u.name,
-          email: u.email,
-        } as SearchUserByCompanyResponse)
+          sub: u.sub,
+        } as SearchTeamByCompanyResponse)
       })
 
-      // API: チーム取得
-      const res3 = await GetTeamCSR({
+      // API: ロール検索_同一企業
+      const res3 = await SearchRoleByCompanyCSR({
+        user_hash_key: user.hashKey,
+      } as SearchRoleByCompanyRequest)
+
+      const list2: SearchRoleByCompanyResponse[] = []
+      _.forEach(res3.data.list, (u) => {
+        list2.push({
+          hashKey: u.hash_key,
+          name: u.name,
+        } as SearchRoleByCompanyResponse)
+      })
+
+      // API: ユーザー取得
+      const res4 = await GetUserCSR({
         user_hash_key: user.hashKey,
         hash_key: decodeURIComponent(id),
-      } as GetTeamRequest)
+      } as GetUserRequest)
 
-      setTeam({
-        hashKey: res3.data.hash_key,
-        name: res3.data.name,
-        users: _.map(res3.data.users, (user) => {
+      setUsers({
+        hashKey: res4.data.hash_key,
+        name: res4.data.name,
+        email: res4.data.email,
+        teams: _.map(res4.data.teams, (team) => {
           return {
-            hashKey: user.hash_key,
-            name: user.name,
-            email: user.email,
-          } as SearchUserByCompanyResponse
+            hashKey: team.hash_key,
+            name: team.name,
+            sub: team.sub,
+          } as SearchTeamByCompanyResponse
         }),
-      } as GetTeamResponse)
+      } as GetUserResponse)
 
-      setValue('name', res3.data.name)
+      // 表示初期値
+      setValue('name', res4.data.name)
+      setValue('email', res4.data.email)
 
-      setSelectedUsers(
-        _.map(res3.data.users, (user) => {
+      // 所属済みのチーム
+      setSelectedTeams(
+        _.map(res4.data.teams, (team) => {
           return {
-            hashKey: user.hash_key,
-            name: user.name,
-            email: user.email,
-          } as SearchUserByCompanyResponse
+            hashKey: team.hash_key,
+            name: team.name,
+            sub: team.sub,
+          } as SearchTeamByCompanyResponse
         }),
       )
-      setInitUsers(
+      // 選択可能なチーム
+      setInitTeams(
         _.filter(
           list,
           (item) =>
             !_.includes(
-              _.map(res3.data.users, (user) => {
-                return user.hash_key
+              _.map(res4.data.teams, (team) => {
+                return team.hash_key
               }),
               item.hashKey,
             ),
         ),
+      )
+
+      // 現在のロール
+      setSelectedRoles([
+        {
+          hashKey: res4.data.Role.hash_key,
+          name: res4.data.Role.name,
+        } as SearchRoleByCompanyResponse,
+      ])
+
+      // 選択可能なロール （現在のロールを除く）
+      setInitRolesModel(
+        _.filter(list2, (item) => res4.data.Role.hash_key !== item.hashKey),
       )
     } catch ({ isServerError, routerPath, toastMsg, storeMsg }) {
       if (isServerError) {
@@ -181,7 +233,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         )
         router.push(
           _.isEmpty(routerPath)
-            ? RouterPath.Management + RouterPath.Team
+            ? RouterPath.Management + RouterPath.User
             : routerPath,
         )
         return
@@ -196,7 +248,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         )
         router.push(
           _.isEmpty(routerPath)
-            ? RouterPath.Management + RouterPath.Team
+            ? RouterPath.Management + RouterPath.User
             : routerPath,
         )
       }
@@ -209,21 +261,44 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
     name: {
       max: 50,
     },
+    email: {
+      max: 50,
+      pattern: new RegExp(Pattern.Email),
+    },
   }
-
   const formValidation: FormValidation = {
     name: [
       {
         type: ValidationType.Required,
-        message: t('features.team.header.name') + t('common.validate.required'),
+        message: t('features.user.header.name') + t('common.validate.required'),
       },
       {
         type: ValidationType.MaxLength,
         message:
-          t('features.team.header.name') +
+          t('features.user.header.name') +
           t('common.validate.is') +
+          String(formValidationValue.name.min) +
+          t('common.validate.minLength') +
           String(formValidationValue.name.max) +
           t('common.validate.maxLength'),
+      },
+    ],
+    email: [
+      {
+        type: ValidationType.Required,
+        message: t('features.login.email') + t('common.validate.required'),
+      },
+      {
+        type: ValidationType.MaxLength,
+        message:
+          t('features.login.email') +
+          t('common.validate.is') +
+          String(formValidationValue.email.max) +
+          t('common.validate.maxLength'),
+      },
+      {
+        type: ValidationType.Pattern,
+        message: t('common.validate.pattern.email'),
       },
     ],
   }
@@ -240,27 +315,43 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
     if (processing.current) return
     processing.current = true
 
-    // API: チーム更新
-    await UpdateTeamCSR({
+    // API: ユーザー更新
+    await UpdateUserCSR({
       user_hash_key: user.hashKey,
-      hash_key: team.hashKey,
+      hash_key: decodeURIComponent(id),
       name: d.name,
-      users: _.map(users, (u) => {
-        return u.hashKey
-      }),
-    } as UpdateTeamRequest)
+      email: d.email,
+      teams: _.map(teams, (t) => t.hashKey),
+    } as UpdateUserRequest)
       .then(() => {
         store.dispatch(
           changeSetting({
-            successMsg: [t(`features.team.index`) + t(`common.toast.edit`)],
+            successMsg: [t(`features.user.index`) + t(`common.toast.edit`)],
           } as SettingModel),
         )
-
-        router.push(RouterPath.Management + RouterPath.Team)
+        router.push(RouterPath.Management + RouterPath.User)
       })
-      .catch(({ isServerError, routerPath, toastMsg, storeMsg }) => {
+      .catch(({ isServerError, routerPath, toastMsg, storeMsg, code }) => {
         if (isServerError) {
           router.push(routerPath)
+          return
+        }
+
+        if (code) {
+          toast(t(`common.api.code.userUpdate.${code}`), {
+            style: {
+              backgroundColor: setting.toastErrorColor,
+              color: common.white,
+              width: 500,
+            },
+            position: 'bottom-left',
+            hideProgressBar: true,
+            closeButton: () => <ClearIcon />,
+          })
+
+          setTimeout(() => {
+            processing.current = false
+          }, LITTLE_DURING)
           return
         }
 
@@ -296,11 +387,16 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
           )
         }
       })
+      .finally(() => {
+        processing.current = false
+      })
   }
 
   const formInit = () => {
-    setValue('name', team.name)
-    setUsers([])
+    setValue('name', users.name)
+    setValue('email', users.email)
+    setTeams([])
+    setRolesModel([])
   }
 
   useEffect(() => {
@@ -316,12 +412,12 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
         isLoading(false)
       }
     }
-
     initialize()
   }, [])
 
   return (
     <>
+      {/* ヘッダー */}
       <NextHead />
       {_.every([
         !init,
@@ -338,7 +434,8 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
               noValidate
               sx={ColumnMt4}
             >
-              <FormLabel>{t('features.team.header.name') + '*'}</FormLabel>
+              {/* ユーザー名 */}
+              <FormLabel>{t('features.user.header.name') + '*'}</FormLabel>
               <TextField
                 value={watch('name')}
                 margin="normal"
@@ -356,47 +453,109 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
                 type={errors.name?.type}
               ></ErrorHandler>
 
-              <FormLabel sx={[mt(6), mb(1.5)]}>
-                {t('features.team.header.users') + '*'}
-              </FormLabel>
+              {/* メールアドレス */}
+              <FormLabel>{t('features.user.header.email') + '*'}</FormLabel>
+              <TextField
+                value={watch('email')}
+                margin="normal"
+                required
+                style={w(100)}
+                {...register('email', {
+                  required: true,
+                  maxLength: formValidationValue.email.max,
+                  setValueAs: (value) => _.trim(value),
+                })}
+                aria-invalid={errors.email ? 'true' : 'false'}
+              />
+              <ErrorHandler
+                validations={formValidation.email}
+                type={errors.email?.type}
+              ></ErrorHandler>
+
+              {/* 所属チーム */}
+              <FormLabel>{t('features.user.header.team')}</FormLabel>
               <DropDownList
-                list={_.map(users, (u) => {
+                list={_.map(teams, (team) => {
                   return {
-                    key: u.hashKey,
-                    title: u.name,
-                    subTitle: u.email,
+                    key: team.hashKey,
+                    title: team.name,
+                    subTitle: team.sub,
                   } as SelectTitlesModel
                 })}
-                initList={_.map(initUsers, (u) => {
+                initList={_.map(initTeams, (team) => {
                   return {
-                    key: u.hashKey,
-                    title: u.name,
-                    subTitle: u.email,
+                    key: team.hashKey,
+                    title: team.name,
+                    subTitle: team.sub,
                   } as SelectTitlesModel
                 })}
                 sx={[w(50)]}
                 onChange={(value) => {
-                  const list: SearchUserByCompanyResponse[] = []
+                  const list: SearchTeamByCompanyResponse[] = []
                   for (const l of value) {
                     list.push({
                       hashKey: l.key,
                       name: l.title,
-                      email: l.subTitle,
-                    } as SearchUserByCompanyResponse)
+                      sub: l.subTitle,
+                    } as SearchTeamByCompanyResponse)
                   }
-                  setUsers(list)
+                  setTeams(list)
                 }}
               ></DropDownList>
 
+              {/* ロール */}
+              <FormLabel>{t('features.user.header.role')}</FormLabel>
+              <DropDownList
+                list={_.map(rolesModel, (r) => {
+                  return {
+                    key: r.hashKey,
+                    title: r.name,
+                    subTitle: '',
+                  } as SelectTitlesModel
+                })}
+                initList={_.map(initRolesModel, (r) => {
+                  return {
+                    key: r.hashKey,
+                    title: r.name,
+                    subTitle: '',
+                  } as SelectTitlesModel
+                })}
+                sx={[w(50)]}
+                onChange={(value) => {
+                  if (_.size(value) > 1) return
+                  setRolesModel(
+                    _.map(value, (v) => {
+                      return {
+                        hashKey: v.key,
+                        name: v.title,
+                        sub: '',
+                      } as SearchRoleByCompanyResponse
+                    }),
+                  )
+                }}
+              ></DropDownList>
+
+              {/* 所属済みチーム */}
               <FormLabel sx={[mt(6), mb(1.5)]}>
-                {t('features.team.header.selectedUsers')}
+                {t('features.user.header.selectedTeams')}
               </FormLabel>
               <List>
-                {_.map(selectedUsers, (user) => {
-                  return <ListItem>{'・' + user.name}</ListItem>
+                {_.map(selectedTeams, (team, i) => {
+                  return <ListItem key={i}>{'・' + team.name}</ListItem>
                 })}
               </List>
 
+              {/* 所属済みロール */}
+              <FormLabel sx={[mt(6), mb(1.5)]}>
+                {t('features.user.header.selectedRoles')}
+              </FormLabel>
+              <List>
+                {_.map(selectedRoles, (role, i) => {
+                  return <ListItem key={i}>{'・' + role.name}</ListItem>
+                })}
+              </List>
+
+              {/* ボタン */}
               <Box sx={[FormThreeButtons, mt(8)]}>
                 <Button
                   tabIndex={-1}
@@ -405,7 +564,7 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
                   color="inherit"
                   sx={minW(180)}
                   onClick={() =>
-                    router.push(RouterPath.Management + RouterPath.Team)
+                    router.push(RouterPath.Management + RouterPath.User)
                   }
                 >
                   {t('common.button.cancel')}
@@ -428,9 +587,10 @@ const TeamEdit: FC<Props> = ({ isError, id }) => {
                   type="submit"
                   variant="contained"
                   sx={[minW(180), ButtonColor(common.white, setting.color)]}
+                  onClick={handleSubmit(submit)}
                 >
                   <EditNoteIcon sx={mr(0.25)} />
-                  {t('features.team.edit')}
+                  {t('features.user.edit')}
                 </Button>
               </Box>
             </Box>
@@ -459,4 +619,4 @@ export const getServerSideProps: GetServerSideProps = async ({
   }
 }
 
-export default TeamEdit
+export default UserEdit
